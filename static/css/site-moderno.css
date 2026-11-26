@@ -1201,3 +1201,29 @@ main#main {
   font-weight: 600;
   font-size: 0.9rem;
 }
+
+/* ---------- Dízimos e Ofertas ---------- */
+
+.vb-dizimos {
+  display: grid;
+  gap: 16px;
+  margin-top: 32px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .vb-dizimos {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.vb-dizimos__cartao h2 {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+}
+
+.vb-dizimos__valor {
+  font-weight: 700;
+  font-size: 1.1rem;
+  word-break: break-word;
+}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ p.titulo }} | Verbo da Vida Braga{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="{{ p.titulo }} — {{ p.resumo }} Igreja Verbo da Vida Braga, Braga.">
+<meta name="theme-color" content="#101014">
+<link rel="canonical" href="https://verbodavidabraga.pt/dizimos-e-ofertas">
+<link rel="stylesheet" href="/static/css/genesis-public.css?v={{ asset_version }}">
+<link rel="stylesheet" href="/static/css/site-moderno.css?v={{ asset_version }}">
+{% endblock %}
+
+{% block body %}
+<a href="#main" class="skip-link">Saltar para conteúdo</a>
+
+{% include 'partials/public_header.html' %}
+
+<main id="main">
+  <section class="vb-sec">
+    <div class="vb-wrap">
+      <a href="/" class="vb-depto-voltar">← Início</a>
+
+      <div class="vb-depto-pagina__cabecalho">
+        <div>
+          <span class="vb-sec__rotulo">Contribuir</span>
+          <h1>{{ p.titulo }}</h1>
+          <p class="vb-sec__intro">{{ p.resumo }}</p>
+        </div>
+      </div>
+
+      <div class="vb-depto-pagina__texto">
+        {% for paragrafo in p.descricao %}
+        <p>{{ paragrafo }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="vb-dizimos">
+        <article class="vb-cartao vb-dizimos__cartao">
+          <h2>Transferência bancária (IBAN)</h2>
+          <p class="vb-dizimos__valor">{{ p.iban }}</p>
+          <p>Titular: {{ p.titular }}</p>
+        </article>
+        <article class="vb-cartao vb-dizimos__cartao">
+          <h2>MB Way</h2>
+          <p class="vb-dizimos__valor">{{ p.mbway }}</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include 'partials/public_footer.html' %}
+{% endblock %}

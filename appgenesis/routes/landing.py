@@ -109,6 +109,28 @@ async def landing_page(request: Request):
     )
 
 
+# FICTÍCIO: substituir o IBAN, o titular e o número MB Way reais antes de qualquer deploy.
+DIZIMOS = {
+    "titulo": "Dízimos e Ofertas",
+    "resumo": "Contribuir é participar na obra de Deus.",
+    "descricao": [
+        "Os dízimos e as ofertas sustentam o trabalho da igreja: os cultos, os departamentos e as missões.",
+        "Podes contribuir por transferência bancária ou por MB Way. Agradecemos a tua fidelidade.",
+    ],
+    "iban": "PT00 0000 0000 0000 0000 0000 0",
+    "titular": "FICTÍCIO - substituir",
+    "mbway": "000 000 000",
+}
+
+
+@router.get("/dizimos-e-ofertas", response_class=HTMLResponse)
+async def dizimos_page(request: Request):
+    """Página de dízimos e ofertas (dados fixos em DIZIMOS)."""
+    return templates.TemplateResponse(
+        request, "dizimos.html", {"request": request, "p": DIZIMOS}
+    )
+
+
 @router.get("/departamentos/{slug}", response_class=HTMLResponse)
 async def departamento_page(request: Request, slug: str):
     """Página de um departamento (dados fixos em DEPARTAMENTOS)."""

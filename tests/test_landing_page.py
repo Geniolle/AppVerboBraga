@@ -81,3 +81,14 @@ def test_centro_de_cura_usa_cabecalho_padrao_e_sem_secao_alimente(client):
     assert "vb-depto-pagina__cabecalho" in response.text
     assert "vb-depto-hero" not in response.text
     assert "Alimente sua fé" not in response.text
+
+
+def test_dizimos_e_ofertas_mostra_iban_e_mbway(client):
+    """Página de dízimos: mostra IBAN e MB Way vindos de DIZIMOS."""
+    from appgenesis.routes.landing import DIZIMOS
+
+    response = client.get("/dizimos-e-ofertas")
+    assert response.status_code == 200
+    assert DIZIMOS["iban"] in response.text
+    assert DIZIMOS["mbway"] in response.text
+    assert "Dízimos e Ofertas" in response.text
