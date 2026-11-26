@@ -109,7 +109,6 @@ async def landing_page(request: Request):
     )
 
 
-# FICTÍCIO: substituir o IBAN, o titular e o número MB Way reais antes de qualquer deploy.
 DIZIMOS = {
     "titulo": "Dízimos e Ofertas",
     "resumo": "Contribuir é participar na obra de Deus.",
@@ -117,9 +116,9 @@ DIZIMOS = {
         "Os dízimos e as ofertas sustentam o trabalho da igreja: os cultos, os departamentos e as missões.",
         "Podes contribuir por transferência bancária ou por MB Way. Agradecemos a tua fidelidade.",
     ],
-    "iban": "PT00 0000 0000 0000 0000 0000 0",
-    "titular": "FICTÍCIO - substituir",
-    "mbway": "000 000 000",
+    "iban": "PT50 0036 0085 9910 0058 9412 3",
+    "titular": "IGREJA VERBO VIDA BRAGA",
+    "mbway": "+351 936 945 580",
 }
 
 
