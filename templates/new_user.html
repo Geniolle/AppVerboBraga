@@ -1113,9 +1113,24 @@
               </div>
             </div>
             <div class="entity-fifth-row entity-fifth-row-edit">
-              <div class="field entity-fifth-row-logo">
-                <label for="edit_entity_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
-                <input id="edit_entity_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+              <div class="field profile-photo-field-v1 entity-fifth-row-logo">
+                <span class="personal-label">Imagem/ícone da entidade</span>
+                <small class="entity-logo-hint">PNG, JPG ou WEBP, até 5MB.</small>
+                <div class="profile-photo-row-v1">
+                  <div class="entity-logo-picker-wrap">
+                    <button type="button" class="profile-photo-picker-v1" id="edit_entity_logo_picker" aria-haspopup="menu" aria-expanded="false" aria-controls="edit_entity_logo_menu" title="Alterar imagem da entidade">
+                      <img id="edit_entity_logo_preview" class="profile-photo-preview-v1" alt="" src="{{ entity_edit_data.logo_url or '' }}" {% if not entity_edit_data.logo_url %}hidden{% endif %}>
+                      <span class="profile-photo-placeholder-v1" {% if entity_edit_data.logo_url %}hidden{% endif %} aria-hidden="true">{{ (entity_edit_data.name or '?')[:1] }}</span>
+                      <span class="profile-photo-camera-v1" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" focusable="false"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 14.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg></span>
+                    </button>
+                    <div id="edit_entity_logo_menu" class="entity-logo-menu" role="menu" hidden>
+                      <button type="button" class="entity-logo-menu-item" role="menuitem" data-logo-action="select">Selecionar imagem</button>
+                      <button type="button" class="entity-logo-menu-item" role="menuitem" data-logo-action="remove" {% if not entity_edit_data.logo_url %}disabled{% endif %}>Remover imagem</button>
+                    </div>
+                  </div>
+                  <input id="edit_entity_logo_file" class="visually-hidden-v1" type="file" name="entity_logo_file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+                  <input id="edit_entity_remove_logo" type="hidden" name="remove_logo" value="">
+                </div>
               </div>
               <div class="field entity-edit-status-row">
                 <label for="edit_entity_status">Estado da entidade *</label>
@@ -1137,30 +1152,6 @@
               </div>
             </div>
 
-            {% if entity_edit_data.logo_url %}
-              <div class="entity-edit-logo-row">
-                <div class="field entity-edit-current-logo">
-                  <label>Logo atual</label>
-                  <div class="entity-edit-current-logo-preview">
-                    <input
-                      id="remove_logo_checkbox"
-                      class="entity-edit-remove-logo-input"
-                      type="checkbox"
-                      name="remove_logo"
-                      value="1"
-                    >
-                    <label
-                      for="remove_logo_checkbox"
-                      class="entity-edit-remove-logo-btn"
-                      title="Remover logo atual"
-                      aria-label="Remover logo atual"
-                    >&#10005;</label>
-                    <img class="entity-edit-current-logo-image" src="{{ entity_edit_data.logo_url }}" alt="Logo atual da entidade">
-                    <div class="entity-edit-remove-logo-placeholder">Logo marcado para remoção. Clique em Guardar para confirmar.</div>
-                  </div>
-                </div>
-              </div>
-            {% endif %}
             <div class="form-action-row">
               {% if not entity_readonly_mode %}
               <button type="submit" class="action-btn">Guardar</button>
