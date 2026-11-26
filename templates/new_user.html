@@ -234,10 +234,6 @@
                 <label>Nº da entidade</label>
                 <input class="readonly-field" value="{{ company_profile_data.entity_number or '-' }}" readonly disabled>
               </div>
-              <div class="field entity-fourth-row-country">
-                <label for="empresa_country">País *</label>
-                <input id="empresa_country" name="country" maxlength="50" required value="{{ company_profile_data.country }}">
-              </div>
               <div class="field entity-first-row-name">
                 <label for="empresa_name">Nome da entidade *</label>
                 <input id="empresa_name" name="name" required value="{{ company_profile_data.name }}">
@@ -246,12 +242,12 @@
                 <label for="empresa_acronym">Acrónimo (opcional)</label>
                 <input id="empresa_acronym" name="acronym" maxlength="5" value="{{ company_profile_data.acronym }}">
               </div>
-            </div>
-            <div class="entity-second-row">
               <div class="field entity-first-row-tax">
                 <label for="empresa_tax_id">Nº Identificação Fiscal *</label>
                 <input id="empresa_tax_id" name="tax_id" maxlength="20" required value="{{ company_profile_data.tax_id }}">
               </div>
+            </div>
+            <div class="entity-second-row">
               <div class="field entity-second-row-email">
                 <label for="empresa_email">Email *</label>
                 <input id="empresa_email" name="email" type="email" required value="{{ company_profile_data.email }}">
@@ -264,33 +260,7 @@
                 <label for="empresa_responsible_name">Nome do responsável *</label>
                 <input id="empresa_responsible_name" name="responsible_name" required value="{{ company_profile_data.responsible_name }}">
               </div>
-            </div>
-            <div class="entity-third-row">
-              <div class="field entity-third-row-address">
-                <label for="empresa_address">Morada *</label>
-                <input id="empresa_address" name="address" required value="{{ company_profile_data.address }}">
-              </div>
-              <div class="field entity-third-row-door">
-                <label for="empresa_door_number">Nº da porta *</label>
-                <input id="empresa_door_number" name="door_number" maxlength="15" required value="{{ company_profile_data.door_number }}">
-              </div>
-              <div class="field entity-third-row-freguesia">
-                <label for="empresa_freguesia">Freguesia *</label>
-                <input id="empresa_freguesia" name="freguesia" required value="{{ company_profile_data.freguesia }}">
-              </div>
-              <div class="field entity-third-row-postal">
-                <label for="empresa_postal_code">Código postal *</label>
-                <input id="empresa_postal_code" name="postal_code" maxlength="30" required value="{{ company_profile_data.postal_code }}">
-              </div>
-            </div>
-            <div class="entity-fourth-row">
-              <div class="field entity-fourth-row-city">
-                <label for="empresa_city">Cidade *</label>
-                <input id="empresa_city" name="city" maxlength="120" required value="{{ company_profile_data.city }}">
-              </div>
-            </div>
-            <div class="entity-fifth-row entity-fifth-row-edit">
-              <div class="field profile-photo-field-v1 entity-fifth-row-logo">
+              <div class="field profile-photo-field-v1 entity-second-row-logo">
                 <span class="personal-label">Imagem/ícone da entidade</span>
                 <small class="entity-logo-hint">PNG, JPG ou WEBP, até 5MB.</small>
                 <div class="profile-photo-row-v1">
@@ -308,6 +278,34 @@
                   <input id="empresa_logo_file" class="visually-hidden-v1" type="file" name="entity_logo_file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
                   <input id="empresa_remove_logo" type="hidden" name="remove_logo" value="">
                 </div>
+              </div>
+            </div>
+            <div class="entity-third-row">
+              <div class="field entity-fourth-row-country">
+                <label for="empresa_country">País *</label>
+                <input id="empresa_country" name="country" maxlength="50" required value="{{ company_profile_data.country }}">
+              </div>
+              <div class="field entity-fourth-row-city">
+                <label for="empresa_city">Cidade *</label>
+                <input id="empresa_city" name="city" maxlength="120" required value="{{ company_profile_data.city }}">
+              </div>
+              <div class="field entity-third-row-freguesia">
+                <label for="empresa_freguesia">Freguesia *</label>
+                <input id="empresa_freguesia" name="freguesia" required value="{{ company_profile_data.freguesia }}">
+              </div>
+              <div class="field entity-third-row-postal">
+                <label for="empresa_postal_code">Código postal *</label>
+                <input id="empresa_postal_code" name="postal_code" maxlength="30" required value="{{ company_profile_data.postal_code }}">
+              </div>
+            </div>
+            <div class="entity-fourth-row">
+              <div class="field entity-third-row-address">
+                <label for="empresa_address">Morada *</label>
+                <input id="empresa_address" name="address" required value="{{ company_profile_data.address }}">
+              </div>
+              <div class="field entity-third-row-door">
+                <label for="empresa_door_number">Nº da porta *</label>
+                <input id="empresa_door_number" name="door_number" maxlength="15" required value="{{ company_profile_data.door_number }}">
               </div>
             </div>
             <div class="form-action-row">
