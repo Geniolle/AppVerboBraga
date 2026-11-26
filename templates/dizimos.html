@@ -45,7 +45,10 @@
         </article>
         <article class="vb-cartao vb-dizimos__cartao">
           <h2 class="vb-dizimos__titulo"><img src="/static/img/mbway-logo.png" alt="" width="28" height="32" class="vb-dizimos__logo">MB Way</h2>
-          <p class="vb-dizimos__valor">{{ p.mbway }}</p>
+          <div class="vb-dizimos__linha">
+            <p class="vb-dizimos__valor">{{ p.mbway }}</p>
+            <button type="button" class="vb-dizimos__copiar" data-copiar="{{ p.mbway | replace(' ', '') }}" aria-label="Copiar número MB Way">Copiar</button>
+          </div>
         </article>
       </div>
     </div>
