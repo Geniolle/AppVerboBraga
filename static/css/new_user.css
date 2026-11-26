@@ -6277,6 +6277,12 @@ input.action-btn-cancel,
   grid-column: span 3;
 }
 
+/* Area do seletor de logo: 80px de altura. */
+#empresa-card .profile-photo-row-v1,
+#edit-entity-card .profile-photo-row-v1 {
+  height: 80px;
+}
+
 /* Texto de ajuda do logo: 10px, abaixo do seletor. */
 #empresa-card .entity-logo-hint,
 #edit-entity-card .entity-logo-hint {
