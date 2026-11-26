@@ -6277,19 +6277,6 @@ input.action-btn-cancel,
   grid-column: span 3;
 }
 
-#empresa-card form > .entity-second-row > .entity-first-row-tax,
-#empresa-card form > .entity-second-row > .entity-second-row-phone {
-  grid-column: span 2;
-}
-
-#empresa-card form > .entity-second-row > .entity-second-row-email {
-  grid-column: span 5;
-}
-
-#empresa-card form > .entity-second-row > .entity-second-row-responsible {
-  grid-column: span 3;
-}
-
 #empresa-card form > .entity-first-row,
 #empresa-card form > .entity-second-row,
 #empresa-card form > .entity-third-row,
@@ -6312,10 +6299,8 @@ input.action-btn-cancel,
   margin: 0;
 }
 
-/* Seletor da imagem da entidade: linha propria, por baixo de todos os campos. */
-#empresa-card .entity-fifth-row-logo {
-  grid-column: 1 / -1;
-}
+/* Seletor da imagem da entidade: ocupa a 8.a posicao, na segunda linha. */
+
 
 #empresa-card .entity-logo-picker-wrap {
   position: relative;
