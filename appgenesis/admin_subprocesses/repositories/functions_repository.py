@@ -14,7 +14,10 @@ from appgenesis.services.user_system import (
     normalize_user_system_type_v1,
 )
 
+from appgenesis.services.entity_menu_data import get_entity_menu_data, set_entity_menu_data
+
 FUNCTIONS_MENU_CONFIG_KEY = "authorization_functions"
+FUNCTIONS_MENU_KEY = "administrativo"
 ALL_PROFILES_VALUE = "__all__"
 FUNCTIONS_SCOPE_LABELS = {"all": "Default", "owner": "Owner", "legado": "Legado"}
 FUNCTIONS_STATUS_LABELS = {"ativo": "Ativo", "inativo": "Inativo"}
@@ -80,29 +83,15 @@ def _entity_id_from_context(context: dict[str, Any] | None) -> int | None:
 
 
 def _load_functions(session: Any, context: dict[str, Any] | None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    # Multi-tenant: a linha do menu Administrativo e por entidade; sem entidade nao ha funcoes.
+    # Dados por entidade (entity_menu_data): sem entidade nao ha funcoes.
     entity_id = _entity_id_from_context(context)
     if entity_id is None:
         return {}, []
-    row = session.execute(
-        text(
-            """
-            SELECT menu_config
-            FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = 'administrativo'
-              AND entity_id = :entity_id
-            LIMIT 1
-            """
-        ),
-        {"entity_id": entity_id},
-    ).fetchone()
-    if not row:
-        return {}, []
-    raw_config = row[0]
-    menu_config = raw_config if isinstance(raw_config, dict) else json.loads(raw_config or "{}")
-    raw_items = menu_config.get(FUNCTIONS_MENU_CONFIG_KEY) or []
-    items = [dict(item) for item in raw_items if isinstance(item, dict)]
-    return menu_config, items
+    raw_items = get_entity_menu_data(
+        session, entity_id, FUNCTIONS_MENU_KEY, FUNCTIONS_MENU_CONFIG_KEY, []
+    )
+    items = [dict(item) for item in (raw_items or []) if isinstance(item, dict)]
+    return {}, items
 
 
 def _store_functions(
@@ -114,19 +103,16 @@ def _store_functions(
     entity_id = _entity_id_from_context(context)
     if entity_id is None:
         return False
-    menu_config[FUNCTIONS_MENU_CONFIG_KEY] = items
-    result = session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = 'administrativo'
-              AND entity_id = :entity_id
-            """
-        ),
-        {"menu_config": json.dumps(menu_config, ensure_ascii=False), "entity_id": entity_id},
+    # Funcoes so existem com o menu Administrativo (linha compartilhada) no BD.
+    menu_exists = session.execute(
+        text("SELECT 1 FROM sidebar_menu_settings WHERE lower(trim(menu_key)) = 'administrativo' LIMIT 1")
+    ).fetchone()
+    if menu_exists is None:
+        return False
+    set_entity_menu_data(
+        session, entity_id, FUNCTIONS_MENU_KEY, FUNCTIONS_MENU_CONFIG_KEY, items
     )
-    return bool(getattr(result, "rowcount", 1))
+    return True
 
 
 class FunctionsAdminRepository(BaseAdminSubprocessRepository):

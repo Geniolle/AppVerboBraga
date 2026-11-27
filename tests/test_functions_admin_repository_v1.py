@@ -21,16 +21,29 @@ class _Result:
     def fetchone(self):
         return self._row
 
+    def scalar_one_or_none(self):
+        return self._row[0] if self._row else None
+
 
 class _FakeSession:
-    """Simula sidebar_menu_settings: uma linha 'administrativo' por entity_id."""
+    """Simula sidebar_menu_settings (linha 'administrativo' por entity_id) e entity_menu_data."""
 
     def __init__(self, menu_configs: dict):
         self.menus = {entity_id: json.dumps(config) for entity_id, config in menu_configs.items()}
+        self.data: dict[tuple, str] = {}
 
     def execute(self, statement, params=None):
         sql = str(statement)
-        entity_id = (params or {}).get("entity_id")
+        params = params or {}
+        entity_id = params.get("entity_id")
+        if "entity_menu_data" in sql:
+            key = (entity_id, params.get("menu_key"), params.get("data_key"))
+            if sql.strip().upper().startswith(("INSERT", "UPDATE")):
+                self.data[key] = params["data"]
+                return _Result(None, rowcount=1)
+            return _Result((self.data[key],)) if key in self.data else _Result(None)
+        if "SELECT 1" in sql:
+            return _Result((1,)) if self.menus else _Result(None)
         if sql.strip().upper().startswith("UPDATE"):
             if entity_id not in self.menus:
                 return _Result(None, rowcount=0)
@@ -45,8 +58,8 @@ def _repo() -> FunctionsAdminRepository:
     return FunctionsAdminRepository(FUNCTIONS_ADMIN_CONFIG)
 
 
-def _stored(session: _FakeSession, entity_id: int = 1) -> dict:
-    return json.loads(session.menus[entity_id])
+def _stored(session: _FakeSession, entity_id: int = 1) -> list:
+    return json.loads(session.data[(entity_id, "administrativo", "authorization_functions")])
 
 
 def _payload(label: str = "Diretor", status: str = "ativo", profiles=None) -> dict:
@@ -162,10 +175,11 @@ def test_delete_removes_inactive_function():
     assert repo.list_rows(session) == []
 
 
-def test_save_keeps_other_menu_config_keys():
+def test_save_does_not_touch_shared_menu_config():
     session = _FakeSession({1: {"sidebar_sections": [{"key": "x"}]}})
+    before = session.menus[1]
     _repo().save_row(session, _payload("Diretor"), context=CONTEXT)
-    assert _stored(session)["sidebar_sections"] == [{"key": "x"}]
+    assert session.menus[1] == before
 
 
 def test_save_all_profiles_stores_marker():

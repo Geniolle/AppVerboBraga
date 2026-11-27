@@ -100,7 +100,10 @@ def ensure_members_optional_columns() -> None:
 
 
 def ensure_sidebar_menu_settings_table() -> None:
+    from appgenesis.services.entity_menu_data import ENTITY_MENU_DATA_TABLE_SQL
+
     with engine.begin() as connection:
+        connection.execute(text(ENTITY_MENU_DATA_TABLE_SQL))
         connection.execute(
             text(
                 """
