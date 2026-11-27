@@ -59,6 +59,12 @@ from appgenesis.services.page import (
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.profile import get_user_personal_data
 from appgenesis.services.session import get_current_user, get_session_entity_id
+from appgenesis.services.sidebar_section_ownership import (
+    can_manage_section,
+    filter_sections_for_entity,
+    is_section_visible_to_entity,
+    load_section_owner_map_v1,
+)
 from appgenesis.web.templates import templates
 from appgenesis.models import (
     Entity,
@@ -698,6 +704,34 @@ def new_user_page(
                     sidebar_section_edit_data_v22,
                 )
         # APPGENESIS_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
+
+        # Sessoes criadas por legado: so a entidade criadora ve; so ela (ou o Owner, nas de sistema) gere.
+        _owner_map_v1 = load_section_owner_map_v1(session)
+        _is_tenant_owner_v1 = bool(page_data.get("current_user_can_manage_tenant_structure"))
+
+        def _with_can_manage_v1(section: dict[str, Any]) -> dict[str, Any]:
+            row = dict(section)
+            row["can_manage"] = can_manage_section(
+                _owner_map_v1, row.get("key"), selected_entity_number, _is_tenant_owner_v1
+            )
+            return row
+
+        active_sidebar_sections_v22 = [
+            _with_can_manage_v1(section)
+            for section in filter_sections_for_entity(
+                active_sidebar_sections_v22, _owner_map_v1, selected_entity_number
+            )
+        ]
+        inactive_sidebar_sections_v22 = [
+            _with_can_manage_v1(section)
+            for section in filter_sections_for_entity(
+                inactive_sidebar_sections_v22, _owner_map_v1, selected_entity_number
+            )
+        ]
+        if sidebar_section_edit_data_v22 and not is_section_visible_to_entity(
+            _owner_map_v1, sidebar_section_edit_data_v22.get("key"), selected_entity_number
+        ):
+            sidebar_section_edit_data_v22 = None
     settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
@@ -710,7 +744,11 @@ def new_user_page(
         # Aba "Sessao": opcoes = secoes ativas da barra lateral; atual = sidebar_section do menu.
         settings_edit_data["session_options"] = [
             {"key": str(section.get("key") or ""), "label": str(section.get("label") or section.get("key") or "")}
-            for section in (_resolve_sidebar_sections_from_page_data_v22(page_data) or [])
+            for section in filter_sections_for_entity(
+                _resolve_sidebar_sections_from_page_data_v22(page_data) or [],
+                load_section_owner_map_v1(session),
+                selected_entity_number,
+            )
             if _sidebar_section_is_active_for_page_v22(section)
         ]
         settings_edit_data["session_current_key"] = str(

@@ -31,6 +31,11 @@ from appgenesis.menu_settings import (
     normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
+from appgenesis.services.sidebar_section_ownership import (
+    filter_sections_for_entity,
+    get_section_owner_map,
+    resolve_entity_number_v1,
+)
 from appgenesis.services.user_entity_scope import (
     get_actor_primary_entity_v1,
     get_entities_for_user_edit_form_v1,
@@ -316,8 +321,15 @@ def _resolve_sidebar_menu_context(
         ),
         None,
     )
+    administrativo_menu_config = (administrativo_menu or {}).get("menu_config", {}) or {}
     sidebar_section_options = normalize_sidebar_sections(
-        (administrativo_menu or {}).get("menu_config", {}).get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+        administrativo_menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+    # Sessoes criadas por legado so aparecem para a entidade que as criou.
+    sidebar_section_options = filter_sections_for_entity(
+        sidebar_section_options,
+        get_section_owner_map(administrativo_menu_config),
+        resolve_entity_number_v1(session, selected_entity_id),
     )
     return {
         "sidebar_menu_settings": sidebar_menu_settings,
