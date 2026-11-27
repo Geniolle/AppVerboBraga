@@ -81,3 +81,12 @@ def test_session_entity_number_field_filled_and_other_fields_kept():
     assert by_key["label"] == next(f for f in SIDEBAR_SECTION_FIELDS if f.key == "label")
     # Configuracao original nao muda.
     assert next(f for f in SESSOES_CONFIG.fields if f.key == SESSION_ENTITY_NUMBER_FIELD_KEY).default_value == ""
+
+
+def test_session_entity_display_genesis_for_1000():
+    from appgenesis.services.sidebar_section_ownership import session_entity_display_v1
+
+    assert session_entity_display_v1(1000) == "Genesis"
+    assert session_entity_display_v1("1000") == "Genesis"
+    assert session_entity_display_v1(1001) == "1001"
+    assert session_entity_display_v1(None) == "-"

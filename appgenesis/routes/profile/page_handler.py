@@ -65,6 +65,7 @@ from appgenesis.services.sidebar_section_ownership import (
     is_section_visible_to_entity,
     load_section_creator_map_v1,
     load_section_owner_map_v1,
+    session_entity_display_v1,
     with_session_entity_number_v1,
 )
 from appgenesis.web.templates import templates
@@ -718,7 +719,7 @@ def new_user_page(
                 _owner_map_v1, row.get("key"), selected_entity_number, _is_tenant_owner_v1
             )
             _creator_number_v1 = _creator_map_v1.get(str(row.get("key") or "").strip().lower())
-            row["entity_number"] = str(_creator_number_v1) if _creator_number_v1 is not None else "-"
+            row["entity_number"] = session_entity_display_v1(_creator_number_v1)
             return row
 
         active_sidebar_sections_v22 = [
@@ -826,7 +827,7 @@ def new_user_page(
             _sessao_entity_number_v2 = selected_entity_number
         sessoes_subprocess_config_v2 = with_session_entity_number_v1(
             sessoes_subprocess_config_v2,
-            str(_sessao_entity_number_v2) if _sessao_entity_number_v2 is not None else "-",
+            session_entity_display_v1(_sessao_entity_number_v2),
         )
 
         if sessoes_subprocess_config_v2 is not None:
