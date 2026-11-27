@@ -243,21 +243,6 @@
 
     window.__appgenesisAdminSubprocessViewV1 = true;
 
-    document.addEventListener("click", function (event) {
-      const button = event.target.closest("[data-admin-subprocess-view]");
-
-      if (!button) {
-        return;
-      }
-
-      event.preventDefault();
-
-      const title = button.getAttribute("data-view-title") || "Detalhes";
-      const details = button.getAttribute("data-view-details") || "";
-
-      alert(title + (details ? "\n" + details : ""));
-    });
-
     // Linha sem permissao de gestao (sessao default): avisa em vez de abrir edicao.
     document.addEventListener("click", function (event) {
       const row = event.target.closest ? event.target.closest("tr[data-row-locked-message]") : null;
