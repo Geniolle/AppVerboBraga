@@ -844,3 +844,8 @@ form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [d
     grid-template-columns: 1fr;
   }
 }
+
+/* Gatilho oculto do formulario Administradores do sistema: o + do cabecalho chama o summary via JS. */
+#system-admins-create-collapse > summary.system-admins-inline-create-trigger {
+  display: none !important;
+}
