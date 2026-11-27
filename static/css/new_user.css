@@ -7124,3 +7124,10 @@ select:disabled,
 table tbody tr {
   cursor: pointer;
 }
+
+/* Guardar e Cancelar na mesma linha em qualquer largura (mobile incluido). */
+.form-action-row,
+.profile-edit-actions,
+.entity-form-actions {
+  flex-wrap: nowrap !important;
+}
