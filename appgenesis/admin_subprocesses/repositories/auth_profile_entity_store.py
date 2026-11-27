@@ -14,8 +14,10 @@ from typing import Any
 from sqlalchemy import String, cast, select, text
 
 from appgenesis.models import Entity
+from appgenesis.services.entity_menu_data import get_entity_menu_data, set_entity_menu_data
 
 AUTH_PROFILE_FIELDS_MENU_CONFIG_KEY = "authorization_profile_fields"
+AUTH_PROFILE_MENU_KEY = "administrativo"
 
 
 @dataclass
@@ -43,21 +45,9 @@ def resolve_entity_id_for_auth_profiles_v1(session: Any, context: dict[str, Any]
 
 
 def load_entity_auth_profile_store_v1(session: Any, entity_id: int) -> EntityAuthProfileStore:
-    row = session.execute(
-        text(
-            """
-            SELECT menu_config
-            FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = 'administrativo'
-              AND entity_id = :entity_id
-            LIMIT 1
-            """
-        ),
-        {"entity_id": entity_id},
-    ).fetchone()
-    raw_config = row[0] if row else None
-    menu_config = raw_config if isinstance(raw_config, dict) else json.loads(raw_config or "{}")
-    raw_fields = menu_config.get(AUTH_PROFILE_FIELDS_MENU_CONFIG_KEY)
+    raw_fields = get_entity_menu_data(
+        session, entity_id, AUTH_PROFILE_MENU_KEY, AUTH_PROFILE_FIELDS_MENU_CONFIG_KEY
+    )
     return EntityAuthProfileStore(
         entity_id=entity_id,
         profile_custom_fields=str(raw_fields) if raw_fields else None,
@@ -65,38 +55,11 @@ def load_entity_auth_profile_store_v1(session: Any, entity_id: int) -> EntityAut
 
 
 def save_entity_auth_profile_store_v1(session: Any, store: EntityAuthProfileStore) -> bool:
-    row = session.execute(
-        text(
-            """
-            SELECT menu_config
-            FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = 'administrativo'
-              AND entity_id = :entity_id
-            LIMIT 1
-            """
-        ),
-        {"entity_id": store.entity_id},
-    ).fetchone()
-    if not row:
-        return False
-    raw_config = row[0]
-    menu_config = raw_config if isinstance(raw_config, dict) else json.loads(raw_config or "{}")
-    if store.profile_custom_fields:
-        menu_config[AUTH_PROFILE_FIELDS_MENU_CONFIG_KEY] = store.profile_custom_fields
-    else:
-        menu_config.pop(AUTH_PROFILE_FIELDS_MENU_CONFIG_KEY, None)
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = 'administrativo'
-              AND entity_id = :entity_id
-            """
-        ),
-        {
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-            "entity_id": store.entity_id,
-        },
+    set_entity_menu_data(
+        session,
+        store.entity_id,
+        AUTH_PROFILE_MENU_KEY,
+        AUTH_PROFILE_FIELDS_MENU_CONFIG_KEY,
+        store.profile_custom_fields or "",
     )
     return True

@@ -318,6 +318,21 @@ def _menu_exists(session: Session, menu_key: str) -> bool:
 
 
 def _resolve_sidebar_menu_settings_entity_id(session: Session) -> int | None:
+    # Menus Default pertencem a entidade owner (1000); sem ela, cai na regra antiga.
+    owner_entity_id = session.execute(
+        text(
+            """
+            SELECT id
+            FROM entities
+            WHERE profile_scope = 'owner' AND is_active IS TRUE
+            ORDER BY id
+            LIMIT 1
+            """
+        )
+    ).scalar_one_or_none()
+    if owner_entity_id is not None:
+        return int(owner_entity_id)
+
     entity_id = session.execute(
         text(
             """
