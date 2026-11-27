@@ -709,6 +709,7 @@ def new_user_page(
 
         # Sessoes criadas por legado: so a entidade criadora ve; so ela (ou o Owner, nas de sistema) gere.
         _owner_map_v1 = load_section_owner_map_v1(session)
+        _creator_map_v1 = load_section_creator_map_v1(session)
         _is_tenant_owner_v1 = bool(page_data.get("current_user_can_manage_tenant_structure"))
 
         def _with_can_manage_v1(section: dict[str, Any]) -> dict[str, Any]:
@@ -716,6 +717,8 @@ def new_user_page(
             row["can_manage"] = can_manage_section(
                 _owner_map_v1, row.get("key"), selected_entity_number, _is_tenant_owner_v1
             )
+            _creator_number_v1 = _creator_map_v1.get(str(row.get("key") or "").strip().lower())
+            row["entity_number"] = str(_creator_number_v1) if _creator_number_v1 is not None else "-"
             return row
 
         active_sidebar_sections_v22 = [
