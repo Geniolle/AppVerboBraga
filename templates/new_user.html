@@ -856,10 +856,10 @@
         {% endif %}
 
         {% if current_user_can_manage_all_entities and admin_subprocess_system_admin_state is not none %}
-        <section id="system-admins-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="admin_sistema" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#system-admins-card' %}style="display: none;"{% endif %}>
+        <section id="system-admins-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="admin_sistema" data-admin-subprocess-role="form" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#system-admins-card' %}style="display: none;"{% endif %}>
           <div class="entity-create-toolbar appgenesis-process-action-toolbar-v1">
             <details id="system-admins-create-collapse" class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1"{% if errors and form_data and form_data.system_profile == 'legado' %} open{% endif %}>
-              <summary class="appgenesis-process-action-toggle-v1">
+              <summary class="appgenesis-process-action-toggle-v1" hidden aria-hidden="true">
                 <span>Criar administrador do sistema</span>
               </summary>
               <div class="entity-create-body appgenesis-process-action-panel-v1">
