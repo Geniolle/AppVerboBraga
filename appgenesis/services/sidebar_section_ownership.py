@@ -211,13 +211,15 @@ def with_session_entity_number_v1(config, entity_number_display: str):
 GENESIS_ENTITY_NUMBER = 1000
 
 
-def session_entity_display_v1(entity_number) -> str:
-    """Texto do Nº DA ENTIDADE: a entidade 1000 aparece como Genesis; sem registo fica '-'."""
+def session_entity_display_v1(entity_number, viewer_is_tenant_owner: bool = False) -> str:
+    """Texto do Nº DA ENTIDADE. Para entidades legado, a 1000 aparece como Genesis; o Owner ve o numero."""
     if entity_number is None or str(entity_number).strip() == "":
         return "-"
     try:
-        if int(entity_number) == GENESIS_ENTITY_NUMBER:
-            return "Genesis"
+        number = int(entity_number)
     except (TypeError, ValueError):
         return str(entity_number)
+    if not viewer_is_tenant_owner and number == GENESIS_ENTITY_NUMBER:
+        return "Genesis"
+    return str(number)
     return str(entity_number)
