@@ -667,38 +667,6 @@
                           <option value="super_user" {% if form_data.system_profile == "super_user" %}selected{% endif %}>Super User</option>
                         </select>
                       </div>
-                      {% if can_select_user_entity %}
-                      <div class="field">
-                        <label for="create_user_entity_id">Entidade *</label>
-                        <select
-                          id="create_user_entity_id"
-                          name="entity_id"
-                          required
-                          data-user-entity-select="1"
-                          data-user-entity-number-target="create_user_entity_number"
-                        >
-                          <option value="">— Selecione uma entidade —</option>
-                          {% for entity in entities_for_user_form %}
-                          <option
-                            value="{{ entity.id }}"
-                            data-entity-number="{{ entity.entity_number if entity.entity_number is not none else '' }}"
-                            data-entity-name="{{ entity.name }}"
-                            {% if form_data.entity_id == entity.id | string %}selected{% endif %}
-                          >{{ entity.name }}{% if entity.entity_number is not none %} (Nº {{ entity.entity_number }}){% endif %}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <div class="field">
-                        <label for="create_user_entity_number">Nº da Entidade</label>
-                        <input
-                          id="create_user_entity_number"
-                          value="{{ form_data.entity_number if form_data.entity_number else '' }}"
-                          readonly
-                          disabled
-                          class="readonly-field"
-                        >
-                      </div>
-                      {% else %}
                       <div class="field">
                         <label for="entity_auto_name">Entidade</label>
                         <input
@@ -720,7 +688,6 @@
                           class="readonly-field"
                         >
                       </div>
-                      {% endif %}
                       <div class="field">
                         <label for="create_user_status">Estado da conta</label>
                         <input id="create_user_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">

@@ -45,3 +45,19 @@ def test_admin_config_reuses_user_config_without_profile_column():
     assert ADMIN_SISTEMA_CONFIG.repository_name == UTILIZADOR_CONFIG.repository_name
     assert "system_profile" not in [c.key for c in ADMIN_SISTEMA_CONFIG.columns]
     assert ADMIN_SISTEMA_CONFIG.default_target == "system-admins-card"
+
+
+def test_utilizador_form_has_no_entity_dropdown():
+    from pathlib import Path
+
+    template = (Path(__file__).resolve().parents[1] / "templates" / "new_user.html").read_text(encoding="utf-8")
+    # Utilizador (local) cria sempre na entidade do ator; so o Administrador do sistema escolhe entidade.
+    assert 'id="create_user_entity_id"' not in template
+    assert 'id="system_admin_entity_id"' in template
+
+
+def test_create_entity_dropdown_only_for_legado_admin():
+    from pathlib import Path
+
+    source = (Path(__file__).resolve().parents[1] / "appgenesis" / "use_cases" / "users" / "create_user.py").read_text(encoding="utf-8")
+    assert 'if entity_permissions.get("can_manage_all_entities") and payload.clean_system_type == "legado":' in source

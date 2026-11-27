@@ -128,6 +128,10 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
             return_value=(entity, ""),
         ), patch.object(
             create_user_module,
+            "get_actor_primary_entity_v1",
+            return_value={"id": entity.id, "name": entity.name, "entity_number": entity.entity_number},
+        ), patch.object(
+            create_user_module,
             "build_user_invite_link",
             return_value="https://app.test/invite",
         ), patch.object(
@@ -203,6 +207,10 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
             create_user_module,
             "_resolve_entity_from_user_email_v2",
             return_value=(entity, ""),
+        ), patch.object(
+            create_user_module,
+            "get_actor_primary_entity_v1",
+            return_value={"id": entity.id, "name": entity.name, "entity_number": entity.entity_number},
         ), patch.object(
             create_user_module,
             "build_user_invite_link",

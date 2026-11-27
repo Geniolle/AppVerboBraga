@@ -386,9 +386,9 @@ def execute_create_user(
 
     # APPGENESIS_ENTITY_SCOPE_RESOLUTION_V1_START
     # A entidade do novo utilizador depende das permissões ativas do utilizador logado:
-    # - can_manage_all_entities → escolhe qualquer entidade ativa no dropdown
-    # - restantes → ficam restritos à entidade ativa do próprio ator
-    if entity_permissions.get("can_manage_all_entities"):
+    # - Administrador do sistema (legado, so owner) → escolhe entidade legada no dropdown
+    # - Utilizador (local) → sempre a entidade do próprio ator (owner: entidade 1000)
+    if entity_permissions.get("can_manage_all_entities") and payload.clean_system_type == "legado":
         submitted_entity_id = form_data.get("entity_id", "")
         if submitted_entity_id:
             try:
