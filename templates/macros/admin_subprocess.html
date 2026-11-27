@@ -628,7 +628,7 @@
           <tbody>
             {% for row in rows %}
               {% set _row_edit_href = "/users/new?menu=" ~ (state.menu_key or 'administrativo') ~ ("&" ~ state.config.edit_url_extra_params if state.config.edit_url_extra_params else "") ~ "&target=" ~ state.config.edit_target ~ "&" ~ state.config.edit_param ~ "=" ~ row.get(state.config.identity_field, row.get("key", row.get("id", ""))) ~ "#" ~ state.config.edit_target %}
-              <tr{% if state.config.row_click_edit %} class="admin-subprocess-row-clickable-v1" data-row-edit-href="{{ _row_edit_href }}"{% endif %}{% if row.get("can_manage", True) == false %} data-row-locked-message="Sessões default são de exclusiva manutenção da Genesis."{% endif %}>
+              <tr{% if state.config.row_click_edit and row.get("can_manage", True) != false %} class="admin-subprocess-row-clickable-v1" data-row-edit-href="{{ _row_edit_href }}"{% endif %}{% if row.get("can_manage", True) == false %} data-row-locked-message="Sessões default são de exclusiva manutenção da Genesis."{% endif %}>
                 {% for column in state.config.columns %}
                   {% set cell_value = row.get(column.source, "") %}
                   {% set _sort_val = row.get(column.sort_value_source, cell_value) if column.sort_value_source else cell_value %}
