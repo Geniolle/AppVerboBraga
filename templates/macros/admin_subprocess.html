@@ -505,7 +505,7 @@
 {% endmacro %}
 
 
-{% macro render_admin_subprocess_table(state, rows, title, status_value) %}
+{% macro render_admin_subprocess_table(state, rows, title, status_value, extra_active_html='') %}
   {% set sort_state = namespace(has_sortable_columns=false, has_responsive_columns=false, default_key="", default_direction="") %}
   {% for column in state.config.columns %}
     {% if column.sortable %}
@@ -565,6 +565,9 @@
     <h2>{{ title }}</h2>
     {% if _is_active and state.config.create_toggle_in_active_header %}
       {{ render_admin_subprocess_inline_create_button(state.config) }}
+    {% endif %}
+    {% if _is_active and extra_active_html %}
+      {{ extra_active_html }}
     {% endif %}
 
     {% set _empty_msg = (state.config.empty_active_message if _is_active else state.config.empty_inactive_message) %}
@@ -690,8 +693,8 @@
 {% endmacro %}
 
 
-{% macro render_admin_subprocess_tables(state) %}
-  {{ render_admin_subprocess_table(state, state.active_rows, state.config.active_title, state.config.active_value) }}
+{% macro render_admin_subprocess_tables(state, extra_active_html='') %}
+  {{ render_admin_subprocess_table(state, state.active_rows, state.config.active_title, state.config.active_value, extra_active_html) }}
   {{ render_admin_subprocess_table(state, state.inactive_rows, state.config.inactive_title, state.config.inactive_value) }}
 {% endmacro %}
 
