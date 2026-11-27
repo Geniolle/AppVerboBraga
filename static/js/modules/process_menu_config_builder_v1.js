@@ -254,6 +254,7 @@
         ...(canManageTenant ? [{ label: "Entidade", target: "#recent-entities-card" }] : []),
         { label: "Dados da empresa", target: "#empresa-card" },
         { label: "Utilizador", target: "#create-user-card" },
+        ...(canManageTenant ? [{ label: "Administradores do sistema", target: "#system-admins-card" }] : []),
         { label: "Perfil de autorização", target: "#auth-profile-card" },
         { label: "Funções Administrativas", target: "#funcoes-administrativas-card" }
       ];

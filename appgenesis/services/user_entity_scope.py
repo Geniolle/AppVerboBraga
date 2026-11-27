@@ -129,8 +129,22 @@ def get_entities_for_user_edit_form_v1(
     )
 
 
+def get_legacy_entities_for_admin_form_v1(session: Session) -> list[dict[str, Any]]:
+    """Administradores do sistema: so entidades legadas (profile_scope='legado'), ativas."""
+    rows = session.execute(
+        select(Entity.id, Entity.name, Entity.entity_number)
+        .where(Entity.is_active.is_(True), Entity.profile_scope == "legado")
+        .order_by(Entity.entity_number.is_(None), Entity.entity_number.asc(), Entity.id.asc())
+    ).all()
+    return [
+        {"id": int(row.id), "name": str(row.name or ""), "entity_number": row.entity_number}
+        for row in rows
+    ]
+
+
 __all__ = [
     "can_select_user_entity_v1",
+    "get_legacy_entities_for_admin_form_v1",
     "get_actor_system_type_v1",
     "get_actor_primary_entity_v1",
     "get_entities_for_user_form_v1",

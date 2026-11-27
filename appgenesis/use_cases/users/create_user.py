@@ -231,6 +231,7 @@ def normalize_create_user_input_v1(
     entity_id: str = "",
     invite_delivery: str,
     system_profile: str = "",
+    legacy_admin_form: bool = False,
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
@@ -240,6 +241,13 @@ def normalize_create_user_input_v1(
     clean_invite_delivery = invite_delivery.strip().lower()
     if clean_invite_delivery not in {"email", "link"}:
         clean_invite_delivery = "email"
+    # Perfil Legado so existe no separador Administradores do sistema (owner).
+    legacy_profile_error = ""
+    if legacy_admin_form:
+        clean_system_type = "legado"
+    elif clean_system_type == "legado":
+        clean_system_type = LEGACY_USER_SYSTEM_TYPE_DEFAULT
+        legacy_profile_error = "O perfil Legado só pode ser criado em Administradores do sistema."
 
     form_data = {
         "full_name": clean_full_name,
@@ -252,6 +260,8 @@ def normalize_create_user_input_v1(
     }
 
     errors: list[str] = []
+    if legacy_profile_error:
+        errors.append(legacy_profile_error)
     if not clean_full_name:
         errors.append("Nome completo é obrigatório.")
     if not clean_primary_phone:
@@ -283,6 +293,8 @@ def _build_error_context(
     user_personal_data: dict[str, Any],
     next_entity_number: int,
     page_data: dict[str, Any],
+    admin_tab: str = "utilizador",
+    admin_target: str = "#create-user-card",
 ) -> dict[str, Any]:
     return {
         "request": request,
@@ -313,13 +325,13 @@ def _build_error_context(
         "settings_tab": "",
         "profile_tab": "pessoal",
         "initial_menu": "administrativo",
-        "initial_menu_target": "#create-user-card",
+        "initial_menu_target": admin_target,
         "initial_dynamic_process_section": "",
         "initial_profile_section": "",
         "requested_profile_section": "",
         "requested_dynamic_process_section": "",
         "appgenesis_after_save": False,
-        "admin_tab": "utilizador",
+        "admin_tab": admin_tab,
         **page_data,
     }
 
@@ -368,6 +380,9 @@ def execute_create_user(
     errors = list(payload.errors)
     form_data = dict(payload.form_data)
     selected_entity = None
+    # Perfil Legado volta ao separador Administradores do sistema; os restantes ao Utilizador.
+    _admin_tab_v1 = "admin_sistema" if payload.clean_system_type == "legado" else "utilizador"
+    _admin_target_v1 = "#system-admins-card" if payload.clean_system_type == "legado" else "#create-user-card"
 
     # APPGENESIS_ENTITY_SCOPE_RESOLUTION_V1_START
     # A entidade do novo utilizador depende das permissões ativas do utilizador logado:
@@ -419,6 +434,12 @@ def execute_create_user(
             ).scalar_one_or_none()
             if selected_entity is None:
                 errors.append("Entidade do utilizador logado está inativa ou não foi encontrada.")
+
+    if payload.clean_system_type == "legado":
+        if not entity_permissions.get("can_manage_all_entities"):
+            errors.append("Apenas o owner pode criar administradores do sistema.")
+        if selected_entity is not None and str(selected_entity.profile_scope or "") != "legado":
+            errors.append("Administrador do sistema só pode ser criado para entidade legada.")
 
     if selected_entity is not None:
         form_data["entity_id"] = str(selected_entity.id)
@@ -483,9 +504,9 @@ def execute_create_user(
                             success="Utilizador já estava pendente. Link de ativação gerado.",
                             invite_link=invite_link,
                             menu="administrativo",
-                            admin_tab="utilizador",
+                            admin_tab=_admin_tab_v1,
                         )
-                        + "#create-user-card",
+                        + _admin_target_v1,
                     )
                 email_sent, email_error = send_user_invite_email(
                     recipient_email=payload.clean_email,
@@ -500,9 +521,9 @@ def execute_create_user(
                         redirect_url=build_users_new_url(
                             success="Utilizador já estava pendente. Convite reenviado por email.",
                             menu="administrativo",
-                            admin_tab="utilizador",
+                            admin_tab=_admin_tab_v1,
                         )
-                        + "#create-user-card",
+                        + _admin_target_v1,
                     )
                 return CreateUserOutcome(
                     kind="redirect",
@@ -510,9 +531,9 @@ def execute_create_user(
                         success="Utilizador já estava pendente.",
                         error=f"{email_error} Link de ativação: {invite_link}",
                         menu="administrativo",
-                        admin_tab="utilizador",
+                        admin_tab=_admin_tab_v1,
                     )
-                    + "#create-user-card",
+                    + _admin_target_v1,
                 )
             errors.append("Já existe um utilizador com este email de login.")
 
@@ -545,6 +566,8 @@ def execute_create_user(
                 user_personal_data=user_personal_data,
                 next_entity_number=next_entity_number,
                 page_data=page_data,
+                admin_tab=_admin_tab_v1,
+                admin_target=_admin_target_v1,
             ),
         )
 
@@ -615,6 +638,8 @@ def execute_create_user(
                 user_personal_data=user_personal_data,
                 next_entity_number=next_entity_number,
                 page_data=page_data,
+                admin_tab=_admin_tab_v1,
+                admin_target=_admin_target_v1,
             ),
         )
 
@@ -631,9 +656,9 @@ def execute_create_user(
                 success="Utilizador criado em estado pendente. Link de ativação gerado.",
                 invite_link=invite_link,
                 menu="administrativo",
-                admin_tab="utilizador",
+                admin_tab=_admin_tab_v1,
             )
-            + "#create-user-card",
+            + _admin_target_v1,
         )
 
     email_sent, email_error = send_user_invite_email(
@@ -649,9 +674,9 @@ def execute_create_user(
             redirect_url=build_users_new_url(
                 success="Utilizador criado em estado pendente. Convite enviado por email.",
                 menu="administrativo",
-                admin_tab="utilizador",
+                admin_tab=_admin_tab_v1,
             )
-            + "#create-user-card",
+            + _admin_target_v1,
         )
 
     return CreateUserOutcome(
@@ -660,7 +685,7 @@ def execute_create_user(
             success="Utilizador criado em estado pendente.",
             error=f"{email_error} Link de ativação: {invite_link}",
             menu="administrativo",
-            admin_tab="utilizador",
+            admin_tab=_admin_tab_v1,
         )
-        + "#create-user-card",
+        + _admin_target_v1,
     )

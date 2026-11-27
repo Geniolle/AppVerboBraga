@@ -11,7 +11,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 # APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
-from appgenesis.admin_subprocesses.registry import get_admin_subprocess_config, ENTIDADE_CONFIG, UTILIZADOR_CONFIG
+from appgenesis.admin_subprocesses.registry import (
+    ADMIN_SISTEMA_CONFIG,
+    ENTIDADE_CONFIG,
+    LEGACY_ADMIN_TAB_KEY,
+    UTILIZADOR_CONFIG,
+    get_admin_subprocess_config,
+)
 from appgenesis.admin_subprocesses.repositories.auth_profile_repository import AuthorizationProfileAdminRepository
 from dataclasses import replace as _dataclass_replace
 
@@ -278,6 +284,8 @@ def _resolve_initial_menu_target(
             return "#menu-subprocess-card-active", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
+        if resolved_admin_tab == LEGACY_ADMIN_TAB_KEY:
+            return "#system-admins-card", ""
         if resolved_admin_tab == "perfil_de_autorizacao":
             return "#auth-profile-card", ""
         if resolved_admin_tab == "funcoes_administrativas":
@@ -552,7 +560,7 @@ def new_user_page(
         if resolved_admin_tab not in {"contas", "sessoes", "departamentos"}:
             resolved_admin_tab = "contas"
     else:
-        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "perfil_de_autorizacao", "funcoes_administrativas", "dados_empresa"}:
+        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "perfil_de_autorizacao", "funcoes_administrativas", "dados_empresa", "admin_sistema"}:
             resolved_admin_tab = "entidade"
         if resolved_admin_tab == "definicoes":
             resolved_admin_tab = "contas"
@@ -1128,12 +1136,31 @@ def new_user_page(
         return result
 
     admin_subprocess_entity_state = None
+    # Utilizador = so sistema local; Administradores do sistema = perfil Legado (so owner).
+    _is_legacy_user_row_v1 = lambda row: str(row.get("system_type") or "") == "legado"
+    _is_owner_actor_v1 = bool(page_data.get("current_user_can_manage_all_entities"))
     admin_subprocess_user_state = AdminSubprocessState(
         config=UTILIZADOR_CONFIG,
-        active_rows=_normalize_user_rows_v1(page_data.get("active_created_users", [])),
-        inactive_rows=_normalize_user_rows_v1(page_data.get("inactive_users", [])),
+        active_rows=_normalize_user_rows_v1(
+            [r for r in page_data.get("active_created_users", []) if not _is_legacy_user_row_v1(r)]
+        ),
+        inactive_rows=_normalize_user_rows_v1(
+            [r for r in page_data.get("inactive_users", []) if not _is_legacy_user_row_v1(r)]
+        ),
         return_url="/users/new?menu=administrativo&admin_tab=utilizador#create-user-card",
     )
+    admin_subprocess_system_admin_state = None
+    if _is_owner_actor_v1:
+        admin_subprocess_system_admin_state = AdminSubprocessState(
+            config=ADMIN_SISTEMA_CONFIG,
+            active_rows=_normalize_user_rows_v1(
+                [r for r in page_data.get("active_created_users", []) if _is_legacy_user_row_v1(r)]
+            ),
+            inactive_rows=_normalize_user_rows_v1(
+                [r for r in page_data.get("inactive_users", []) if _is_legacy_user_row_v1(r)]
+            ),
+            return_url="/users/new?menu=administrativo&admin_tab=admin_sistema#system-admins-card",
+        )
 
     if bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))):
         admin_subprocess_entity_state = AdminSubprocessState(
@@ -1155,6 +1182,9 @@ def new_user_page(
     # Aba Entidade (Administrativo) so para o owner do sistema; restantes perfis nao veem.
     if clean_menu_key == "administrativo" and not page_data.get("current_user_can_manage_tenant_structure"):
         resolved_tabs_config = [t for t in resolved_tabs_config if t.key != "entidade"]
+    # Administradores do sistema so para o owner.
+    if clean_menu_key == "administrativo" and not page_data.get("current_user_can_manage_all_entities"):
+        resolved_tabs_config = [t for t in resolved_tabs_config if t.key != LEGACY_ADMIN_TAB_KEY]
     initial_menu_tabs = [t.to_dict() for t in resolved_tabs_config]
     
     if initial_menu_tabs:
@@ -1252,6 +1282,7 @@ def new_user_page(
         "admin_subprocess_menu_state": admin_subprocess_menu_state_v1,
         "admin_subprocess_entity_state": admin_subprocess_entity_state,
         "admin_subprocess_user_state": admin_subprocess_user_state,
+        "admin_subprocess_system_admin_state": admin_subprocess_system_admin_state,
         "current_user_can_manage_tenant_structure": bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
         "current_user_can_manage_all_entities": bool(entity_permissions.get("can_manage_all_entities", False)),
         "menu_missing_actions": menu_missing_actions_v1,

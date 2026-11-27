@@ -12,6 +12,7 @@ from appgenesis.services.page import build_users_new_url
 from appgenesis.services.navigation_context import build_return_url_v1
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.use_cases.users import execute_create_user, normalize_create_user_input_v1
+from appgenesis.admin_subprocesses.registry import LEGACY_ADMIN_TAB_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ def create_user_v1(
             entity_id=entity_id,
             invite_delivery=invite_delivery,
             system_profile=system_profile,
+            legacy_admin_form=(return_admin_tab or "").strip() == LEGACY_ADMIN_TAB_KEY,
         )
 
         with SessionLocal() as session:
