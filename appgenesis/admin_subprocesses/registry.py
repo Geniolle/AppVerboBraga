@@ -263,6 +263,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     plural_label="Sessões",
     edit_param="sidebar_section_edit_key",
     default_target="admin-sidebar-sections-card",
+    row_click_edit=True,
     # Cartoes reais da lista (o "admin-sidebar-sections-card" nao existe no DOM):
     # o Cancelar do formulario de edicao precisa do alvo de retorno correto.
     active_card_id="admin-sidebar-sections-card-active",
