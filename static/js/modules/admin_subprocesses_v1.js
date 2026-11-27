@@ -257,6 +257,23 @@
 
       alert(title + (details ? "\n" + details : ""));
     });
+
+    // Linha sem permissao de gestao (sessao default): avisa em vez de abrir edicao.
+    document.addEventListener("click", function (event) {
+      const row = event.target.closest ? event.target.closest("tr[data-row-locked-message]") : null;
+
+      if (!row || event.target.closest("button, a, input, select, textarea, label, summary, .table-actions")) {
+        return;
+      }
+
+      const message = row.getAttribute("data-row-locked-message") || "";
+
+      if (window.AppGenesisDialogV1 && typeof window.AppGenesisDialogV1.alert === "function") {
+        window.AppGenesisDialogV1.alert({ title: "Sessão default", message: message });
+      } else {
+        alert("Sessão default\n" + message);
+      }
+    });
   }
 
   //###################################################################################
