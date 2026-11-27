@@ -399,8 +399,8 @@
 
   <div class="table-actions admin-subprocess-row-actions-v1">
     {% if status_value == state.config.active_value and state.config.move_endpoint %}
-      {% set _can_move_up = row.get(state.config.move_up_condition_field, True) if state.config.move_up_condition_field else True %}
-      {% set _can_move_down = row.get(state.config.move_down_condition_field, True) if state.config.move_down_condition_field else True %}
+      {% set _can_move_up = (row.get(state.config.move_up_condition_field, True) if state.config.move_up_condition_field else True) and row.get("can_manage", True) %}
+      {% set _can_move_down = (row.get(state.config.move_down_condition_field, True) if state.config.move_down_condition_field else True) and row.get("can_manage", True) %}
 
       {% if _can_move_up %}
         <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
@@ -452,12 +452,14 @@
       href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;target={{ state.config.default_target }}&amp;{{ state.config.copy_param }}={{ row_key }}#{{ state.config.default_target }}"
     >&#10697;</a>
     {% endif %}
+    {% if row.get("can_manage", True) %}
     <a
       class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
       title="Editar"
       aria-label="Editar"
       href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
     >✎</a>
+    {% endif %}
 
     {% if state.config.delete_endpoint %}
       {% set _delete_ns = namespace(visible_when=(), condition_field="", requires_confirmation=false, confirmation_message="") %}
@@ -471,7 +473,7 @@
       {% endfor %}
 
       {% set _delete_visible = (not _delete_ns.visible_when) or (status_value in _delete_ns.visible_when) %}
-      {% set _can_delete = row.get(_delete_ns.condition_field, True) if _delete_ns.condition_field else True %}
+      {% set _can_delete = (row.get(_delete_ns.condition_field, True) if _delete_ns.condition_field else True) and row.get("can_manage", True) %}
 
       {% if _delete_visible and _can_delete %}
         {% set _del_active_card = state.config.active_card_id or (state.config.default_target ~ '-active') %}

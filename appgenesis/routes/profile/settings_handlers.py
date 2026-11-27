@@ -30,6 +30,13 @@ from appgenesis.services.session import get_current_user
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import get_session_entity_id
+from appgenesis.services.sidebar_section_ownership import (
+    can_manage_section,
+    is_section_visible_to_entity,
+    load_section_owner_map_v1,
+    resolve_entity_number_v1,
+    set_section_owner_v1,
+)
 from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
 
 # Regista as rotas dos handlers de process-settings separados por dominio
@@ -415,6 +422,12 @@ def _is_sidebar_section_ajax_request_v1(request: Request) -> bool:
     accept = str(request.headers.get("Accept") or "").strip().lower()
     return "application/json" in accept
 
+def _sidebar_section_forbidden_message_v1(owner_map: dict[str, int], section_key: str) -> str:
+    if section_key in owner_map:
+        return "Apenas a entidade criadora pode alterar esta sessão."
+    return "Apenas Owner pode alterar sessões do sidebar."
+
+
 def _sidebar_section_json_error_v1(
     message: str,
     *,
@@ -619,11 +632,16 @@ def save_one_sidebar_section_v19(
             current_user["login_email"],
             selected_entity_id,
         )
+        is_tenant_owner = bool(
+            permissions.get(
+                "can_manage_tenant_structure",
+                permissions.get("can_manage_all_entities", False),
+            )
+        )
+        actor_entity_number = resolve_entity_number_v1(session, selected_entity_id)
 
-        if not permissions.get(
-            "can_manage_tenant_structure",
-            permissions.get("can_manage_all_entities", False),
-        ):
+        # Owner gere sessoes de sistema; entidade legado cria e gere as suas.
+        if not is_tenant_owner and actor_entity_number is None:
             if _is_ajax:
                 return _sidebar_section_json_error_v1(
                     "Apenas Owner pode alterar sessões do sidebar.",
@@ -642,6 +660,29 @@ def save_one_sidebar_section_v19(
         clean_scope = _normalize_sidebar_section_scope_v19(
             section_visibility_scope_mode
         )
+        if not is_tenant_owner:
+            # Sessao de legado e sempre do tipo Legado (sem Default).
+            clean_scope = "legado"
+
+        if clean_mode == "edit" and clean_original_key:
+            owner_map = load_section_owner_map_v1(session)
+            if not can_manage_section(
+                owner_map, clean_original_key, actor_entity_number, is_tenant_owner
+            ):
+                forbidden_message = _sidebar_section_forbidden_message_v1(
+                    owner_map, clean_original_key
+                )
+                if _is_ajax:
+                    return _sidebar_section_json_error_v1(
+                        forbidden_message,
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        redirect_url=safe_return_url,
+                    )
+                return _redirect_sidebar_section_message_v19(
+                    safe_return_url,
+                    "error",
+                    forbidden_message,
+                )
 
         effective_status = section_status_override_v19 or section_status
         clean_status = _normalize_sidebar_section_status_v19(effective_status)
@@ -782,6 +823,9 @@ def save_one_sidebar_section_v19(
             target_status=clean_status,
         )
 
+        if not is_tenant_owner and clean_mode != "edit":
+            set_section_owner_v1(session, target_section_key, actor_entity_number)
+
         _success_msg = (
             "Sessão atualizada com sucesso."
             if clean_mode == "edit"
@@ -836,11 +880,15 @@ def move_one_sidebar_section_v25(
             current_user["login_email"],
             selected_entity_id,
         )
+        is_tenant_owner = bool(
+            permissions.get(
+                "can_manage_tenant_structure",
+                permissions.get("can_manage_all_entities", False),
+            )
+        )
+        actor_entity_number = resolve_entity_number_v1(session, selected_entity_id)
 
-        if not permissions.get(
-            "can_manage_tenant_structure",
-            permissions.get("can_manage_all_entities", False),
-        ):
+        if not is_tenant_owner and actor_entity_number is None:
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -848,6 +896,16 @@ def move_one_sidebar_section_v25(
             )
 
         clean_section_key = _slugify_sidebar_section_key_v19(section_key)
+        owner_map = load_section_owner_map_v1(session)
+        if not can_manage_section(
+            owner_map, clean_section_key, actor_entity_number, is_tenant_owner
+        ):
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                _sidebar_section_forbidden_message_v1(owner_map, clean_section_key),
+            )
+
         clean_direction = str(direction or "").strip().lower()
 
         if clean_direction not in {"up", "down"}:
@@ -974,11 +1032,15 @@ def delete_one_sidebar_section_v1(
             current_user["login_email"],
             selected_entity_id,
         )
+        is_tenant_owner = bool(
+            permissions.get(
+                "can_manage_tenant_structure",
+                permissions.get("can_manage_all_entities", False),
+            )
+        )
+        actor_entity_number = resolve_entity_number_v1(session, selected_entity_id)
 
-        if not permissions.get(
-            "can_manage_tenant_structure",
-            permissions.get("can_manage_all_entities", False),
-        ):
+        if not is_tenant_owner and actor_entity_number is None:
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -986,6 +1048,16 @@ def delete_one_sidebar_section_v1(
             )
 
         clean_section_key = _slugify_sidebar_section_key_v19(section_key)
+        owner_map = load_section_owner_map_v1(session)
+        if not can_manage_section(
+            owner_map, clean_section_key, actor_entity_number, is_tenant_owner
+        ):
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                _sidebar_section_forbidden_message_v1(owner_map, clean_section_key),
+            )
+
         ok, error_message = delete_sidebar_section(session, clean_section_key)
 
         if not ok:
@@ -994,6 +1066,8 @@ def delete_one_sidebar_section_v1(
                 "error",
                 error_message or "Não foi possível eliminar a sessão.",
             )
+
+        set_section_owner_v1(session, clean_section_key, None)
 
         return _redirect_sidebar_section_message_v19(
             safe_return_url,
@@ -1048,7 +1122,9 @@ def edit_sidebar_sections_v2(
             current_user["login_email"],
             selected_entity_id,
         )
+        actor_entity_number = resolve_entity_number_v1(session, selected_entity_id)
 
+        # Edicao em lote so para o Owner; entidade legado edita cada sessao (Editar).
         if not permissions.get(
             "can_manage_tenant_structure",
             permissions.get("can_manage_all_entities", False),
@@ -1095,6 +1171,21 @@ def edit_sidebar_sections_v2(
                     ),
                 }
             )
+
+        # Sessoes de legado que o Owner nao ve nao entram na tabela: mantem-se como estao.
+        owner_map = load_section_owner_map_v1(session)
+        for current_section in _read_sidebar_sections_for_save_one_v19(session):
+            if not is_section_visible_to_entity(
+                owner_map, current_section.get("key"), actor_entity_number
+            ):
+                payload_sections.append(
+                    {
+                        "key": current_section.get("key"),
+                        "label": current_section.get("label"),
+                        "visibility_scope_mode": current_section.get("visibility_scope_mode"),
+                        "status": current_section.get("status"),
+                    }
+                )
 
         ok, error_message = update_sidebar_sections_v2(
             session,
