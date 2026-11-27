@@ -35,6 +35,7 @@ from appgenesis.services.sidebar_section_ownership import (
     is_section_visible_to_entity,
     load_section_owner_map_v1,
     resolve_entity_number_v1,
+    set_section_creator_v1,
     set_section_owner_v1,
 )
 from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
@@ -825,6 +826,8 @@ def save_one_sidebar_section_v19(
 
         if not is_tenant_owner and clean_mode != "edit":
             set_section_owner_v1(session, target_section_key, actor_entity_number)
+        if clean_mode != "edit":
+            set_section_creator_v1(session, target_section_key, actor_entity_number)
 
         _success_msg = (
             "Sessão atualizada com sucesso."
@@ -1068,6 +1071,7 @@ def delete_one_sidebar_section_v1(
             )
 
         set_section_owner_v1(session, clean_section_key, None)
+        set_section_creator_v1(session, clean_section_key, None)
 
         return _redirect_sidebar_section_message_v19(
             safe_return_url,

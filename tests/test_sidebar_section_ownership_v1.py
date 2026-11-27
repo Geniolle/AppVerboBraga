@@ -65,3 +65,19 @@ def test_manage_legacy_section_only_for_creator():
 
 def test_manage_denied_without_entity_number():
     assert not can_manage_section(OWNER_MAP, "departamentos", None, is_tenant_owner=False)
+
+
+def test_session_entity_number_field_filled_and_other_fields_kept():
+    from appgenesis.admin_subprocesses.registry import SIDEBAR_SECTION_FIELDS, SESSOES_CONFIG
+    from appgenesis.services.sidebar_section_ownership import (
+        SESSION_ENTITY_NUMBER_FIELD_KEY,
+        with_session_entity_number_v1,
+    )
+
+    adjusted = with_session_entity_number_v1(SESSOES_CONFIG, "2002")
+    by_key = {f.key: f for f in adjusted.fields}
+    assert by_key[SESSION_ENTITY_NUMBER_FIELD_KEY].default_value == "2002"
+    assert by_key[SESSION_ENTITY_NUMBER_FIELD_KEY].field_type == "readonly"
+    assert by_key["label"] == next(f for f in SIDEBAR_SECTION_FIELDS if f.key == "label")
+    # Configuracao original nao muda.
+    assert next(f for f in SESSOES_CONFIG.fields if f.key == SESSION_ENTITY_NUMBER_FIELD_KEY).default_value == ""

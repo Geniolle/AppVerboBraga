@@ -67,6 +67,12 @@ SIDEBAR_SECTION_FIELDS = (
             ("inativo", "Inativo"),
         ),
     ),
+    AdminFieldConfig(
+        key="entity_number",
+        label="Nº DA ENTIDADE",
+        input_name="section_entity_number",
+        field_type="readonly",
+    ),
 )
 
 
