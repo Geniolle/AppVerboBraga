@@ -815,3 +815,15 @@ form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [d
 .admin-sessoes-table-v1 td.admin-col-actions-v1 {
   width: 8%;
 }
+
+/* Sessoes: cabecalho (incl. botao de ordenar) centrado como as celulas de Nº, SISTEMA e ESTADO. */
+.admin-sessoes-table-v1 th.admin-col-number-v1,
+.admin-sessoes-table-v1 th.admin-col-system-v1,
+.admin-sessoes-table-v1 th.admin-col-status-v1 {
+  text-align: center;
+}
+
+.admin-sessoes-table-v1 th.admin-col-system-v1 > .admin-subprocess-sort-button-v1 {
+  justify-content: center;
+  width: 100%;
+}
