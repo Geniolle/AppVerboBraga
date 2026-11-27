@@ -126,6 +126,9 @@
     if (card.id === "edit-user-card") {
       return targetSelector === "#edit-user-card";
     }
+    if (targetSelector === "#system-admins-card") {
+      return card.id === "system-admins-card" || card.id === "admin-system-admins-card" || card.id === "inactive-system-admins-card";
+    }
     return (
       targetSelector === "#create-user-card" &&
       (

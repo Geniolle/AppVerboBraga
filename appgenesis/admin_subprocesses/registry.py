@@ -628,6 +628,32 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
 )
 
 
+# Separador Administradores do sistema (so owner): utilizadores com system_type='legado',
+# criados pelo owner para entidades legadas. Reutiliza o config de Utilizador.
+LEGACY_ADMIN_TAB_KEY = "admin_sistema"
+ADMIN_SISTEMA_CONFIG = replace(
+    UTILIZADOR_CONFIG,
+    key=LEGACY_ADMIN_TAB_KEY,
+    label="Administradores do sistema",
+    singular_label="Administrador do sistema",
+    plural_label="Administradores do sistema",
+    default_target="system-admins-card",
+    create_title="Criar administrador do sistema",
+    active_title="Administradores do sistema ativos",
+    inactive_title="Administradores do sistema inativos",
+    empty_active_message="Sem administradores do sistema ativos.",
+    empty_inactive_message="Sem administradores do sistema inativos.",
+    columns=tuple(c for c in UTILIZADOR_CONFIG.columns if c.key != "system_profile"),
+    edit_url_extra_params="admin_tab=admin_sistema",
+    active_card_id="admin-system-admins-card",
+    inactive_card_id="inactive-system-admins-card",
+    active_table_id="admin-system-admins-table",
+    inactive_table_id="inactive-system-admins-table",
+    active_limiter_id="admin-system-admins-table-limiter",
+    inactive_limiter_id="inactive-system-admins-table-limiter",
+)
+
+
 MENU_FIELDS = (
     AdminFieldConfig(
         key="menu_label",
@@ -1000,6 +1026,7 @@ ADMIN_SUBPROCESS_REGISTRY = {
     FUNCTIONS_ADMIN_CONFIG.key: FUNCTIONS_ADMIN_CONFIG,
     DEPARTAMENTOS_ADMIN_CONFIG.key: DEPARTAMENTOS_ADMIN_CONFIG,
     UTILIZADOR_CONFIG.key: UTILIZADOR_CONFIG,
+    ADMIN_SISTEMA_CONFIG.key: ADMIN_SISTEMA_CONFIG,
     MENU_CONFIG.key: MENU_CONFIG,
     CONTAS_CONFIG.key: CONTAS_CONFIG,
 }

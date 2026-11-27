@@ -302,6 +302,7 @@
       "#create-user-card": "administrativo",
       "#admin-users-created-card": "administrativo",
       "#inactive-users-card": "administrativo",
+      "#system-admins-card": "administrativo",
       "#create-entity-card": "administrativo",
       "#edit-entity-card": "administrativo",
       "#recent-entities-card": "administrativo",

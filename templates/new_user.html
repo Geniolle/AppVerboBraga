@@ -855,6 +855,62 @@
           {{ render_admin_subprocess_tables(admin_subprocess_user_state) }}
         {% endif %}
 
+        {% if current_user_can_manage_all_entities and admin_subprocess_system_admin_state is not none %}
+        <section id="system-admins-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="admin_sistema" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#system-admins-card' %}style="display: none;"{% endif %}>
+          <div class="entity-create-toolbar appgenesis-process-action-toolbar-v1">
+            <details id="system-admins-create-collapse" class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1"{% if errors and form_data and form_data.system_profile == 'legado' %} open{% endif %}>
+              <summary class="appgenesis-process-action-toggle-v1">
+                <span>Criar administrador do sistema</span>
+              </summary>
+              <div class="entity-create-body appgenesis-process-action-panel-v1">
+                <div class="admin-subsection">
+                  <form id="create-system-admin-form" method="post" action="/users/new">
+                    <input type="hidden" name="system_profile" value="legado">
+                    <input type="hidden" name="return_menu" value="administrativo">
+                    <input type="hidden" name="return_admin_tab" value="admin_sistema">
+                    <input type="hidden" name="return_target" value="#system-admins-card">
+                    <div class="grid">
+                      <div class="field">
+                        <label for="system_admin_full_name">Nome completo *</label>
+                        <input id="system_admin_full_name" name="full_name" required value="{{ form_data.full_name if form_data and form_data.system_profile == 'legado' else '' }}">
+                      </div>
+                      <div class="field">
+                        <label for="system_admin_primary_phone">Telefone principal *</label>
+                        <input id="system_admin_primary_phone" name="primary_phone" required value="{{ form_data.primary_phone if form_data and form_data.system_profile == 'legado' else '' }}">
+                      </div>
+                      <div class="field">
+                        <label for="system_admin_email">Email *</label>
+                        <input id="system_admin_email" name="email" type="email" required value="{{ form_data.email if form_data and form_data.system_profile == 'legado' else '' }}">
+                      </div>
+                      <div class="field">
+                        <label for="system_admin_entity_id">Entidade legada *</label>
+                        <select id="system_admin_entity_id" name="entity_id" required>
+                          <option value="">— Selecione uma entidade legada —</option>
+                          {% for entity in legacy_entities_for_admin_form %}
+                          <option value="{{ entity.id }}">{{ entity.name }}{% if entity.entity_number is not none %} (Nº {{ entity.entity_number }}){% endif %}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label for="system_admin_status">Estado da conta</label>
+                        <input id="system_admin_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
+                      </div>
+                    </div>
+                    <div class="form-action-row">
+                      <button type="submit" name="invite_delivery" value="email" class="action-btn">Enviar convite</button>
+                      <button type="button" class="action-btn-cancel" data-appgenesis-cancel="1">Cancelar</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </details>
+          </div>
+        </section>
+        {% endif %}
+        {% if current_user_can_manage_all_entities and admin_subprocess_system_admin_state is not none %}
+          {{ render_admin_subprocess_tables(admin_subprocess_system_admin_state) }}
+        {% endif %}
+
         {# APPGENESIS_UTILIZADOR_INVITE_LINK_HEADER_V1: marcacao de origem do
            botao "Gerar link" (endpoint/JS inalterados -- ver
            setupCreateUserGenerateLinkShortcut em new_user.js). O botao e o

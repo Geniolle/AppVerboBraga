@@ -11,6 +11,7 @@ POST_SAVE_MARKER_PARAM_V1 = "appgenesis_after_save"
 
 _ALLOWED_ADMIN_TABS: frozenset[str] = frozenset({
     "utilizador",
+    "admin_sistema",
     "entidade",
     "sessoes",
     "menu",

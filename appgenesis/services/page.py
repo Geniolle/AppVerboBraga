@@ -39,6 +39,7 @@ from appgenesis.services.sidebar_section_ownership import (
 from appgenesis.services.user_entity_scope import (
     get_actor_primary_entity_v1,
     get_entities_for_user_edit_form_v1,
+    get_legacy_entities_for_admin_form_v1,
 )
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.user_status import (
@@ -256,6 +257,7 @@ def _resolve_actor_page_context(
     actor_entity_number = None
     entities_for_user_form: list[dict[str, Any]] = []
     entities_for_user_edit_form: list[dict[str, Any]] = []
+    legacy_entities_for_admin_form: list[dict[str, Any]] = []
     can_select_user_entity = bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)))
     if actor_user_id is not None:
         actor_primary_entity = get_actor_primary_entity_v1(session, actor_user_id)
@@ -265,6 +267,7 @@ def _resolve_actor_page_context(
             actor_entity_number = actor_primary_entity["entity_number"]
         if can_select_user_entity:
             entities_for_user_form = get_entities_for_user_edit_form_v1(session, permissions)
+            legacy_entities_for_admin_form = get_legacy_entities_for_admin_form_v1(session)
         entities_for_user_edit_form = get_entities_for_user_edit_form_v1(session, permissions)
 
     current_entity_scope = ""
@@ -288,6 +291,7 @@ def _resolve_actor_page_context(
         "can_select_user_entity": can_select_user_entity,
         "entities_for_user_form": entities_for_user_form,
         "entities_for_user_edit_form": entities_for_user_edit_form,
+        "legacy_entities_for_admin_form": legacy_entities_for_admin_form,
     }
 
 
@@ -1132,6 +1136,7 @@ def get_page_data(
         "current_user_entity_number": actor_context["actor_entity_number"],
         "can_select_user_entity": actor_context["can_select_user_entity"],
         "entities_for_user_form": actor_context["entities_for_user_form"],
+        "legacy_entities_for_admin_form": actor_context["legacy_entities_for_admin_form"],
         "entities_for_user_edit_form": actor_context["entities_for_user_edit_form"],
         "sidebar_menu_settings": sidebar_menu_settings,
         "active_menu_rows": menu_context["active_menu_rows"],
