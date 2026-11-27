@@ -72,7 +72,7 @@ SIDEBAR_SECTION_FIELDS = (
 
 DEFAULT_COLUMNS = (
     AdminColumnConfig(key="label", label="NOME", source="label", css_class="admin-col-main-v1", always_visible=True),
-    AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1"),
+    AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1", sortable=True, sort_type="text", default_sort="desc"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1", always_visible=True),
 )
 
