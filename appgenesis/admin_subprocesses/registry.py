@@ -45,6 +45,12 @@ SIDEBAR_SECTION_FIELDS = (
         placeholder="Informe o nome da sessão",
     ),
     AdminFieldConfig(
+        key="entity_number",
+        label="Nº DA ENTIDADE",
+        input_name="section_entity_number",
+        field_type="readonly",
+    ),
+    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="section_visibility_scope_mode",
@@ -66,12 +72,6 @@ SIDEBAR_SECTION_FIELDS = (
             ("ativo", "Ativo"),
             ("inativo", "Inativo"),
         ),
-    ),
-    AdminFieldConfig(
-        key="entity_number",
-        label="Nº DA ENTIDADE",
-        input_name="section_entity_number",
-        field_type="readonly",
     ),
 )
 
