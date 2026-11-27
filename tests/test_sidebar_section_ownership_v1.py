@@ -83,10 +83,13 @@ def test_session_entity_number_field_filled_and_other_fields_kept():
     assert next(f for f in SESSOES_CONFIG.fields if f.key == SESSION_ENTITY_NUMBER_FIELD_KEY).default_value == ""
 
 
-def test_session_entity_display_genesis_for_1000():
+def test_session_entity_display_genesis_only_for_legado_viewer():
     from appgenesis.services.sidebar_section_ownership import session_entity_display_v1
 
+    # Legado ve Genesis para a 1000.
     assert session_entity_display_v1(1000) == "Genesis"
     assert session_entity_display_v1("1000") == "Genesis"
     assert session_entity_display_v1(1001) == "1001"
     assert session_entity_display_v1(None) == "-"
+    # Owner ve o numero.
+    assert session_entity_display_v1(1000, viewer_is_tenant_owner=True) == "1000"
