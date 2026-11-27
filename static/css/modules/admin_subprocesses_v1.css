@@ -827,3 +827,20 @@ form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [d
   justify-content: center;
   width: 100%;
 }
+
+/* Sessoes: NOME, SISTEMA, ESTADO e Nº DA ENTIDADE numa unica linha (4 colunas). */
+.admin-subprocess-grid-v1.admin-sessoes-form-grid-v1 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .admin-subprocess-grid-v1.admin-sessoes-form-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-subprocess-grid-v1.admin-sessoes-form-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}
