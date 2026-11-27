@@ -63,7 +63,9 @@ from appgenesis.services.sidebar_section_ownership import (
     can_manage_section,
     filter_sections_for_entity,
     is_section_visible_to_entity,
+    load_section_creator_map_v1,
     load_section_owner_map_v1,
+    with_session_entity_number_v1,
 )
 from appgenesis.web.templates import templates
 from appgenesis.models import (
@@ -812,6 +814,16 @@ def new_user_page(
         sessoes_subprocess_config_v2 = lock_visibility_scope_field_v1(
             get_admin_subprocess_config("sessoes"),
             get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+        )
+        # Nº DA ENTIDADE: na criacao = entidade atual; na edicao = entidade que criou a sessao.
+        _sessao_edit_key_v2 = str(sidebar_section_edit_key or "").strip().lower() if resolved_admin_tab == "sessoes" else ""
+        if _sessao_edit_key_v2:
+            _sessao_entity_number_v2 = load_section_creator_map_v1(session).get(_sessao_edit_key_v2)
+        else:
+            _sessao_entity_number_v2 = selected_entity_number
+        sessoes_subprocess_config_v2 = with_session_entity_number_v1(
+            sessoes_subprocess_config_v2,
+            str(_sessao_entity_number_v2) if _sessao_entity_number_v2 is not None else "-",
         )
 
         if sessoes_subprocess_config_v2 is not None:
