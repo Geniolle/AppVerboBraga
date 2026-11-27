@@ -206,3 +206,18 @@ def with_session_entity_number_v1(config, entity_number_display: str):
         for field in config.fields
     )
     return replace(config, fields=adjusted)
+
+
+GENESIS_ENTITY_NUMBER = 1000
+
+
+def session_entity_display_v1(entity_number) -> str:
+    """Texto do Nº DA ENTIDADE: a entidade 1000 aparece como Genesis; sem registo fica '-'."""
+    if entity_number is None or str(entity_number).strip() == "":
+        return "-"
+    try:
+        if int(entity_number) == GENESIS_ENTITY_NUMBER:
+            return "Genesis"
+    except (TypeError, ValueError):
+        return str(entity_number)
+    return str(entity_number)
