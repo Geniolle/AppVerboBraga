@@ -776,3 +776,42 @@ form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [d
   width: 130px;
   min-width: 130px;
 }
+
+/* Sessoes: distribui NOME, Nº DA ENTIDADE, SISTEMA e ESTADO pela largura da tabela (sem colar a direita). */
+.admin-sessoes-table-v1 {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.admin-sessoes-table-v1 th.admin-col-main-v1,
+.admin-sessoes-table-v1 td.admin-col-main-v1 {
+  width: 40%;
+  min-width: 0;
+  max-width: none;
+}
+
+.admin-sessoes-table-v1 th.admin-col-number-v1,
+.admin-sessoes-table-v1 td.admin-col-number-v1 {
+  width: 20%;
+  min-width: 0;
+  max-width: none;
+}
+
+.admin-sessoes-table-v1 th.admin-col-system-v1,
+.admin-sessoes-table-v1 td.admin-col-system-v1 {
+  width: 18%;
+  min-width: 0;
+  max-width: none;
+}
+
+.admin-sessoes-table-v1 th.admin-col-status-v1,
+.admin-sessoes-table-v1 td.admin-col-status-v1 {
+  width: 14%;
+  min-width: 0;
+  max-width: none;
+}
+
+.admin-sessoes-table-v1 th.admin-col-actions-v1,
+.admin-sessoes-table-v1 td.admin-col-actions-v1 {
+  width: 8%;
+}
