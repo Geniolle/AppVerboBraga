@@ -293,6 +293,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     migration_status="native_next",
     fields=SIDEBAR_SECTION_FIELDS,
     columns=DEFAULT_COLUMNS,
+    table_css_class="admin-sessoes-table-v1",
     actions=DEFAULT_ACTIVE_ACTIONS + (SIDEBAR_SECTION_DELETE_ACTION,),
     menu_scope="administrativo,sessoes",
     empty_active_message="Sem sessões ativas.",
