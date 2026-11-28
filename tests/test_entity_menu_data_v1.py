@@ -37,3 +37,10 @@ def test_set_overwrites_only_same_entity_and_key():
     set_entity_menu_data(session, 1, "administrativo", "authorization_profile_fields", "z")
     assert get_entity_menu_data(session, 1, "administrativo", "authorization_functions") == ["y"]
     assert get_entity_menu_data(session, 1, "administrativo", "authorization_profile_fields") == "z"
+
+
+def test_entity_menu_data_is_in_metadata_so_autogenerate_never_drops_it():
+    from appgenesis.models import Base
+
+    table = Base.metadata.tables["entity_menu_data"]
+    assert [c.name for c in table.primary_key.columns] == ["entity_id", "menu_key", "data_key"]

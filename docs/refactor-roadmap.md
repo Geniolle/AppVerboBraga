@@ -22,6 +22,22 @@ Esta proposta prioriza:
 - Há testes básicos para auth, profile, menu settings e WhatsApp.
 - Há migrações, scripts operacionais e uma divisão inicial entre backend e assets.
 
+### Estado medido em 2026-11-28
+
+Os números abaixo desta secção são históricos. Medição atual (`wc -l`, `grep`):
+
+| Item | Valor |
+|---|---|
+| `from appgenesis.core import *` / `import *` em `appgenesis/` | 0 |
+| Importadores explícitos de `appgenesis.core` | 25 em `appgenesis/`, 16 em `tests/`, 12 em `scripts/` |
+| Funções de topo redefinidas no mesmo módulo (`appgenesis/`) | 0 |
+| SQL direto em `appgenesis/routes` (`session.execute/scalar/get`, `select/update/delete(`) | 67 linhas (34 em `routes/users`) |
+| `menu_settings.py` / `services/page.py` | 1720 / 1466 linhas |
+| `routes/profile/profile_handlers.py` / `settings_handlers.py` | 2654 / 1391 linhas |
+| `templates/new_user.html` / `static/js/new_user.js` / `static/css/new_user.css` | 2567 / 10721 / 7133 linhas |
+| Testes / migrations | 98 ficheiros / 24 migrations |
+| Módulos pagos | `domains/modules/permissions.resolve_module_access` existe; nenhuma rota o chama |
+
 ### Principais problemas que ainda travam a refatoração
 
 1. `appgenesis/core.py` continua a ser um agregador global de framework, settings, DB, modelos e utilitários.
@@ -499,6 +515,8 @@ Cada etapa segue a regra 17 do `AGENTS.md`. Estado registado aqui.
 | 3 | Assets de código saem do volume de produção (`static_prod`) | #98 | `test_prod_compose_static_volumes_v1.py` + CI; `docker compose config` válido | prd: 1 logo, 1 foto, 1 `eventos.json` copiados para `app_*_prod` (checksums iguais); health 200; logo/foto/css 200; volume `app_static_prod` mantido como legado | concluída |
 | 4 | Remover remendos de texto corrompido (JS `ui_text_cleanup`, `settings_process_tabs`, `_fix_common_mojibake`, tabela `??`) | (esta etapa) | `test_no_mojibake_literals_v1.py` + CI (509 passed); pyflakes 79→78 | dev e prd: 0 registos corrompidos (`DB_TARGETS`, leitura); páginas sem Ã/�, sem erros na consola | em curso |
 | 5a | `new_user.html`: bootstrap inline (`window.__APPGENESIS_BOOTSTRAP__`, 30 chaves) → bloco JSON `#appgenesis-bootstrap` + `static/js/modules/app_bootstrap_v1.js` | #100 (deploy prd ok) | `test_app_bootstrap_json_v1.py` (2) + CI | dev: 30 chaves, dados corretos, 0 erros; prd 200 | concluída |
-| 5b | `new_user.js` (≈9.850 linhas) por domínio: auth/menu/perfil/processos/utilizadores, uma fatia por PR, cada uma com teste e validação | - | - | - | pendente |
-| 5c | `new_user.css` (≈6.000 linhas) por componente, mantendo a ordem de cascata | - | - | - | pendente |
+| 5b | `new_user.js` (10.721 linhas) por domínio: auth/menu/perfil/processos/utilizadores, uma fatia por PR, cada uma com teste e validação | - | - | - | pendente |
+| 5c | `new_user.css` (7.133 linhas) por componente, mantendo a ordem de cascata | - | - | - | pendente |
 | 6 | Testes excluídos do CI e pyflakes bloqueante | - | - | - | pendente |
+| 7 | Isolamento da lista de utilizadores por entidade da sessão; filtro no SQL; admins do sistema só para owner | #398 (deploy prd ok) | `test_scoped_users_isolation_v1.py` + CI (638 passed, 2 falhas pré-existentes) | dev: HTTP com login owner/legado, sem vazamento de emails; prd health 200, 0 membros com vínculo em 2 entidades | concluída |
+| 8 | Alinhar números dos documentos ao código (medição 2026-11-28) | (esta etapa) | n/a (docs) | revisão | concluída |
