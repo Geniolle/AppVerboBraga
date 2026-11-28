@@ -186,7 +186,7 @@
     if (window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
     gsap.from('.vb-hero__conteudo > *', { y: 32, opacity: 0, duration: 0.9, stagger: 0.12, ease: 'power3.out' });
     gsap.from('.vb-cartao', {
-      y: 48, opacity: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out',
+      opacity: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out',
       scrollTrigger: { trigger: '.vb-grid3', start: 'top 85%' }
     });
     gsap.utils.toArray('.vb-sec, .vb-final').forEach(function (el) {
