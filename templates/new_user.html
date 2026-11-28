@@ -2148,6 +2148,23 @@
 
                       <div
                         class="field"
+                        data-additional-field-list-key-wrap
+                        style="display: none;"
+                      >
+                        <label for="process-additional-field-editor-list-key">Nome da Lista</label>
+                        <select
+                          id="process-additional-field-editor-list-key"
+                          data-additional-field-editor-list-key
+                        >
+                          <option value="">Escrever opções manualmente</option>
+                          {% for process_list in settings_edit_data.process_lists|default([]) %}
+                          <option value="{{ process_list.key }}">{{ process_list.label }}{% if process_list.status|default('ativo') == 'inativo' %} (Inativa){% endif %}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div
+                        class="field"
                         id="process-additional-field-editor-list-field"
                         data-additional-field-list-wrap
                         style="display: none;"
