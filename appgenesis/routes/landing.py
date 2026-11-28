@@ -137,6 +137,19 @@ DEPARTAMENTOS = [
         "acoes": [],
         "fotos": [],
     },
+    {
+        "slug": "verbo-compartilhar",
+        "nome": "Verbo Compartilhar",
+        "imagem": "/static/img/icon-verbo-compartilhar.png",
+        "resumo": "Assistência social com roupa, alimentos e apoio a quem precisa.",
+        "descricao": [
+            "O Verbo Compartilhar é o departamento de assistência social da Igreja Verbo da Vida Braga.",
+            "Realizamos um bazar beneficente de roupas, onde qualquer pessoa pode encontrar peças a preços solidários.",
+            "Também fazemos a distribuição de cabazes a famílias que precisam de apoio.",
+        ],
+        "acoes": [],
+        "fotos": [],
+    },
 ]
 
 
