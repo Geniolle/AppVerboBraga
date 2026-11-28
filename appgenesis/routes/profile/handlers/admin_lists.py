@@ -14,7 +14,7 @@ from appgenesis.services.auth_profile_entity_scope import (
     get_entity_profile_scope_v1,
     resolve_visibility_scope_for_entity_v1,
 )
-from appgenesis.services.page import get_page_data
+from appgenesis.services.page import resolve_visible_menu_keys_v1
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import (
     get_current_user,
@@ -60,16 +60,9 @@ def _functions_actor_allowed(request: Request, session: Session) -> tuple[dict[s
         current_user["login_email"],
         selected_entity_id,
     )
-    page_data = get_page_data(
-        session,
-        actor_user_id=current_user["id"],
-        actor_login_email=current_user["login_email"],
-        selected_entity_id=selected_entity_id,
+    visible_keys = resolve_visible_menu_keys_v1(
+        session, current_user["id"], current_user["login_email"], selected_entity_id
     )
-    visible_keys = {
-        str(raw_key or "").strip().lower()
-        for raw_key in page_data.get("visible_sidebar_menu_keys", [])
-    }
     if "administrativo" not in visible_keys:
         return None, {}
     entity_context = build_auth_profile_entity_context_v1(
@@ -187,16 +180,9 @@ def _departments_actor_allowed(request: Request, session: Session) -> dict[str, 
     if current_user is None:
         return None
     selected_entity_id = get_session_entity_id(request)
-    page_data = get_page_data(
-        session,
-        actor_user_id=current_user["id"],
-        actor_login_email=current_user["login_email"],
-        selected_entity_id=selected_entity_id,
+    visible_keys = resolve_visible_menu_keys_v1(
+        session, current_user["id"], current_user["login_email"], selected_entity_id
     )
-    visible_keys = {
-        str(raw_key or "").strip().lower()
-        for raw_key in page_data.get("visible_sidebar_menu_keys", [])
-    }
     if "sessoes" not in visible_keys:
         return None
     return current_user

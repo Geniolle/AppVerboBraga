@@ -691,6 +691,74 @@ def _resolve_company_profile_data(
     return _serialize_entity_row_v1(company_entity)
 
 
+def _apply_actor_access_filter_v1(
+    session: Session,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+    *,
+    actor_user_id: int | None,
+    selected_entity_id: int | None,
+    current_entity_scope: str,
+) -> set[str]:
+    """Filtro de acesso por funcao (ativo com APPGENESIS_ACCESS_FILTER_V1=1)."""
+    actor_user = session.get(User, actor_user_id) if actor_user_id else None
+    allowed_menu_keys = resolve_allowed_menu_keys_v1(
+        session,
+        entity_id=selected_entity_id,
+        user_system_type=getattr(actor_user, "system_type", ""),
+    )
+    if allowed_menu_keys is None:
+        return visible_sidebar_menu_keys
+    # Com o filtro, a permissao vem da funcao (nao de requires_admin).
+    return apply_access_filter_to_menu_keys_v1(
+        get_visible_sidebar_menu_keys(
+            sidebar_menu_settings,
+            current_user_is_admin=True,
+            current_entity_scope=current_entity_scope,
+        ),
+        allowed_menu_keys,
+    )
+
+
+def resolve_visible_menu_keys_v1(
+    session: Session,
+    actor_user_id: int,
+    actor_login_email: str,
+    selected_entity_id: int | None,
+) -> set[str]:
+    """Menus visiveis ao ator, iguais aos de get_page_data, sem montar a pagina inteira.
+
+    Para guardas de permissao (ex.: funcoes, departamentos) que so precisam de saber o menu.
+    """
+    permissions = get_user_entity_permissions(session, actor_user_id, actor_login_email, selected_entity_id)
+    resolved_entity_id = permissions["selected_entity_id"]
+    current_entity_scope = ""
+    if resolved_entity_id is not None:
+        current_entity_scope = str(
+            session.execute(
+                select(Entity.profile_scope).where(Entity.id == resolved_entity_id).limit(1)
+            ).scalar_one_or_none()
+            or ""
+        ).strip().lower()
+    sidebar_menu_settings = get_sidebar_menu_settings(session, active_entity_id=resolved_entity_id)
+    visible = get_visible_sidebar_menu_keys(
+        sidebar_menu_settings,
+        current_user_is_admin=bool(permissions["is_admin"]),
+        current_entity_scope=current_entity_scope,
+    )
+    return {
+        str(key or "").strip().lower()
+        for key in _apply_actor_access_filter_v1(
+            session,
+            sidebar_menu_settings,
+            visible,
+            actor_user_id=actor_user_id,
+            selected_entity_id=resolved_entity_id,
+            current_entity_scope=current_entity_scope,
+        )
+    }
+
+
 def get_page_data(
     session: Session,
     actor_user_id: int | None = None,
@@ -710,24 +778,14 @@ def get_page_data(
         session, current_user_is_admin, current_entity_scope, selected_entity_id
     )
     sidebar_menu_settings = menu_context["sidebar_menu_settings"]
-    visible_sidebar_menu_keys = menu_context["visible_sidebar_menu_keys"]
-    # Filtro de acesso por funcao (ativo com APPGENESIS_ACCESS_FILTER_V1=1).
-    _actor_user_v1 = session.get(User, actor_user_id) if actor_user_id else None
-    _allowed_menu_keys_v1 = resolve_allowed_menu_keys_v1(
+    visible_sidebar_menu_keys = _apply_actor_access_filter_v1(
         session,
-        entity_id=selected_entity_id,
-        user_system_type=getattr(_actor_user_v1, "system_type", ""),
+        sidebar_menu_settings,
+        menu_context["visible_sidebar_menu_keys"],
+        actor_user_id=actor_user_id,
+        selected_entity_id=selected_entity_id,
+        current_entity_scope=current_entity_scope,
     )
-    if _allowed_menu_keys_v1 is not None:
-        # Com o filtro, a permissao vem da funcao (nao de requires_admin).
-        visible_sidebar_menu_keys = apply_access_filter_to_menu_keys_v1(
-            get_visible_sidebar_menu_keys(
-                sidebar_menu_settings,
-                current_user_is_admin=True,
-                current_entity_scope=current_entity_scope,
-            ),
-            _allowed_menu_keys_v1,
-        )
 
     process_maps = _resolve_actor_menu_process_maps(
         session,
