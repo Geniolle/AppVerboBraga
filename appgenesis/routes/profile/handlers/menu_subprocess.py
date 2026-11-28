@@ -15,7 +15,6 @@ from appgenesis.menu_settings import (
 )
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.session import get_current_user
-from appgenesis.services.auth import is_admin_user
 from appgenesis.services.session import get_session_entity_id
 from starlette.status import (
     HTTP_302_FOUND,
@@ -76,11 +75,16 @@ def menu_subprocess_save_handler_v1(
                 status_code=HTTP_302_FOUND,
             )
 
-        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
-            return RedirectResponse(
-                url=f"{clean_return_url}&error=Apenas administradores podem alterar definições do menu.",
-                status_code=HTTP_303_SEE_OTHER,
-            )
+        # Menus sao partilhados por todas as entidades: so o owner cria (igual a mover).
+        blocked_response = _require_menu_settings_owner_v1(
+            session,
+            request,
+            "sessoes",
+            "#menu-subprocess-card-active",
+            return_url=clean_return_url,
+        )
+        if blocked_response is not None:
+            return blocked_response
 
         selected_entity_id = get_session_entity_id(request)
         if selected_entity_id is None:
@@ -175,11 +179,16 @@ def menu_subprocess_delete_handler_v1(
                 status_code=HTTP_302_FOUND,
             )
 
-        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
-            return RedirectResponse(
-                url=f"{clean_return_url}&error=Apenas administradores podem alterar definições do menu.",
-                status_code=HTTP_303_SEE_OTHER,
-            )
+        # Menus sao partilhados por todas as entidades: so o owner apaga (igual a mover).
+        blocked_response = _require_menu_settings_owner_v1(
+            session,
+            request,
+            "sessoes",
+            "#menu-subprocess-card-active",
+            return_url=clean_return_url,
+        )
+        if blocked_response is not None:
+            return blocked_response
 
         ok, error_message = delete_sidebar_menu_setting(session, clean_menu_key)
 

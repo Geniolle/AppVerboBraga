@@ -83,7 +83,10 @@ def delete_entity(
             current_user["login_email"],
             selected_entity_id,
         )
-        if not is_entity_within_permissions(parsed_entity_id, entity_permissions):
+        # Entidades sao estrutura do tenant: so o owner elimina (admin de entidade legado nao).
+        if not entity_permissions.get(
+            "can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False)
+        ) or not is_entity_within_permissions(parsed_entity_id, entity_permissions):
             return RedirectResponse(
                 url=build_return_url_v1(
                     return_menu=return_menu,
