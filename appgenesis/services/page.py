@@ -240,7 +240,8 @@ def _resolve_actor_page_context(
         "allowed_structure_entity_ids": set(),
         "allowed_data_entity_ids": set(),
     }
-    allowed_entity_ids: set[int] | None = None
+    # Sem ator: escopo vazio (falha fechada), nunca "todas as entidades".
+    allowed_entity_ids: set[int] = set()
     if actor_user_id is not None:
         permissions = get_user_entity_permissions(
             session,
@@ -548,8 +549,9 @@ def _resolve_scoped_users(
     permissions: dict[str, Any],
     apply_scope_filter: bool,
     scoped_entity_ids: list[int],
+    system_types: set[str] | None = None,
 ) -> dict[str, Any]:
-    user_rows = session.execute(
+    users_stmt = (
         select(
             User.id,
             User.member_id,
@@ -562,29 +564,28 @@ def _resolve_scoped_users(
         )
        .join(Member, Member.id == User.member_id)
        .order_by(User.id.asc())
-    ).all()
+    )
+    if system_types is not None:
+        users_stmt = users_stmt.where(User.system_type.in_(sorted(system_types)))
 
-    # Escopo de dados operacionais: apenas as entidades onde o utilizador tem vínculo ativo.
+    # Isolamento por entidade: so utilizadores com vinculo ativo na entidade da sessao,
+    # e so se o ator tiver acesso de dados a ela. Filtro no SQL (nao carregar outros tenants).
     # A gestora do tenant NÃO vê dados operacionais de entidades Legado através deste filtro.
-    _data_entity_ids = sorted(permissions.get("allowed_data_entity_ids") or set())
+    _data_entity_ids: list[int] = []
     if apply_scope_filter:
-        if _data_entity_ids:
-            scoped_member_ids = {
-                int(raw_id)
-                for raw_id in session.execute(
-                    select(MemberEntity.member_id)
-                   .where(
-                        MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-                        MemberEntity.entity_id.in_(_data_entity_ids),
-                    )
-                   .distinct()
-                ).scalars().all()
-            }
-            user_rows = [
-                row for row in user_rows if int(row.member_id) in scoped_member_ids
-            ]
-        else:
-            user_rows = []
+        _allowed_data_ids = set(permissions.get("allowed_data_entity_ids") or set())
+        _selected_id = permissions.get("selected_entity_id")
+        if _selected_id is not None and int(_selected_id) in _allowed_data_ids:
+            _data_entity_ids = [int(_selected_id)]
+        users_stmt = users_stmt.where(
+            User.member_id.in_(
+                select(MemberEntity.member_id).where(
+                    MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+                    MemberEntity.entity_id.in_(_data_entity_ids or [-1]),
+                )
+            )
+        )
+    user_rows = session.execute(users_stmt).all()
 
     member_ids = [int(row.member_id) for row in user_rows]
 
@@ -598,10 +599,10 @@ def _resolve_scoped_users(
            .where(MemberEntity.member_id.in_(member_ids))
            .order_by(MemberEntity.member_id.asc(), MemberEntity.id.asc())
         )
-        if apply_scope_filter and scoped_entity_ids:
-            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id.in_(scoped_entity_ids))
-        elif apply_scope_filter:
-            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id == -1)
+        if apply_scope_filter:
+            entity_name_stmt = entity_name_stmt.where(
+                MemberEntity.entity_id.in_(_data_entity_ids or [-1])
+            )
 
         for row in session.execute(entity_name_stmt).all():
             member_id_value = int(row.member_id)
@@ -1093,6 +1094,16 @@ def get_page_data(
     inactive_users = scoped_users["inactive_users"]
     recent_users = scoped_users["recent_users"]
     account_status_summary = scoped_users["account_status_summary"]
+    # Administradores do sistema (gestao do owner): perfis Legado e Admin de TODAS as entidades,
+    # sem o escopo da entidade da sessao. So o owner recebe esta lista (isolamento entre tenants).
+    system_admin_active_users: list[dict[str, Any]] = []
+    system_admin_inactive_users: list[dict[str, Any]] = []
+    if permissions.get("can_manage_tenant_structure"):
+        _system_admin_users = _resolve_scoped_users(
+            session, permissions, False, [], system_types={"legado", "owner"}
+        )
+        system_admin_active_users = _system_admin_users["active_created_users"]
+        system_admin_inactive_users = _system_admin_users["inactive_users"]
 
     company_profile_data = _resolve_company_profile_data(
         session, selected_entity_id, permissions
@@ -1123,6 +1134,8 @@ def get_page_data(
         ],
         "all_users": all_users,
         "created_users": created_users,
+        "system_admin_active_users": system_admin_active_users,
+        "system_admin_inactive_users": system_admin_inactive_users,
         "active_created_users": active_created_users,
         "inactive_users": inactive_users,
         "pending_users": pending_users,

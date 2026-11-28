@@ -1137,28 +1137,19 @@ def new_user_page(
 
     admin_subprocess_entity_state = None
     # Utilizador = so sistema local; Administradores do sistema = perfil Legado (so owner).
-    _is_legacy_user_row_v1 = lambda row: str(row.get("system_type") or "") == "legado"
     _is_owner_actor_v1 = bool(page_data.get("current_user_can_manage_all_entities"))
     admin_subprocess_user_state = AdminSubprocessState(
         config=UTILIZADOR_CONFIG,
-        active_rows=_normalize_user_rows_v1(
-            [r for r in page_data.get("active_created_users", []) if not _is_legacy_user_row_v1(r)]
-        ),
-        inactive_rows=_normalize_user_rows_v1(
-            [r for r in page_data.get("inactive_users", []) if not _is_legacy_user_row_v1(r)]
-        ),
+        active_rows=_normalize_user_rows_v1(page_data.get("active_created_users", [])),
+        inactive_rows=_normalize_user_rows_v1(page_data.get("inactive_users", [])),
         return_url="/users/new?menu=administrativo&admin_tab=utilizador#create-user-card",
     )
     admin_subprocess_system_admin_state = None
     if _is_owner_actor_v1:
         admin_subprocess_system_admin_state = AdminSubprocessState(
             config=ADMIN_SISTEMA_CONFIG,
-            active_rows=_normalize_user_rows_v1(
-                [r for r in page_data.get("active_created_users", []) if _is_legacy_user_row_v1(r)]
-            ),
-            inactive_rows=_normalize_user_rows_v1(
-                [r for r in page_data.get("inactive_users", []) if _is_legacy_user_row_v1(r)]
-            ),
+            active_rows=_normalize_user_rows_v1(page_data.get("system_admin_active_users", [])),
+            inactive_rows=_normalize_user_rows_v1(page_data.get("system_admin_inactive_users", [])),
             return_url="/users/new?menu=administrativo&admin_tab=admin_sistema#system-admins-card",
         )
 
