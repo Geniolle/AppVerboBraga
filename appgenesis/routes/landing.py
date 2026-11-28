@@ -34,12 +34,12 @@ DEPARTAMENTOS = [
         ],
         "fotos": [],
         "noticias": [
-            {"titulo": "Oração - Imposição de mãos", "texto": "Texto de exemplo para a notícia 1.", "url": "#", "imagem": "/static/img/noticias/oracao-imposicao-de-maos.jpg"},
             {"titulo": "Aula - Amor Curador de Deus", "texto": "Texto de exemplo para a notícia 2.", "url": "#", "imagem": "/static/img/noticias/aula-amor-curador-de-deus.jpg"},
             {"titulo": "Aula - Somos Curados em Cristo", "texto": "Texto de exemplo para a notícia 3.", "url": "#", "imagem": "/static/img/noticias/aula-somos-curados-em-cristo.jpg"},
             {"titulo": "Aula - Fé para a Cura", "texto": "Texto de exemplo para a notícia 4.", "url": "#", "imagem": "/static/img/noticias/aula-fe-para-a-cura.jpg"},
             {"titulo": "Aula - Como Manter a sua Cura", "texto": "Texto de exemplo para a notícia 5.", "url": "#", "imagem": "/static/img/noticias/aula-como-manter-a-sua-cura.jpg"},
             {"titulo": "Aula - A Unção da Cura", "texto": "Texto de exemplo para a notícia 6.", "url": "#", "imagem": "/static/img/noticias/aula-a-uncao-da-cura.jpg"},
+            {"titulo": "Oração - Imposição de mãos", "texto": "Texto de exemplo para a notícia 1.", "url": "#", "imagem": "/static/img/noticias/oracao-imposicao-de-maos.jpg"},
         ],
     },
     {
