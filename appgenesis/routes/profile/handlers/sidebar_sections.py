@@ -1100,6 +1100,20 @@ def edit_sidebar_sections_v2(
             len(section_status),
         )
 
+        # Pedido sem linhas (formulario vazio/truncado) apagaria todas as sessoes do owner.
+        if rows_count == 0:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Nenhuma sessão enviada; nada foi alterado.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key="administrativo",
+                    settings_action="edit",
+                    settings_tab="sessoes",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
         payload_sections: list[dict[str, str]] = []
 
         for row_index in range(rows_count):
