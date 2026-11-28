@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import Boolean, CheckConstraint, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from appgenesis.models.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from appgenesis.models.department import Department, Role
+    from appgenesis.models.member import MemberEntity
 
 
 class Entity(Base, TimestampMixin):

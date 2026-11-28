@@ -7,7 +7,7 @@ import json
 import secrets
 import smtplib
 import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from email.message import EmailMessage
 from typing import Any
 from urllib.parse import quote

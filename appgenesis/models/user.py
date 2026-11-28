@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from appgenesis.models.base import Base, TimestampMixin
 from appgenesis.models.enums import UserAccountStatus
+
+if TYPE_CHECKING:
+    from appgenesis.models.member import Member
+    from appgenesis.models.profile import UserProfile
 
 
 def _resolve_user_profile_model_v1():

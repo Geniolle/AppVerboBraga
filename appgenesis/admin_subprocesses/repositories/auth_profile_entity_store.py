@@ -7,11 +7,14 @@ utilizador comum consegue ler os perfis que as funcoes da sua entidade referenci
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import Any
 
-from sqlalchemy import String, cast, select, text
+from sqlalchemy import (
+    String,
+    cast,
+    select,
+)
 
 from appgenesis.models import Entity
 from appgenesis.services.entity_menu_data import get_entity_menu_data, set_entity_menu_data

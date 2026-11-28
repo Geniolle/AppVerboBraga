@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import Boolean, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import String
 
 from appgenesis.models.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from appgenesis.models.user import User
 
 
 class Profile(Base, TimestampMixin):

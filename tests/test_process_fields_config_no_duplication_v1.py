@@ -161,14 +161,12 @@ def test_settings_handlers_only_calls_the_unsuffixed_persistence_wrapper() -> No
 def test_unsuffixed_helpers_are_imported_but_never_called_elsewhere() -> None:
     """
     Comportamento estranho de baixo risco, documentado e nao corrigido (regra 18):
-    update_sidebar_menu_process_fields e' importado em page_handler.py mas nunca
-    invocado -- import morto, nao um risco funcional real. O import morto que existia
-    em profile_handlers.py saiu na etapa 4 (handlers partidos em routes/profile/handlers/).
+    Os imports mortos de update_sidebar_menu_process_fields (page_handler.py e o antigo
+    profile_handlers.py) sairam nas etapas 4 e 8; nenhum destes ficheiros a invoca.
     """
     page_handler_path = PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "page_handler.py"
     handler_paths = sorted((PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "handlers").glob("*.py"))
 
-    assert "update_sidebar_menu_process_fields" in page_handler_path.read_text(encoding="utf-8")
     for path in (page_handler_path, *handler_paths):
         text = path.read_text(encoding="utf-8")
         assert re.search(r'\bupdate_sidebar_menu_process_fields\(', text) is None

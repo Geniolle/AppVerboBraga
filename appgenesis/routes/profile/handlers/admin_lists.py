@@ -187,12 +187,6 @@ def _departments_actor_allowed(request: Request, session: Session) -> dict[str, 
     if current_user is None:
         return None
     selected_entity_id = get_session_entity_id(request)
-    entity_permissions = get_user_entity_permissions(
-        session,
-        current_user["id"],
-        current_user["login_email"],
-        selected_entity_id,
-    )
     page_data = get_page_data(
         session,
         actor_user_id=current_user["id"],

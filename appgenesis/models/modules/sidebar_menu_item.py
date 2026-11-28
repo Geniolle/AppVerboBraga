@@ -1,11 +1,14 @@
 ﻿from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from appgenesis.models.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from appgenesis.models.modules.app_module import AppModule
 
 
 class SidebarMenuItem(Base, TimestampMixin):

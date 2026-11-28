@@ -12,4 +12,13 @@ from appgenesis.routes.profile.handlers import personal  # noqa: F401,E402
 from appgenesis.routes.profile.handlers import process_data  # noqa: F401,E402
 from appgenesis.routes.profile.handlers import admin_lists  # noqa: F401,E402
 
-__all__ = ["router"]
+__all__ = [
+    "router",
+    "admin_lists",
+    "auth_profile",
+    "menu_subprocess",
+    "page_handler",
+    "personal",
+    "process_data",
+    "sidebar_sections",
+]

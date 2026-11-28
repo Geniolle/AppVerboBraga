@@ -23,7 +23,6 @@ from appgenesis.models.modules import (
     SidebarMenuItem,
 )
 from appgenesis.models.sidebar_menu_setting import SidebarMenuSetting
-from appgenesis.models.process_record import ProcessRecord
 from appgenesis.models.user import User
 
 if TYPE_CHECKING:

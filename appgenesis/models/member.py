@@ -1,13 +1,26 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from appgenesis.models.base import Base, TimestampMixin
 from appgenesis.models.enums import MemberEntityStatus, MemberStatus
+
+if TYPE_CHECKING:
+    from appgenesis.models.department import DepartmentMembership
+    from appgenesis.models.entity import Entity
+    from appgenesis.models.user import User
 
 
 class Member(Base, TimestampMixin):

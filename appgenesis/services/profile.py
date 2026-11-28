@@ -10,7 +10,6 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from appgenesis.menu_settings import get_sidebar_menu_settings
 from appgenesis.models import Entity, Member, MemberEntity, MemberEntityStatus, User
 
 PROCESS_SUBSEQUENT_ALLOWED_OPERATORS = {
