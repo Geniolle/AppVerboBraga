@@ -95,3 +95,9 @@ def create_user_v1(
 
 
 create_user = create_user_v1
+
+# Reexportado: importado deste modulo por outros ficheiros.
+__all__ = [
+    "build_users_new_url",
+    "create_user_v1",
+]

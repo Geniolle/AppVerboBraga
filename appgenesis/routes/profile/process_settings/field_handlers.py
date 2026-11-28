@@ -18,7 +18,6 @@ from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _build_settings_editor_stay_redirect_url_v1,
-    _SETTINGS_MENU_EDITOR_STAY_TARGET_V1,
 )
 
 @router.post("/settings/menu/process-fields", response_class=HTMLResponse, response_model=None)

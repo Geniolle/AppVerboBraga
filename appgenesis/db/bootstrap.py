@@ -218,4 +218,11 @@ def normalize_entities_entity_numbers() -> None:
             )
             next_number += 1
 
-
+# Reexportado: importado deste modulo por outros ficheiros.
+__all__ = [
+    "SessionLocal",
+    "ensure_entities_optional_columns",
+    "ensure_members_optional_columns",
+    "ensure_sidebar_menu_settings_table",
+    "normalize_entities_entity_numbers",
+]

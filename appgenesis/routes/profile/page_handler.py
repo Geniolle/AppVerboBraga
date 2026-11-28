@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
 from typing import Any
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import (
+    Request,
+    status,
+)
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+)
+from sqlalchemy import select
 
 # APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
 from appgenesis.admin_subprocesses.registry import (
@@ -49,9 +52,6 @@ from appgenesis.menu_settings import (
     delete_sidebar_menu_setting,
     get_sidebar_menu_settings,
     resolve_menu_key_alias,
-    set_sidebar_menu_visibility,
-    update_sidebar_menu_label,
-    update_sidebar_menu_process_fields,
 )
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.page import (
@@ -77,12 +77,7 @@ from appgenesis.services.sidebar_section_ownership import (
 from appgenesis.web.templates import templates
 from appgenesis.models import (
     Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
     User,
-    UserAccountStatus,
 )
 
 from appgenesis.routes.profile.router import router
@@ -1281,3 +1276,9 @@ def new_user_page(
     }
 
     return templates.TemplateResponse(request, "new_user.html", context)
+
+# Reexportado: importado deste modulo por outros ficheiros.
+__all__ = [
+    "delete_sidebar_menu_setting",
+    "new_user_page",
+]

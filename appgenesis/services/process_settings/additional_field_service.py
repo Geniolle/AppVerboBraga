@@ -498,12 +498,10 @@ def move_sidebar_menu_additional_field(
             if next_field_type == "header":
                 break
             block_end = idx
-        block_size = block_end - block_start + 1
     else:
         # Campo normal, mover apenas ele
         block_start = field_index
         block_end = field_index
-        block_size = 1
 
     # Calcular o alvo
     if clean_direction == "up":

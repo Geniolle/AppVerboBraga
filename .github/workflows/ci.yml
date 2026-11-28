@@ -18,13 +18,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest==9.1.1 pyflakes==3.4.0
           pip install -e .
-      - name: Lint with pyflakes (informational)
-        # Non-blocking: appgenesis/models/*.py uses SQLAlchemy string-based
-        # relationship() forward refs that pyflakes reports as false-positive
-        # "undefined name", plus pre-existing "imported but unused" noise.
-        # Kept as a visible report, not a merge gate, until that baseline is
-        # cleaned up separately.
-        continue-on-error: true
+      - name: Lint with pyflakes
+        # Bloqueante desde 2026-11-28 (base a zero). Forward refs dos modelos vivem em
+        # `if TYPE_CHECKING:`; imports de efeito e reexportacoes ficam em __all__.
         run: python -m pyflakes appgenesis/ web_app.py
       - name: Run tests (excluding Selenium browser tests)
         run: |
