@@ -59,6 +59,26 @@
       </div>
       {% endif %}
 
+      {% if d.secoes %}
+      <div class="vb-secoes">
+        {% for sec in d.secoes %}
+        <section class="vb-secao">
+          <h2>{{ sec.titulo }}</h2>
+          {% for par in sec.paragrafos or [] %}<p>{{ par }}</p>{% endfor %}
+          {% if sec.lista %}<ul class="vb-secao__lista">{% for item in sec.lista %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+          {% for txt, ref in sec.citacoes or [] %}<blockquote class="vb-secao__citacao"><p>{{ txt }}</p><cite>{{ ref }}</cite></blockquote>{% endfor %}
+          {% if sec.fotos %}
+          <div class="vb-secao__fotos">
+            {% for n in sec.fotos %}
+            <img src="/static/img/infantil/{{ n }}.jpg" alt="" loading="lazy" width="640" height="480">
+            {% endfor %}
+          </div>
+          {% endif %}
+        </section>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       {% if d.cards %}
       <div class="vb-cards-animados">
         {% for c in d.cards %}
