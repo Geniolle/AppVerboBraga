@@ -7,7 +7,7 @@ import json
 import secrets
 import smtplib
 import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from email.message import EmailMessage
 from typing import Any
 from urllib.parse import quote
@@ -17,26 +17,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from appgenesis.core import (
-    ADMIN_LOGIN_EMAIL,
-    ADMIN_LOGIN_PASSWORD,
-    APP_PUBLIC_URL,
-    APP_SECRET_KEY,
-    GITHUB_CLIENT_ID,
-    GITHUB_CLIENT_SECRET,
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
-    MICROSOFT_CLIENT_ID,
-    MICROSOFT_CLIENT_SECRET,
-    SMTP_FROM_EMAIL,
-    SMTP_FROM_NAME,
-    SMTP_HOST,
-    SMTP_PASSWORD,
-    SMTP_PORT,
-    SMTP_USE_TLS,
-    SMTP_USERNAME,
-    USER_INVITE_TTL_HOURS,
-)
+from appgenesis.config.settings import settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.integrations.oauth import oauth
 from appgenesis.models import Entity, Member, MemberEntity, MemberEntityStatus, MemberStatus, User, UserAccountStatus
@@ -83,7 +64,7 @@ def build_user_invite_token(
     payload_json = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
     payload_encoded = _urlsafe_b64encode(payload_json)
     signature = hmac.new(
-        APP_SECRET_KEY.encode("utf-8"),
+        settings.APP_SECRET_KEY.encode("utf-8"),
         payload_encoded.encode("utf-8"),
         hashlib.sha256,
     ).digest()
@@ -99,7 +80,7 @@ def parse_user_invite_token(token: str) -> dict[str, Any] | None:
         return None
 
     expected_signature = hmac.new(
-        APP_SECRET_KEY.encode("utf-8"),
+        settings.APP_SECRET_KEY.encode("utf-8"),
         payload_encoded.encode("utf-8"),
         hashlib.sha256,
     ).digest()
@@ -135,7 +116,7 @@ def parse_user_invite_token(token: str) -> dict[str, Any] | None:
             return None
         entity_id = int(entity_id_raw)
 
-    max_token_age = max(int(USER_INVITE_TTL_HOURS), 1) * 3600
+    max_token_age = max(int(settings.USER_INVITE_TTL_HOURS), 1) * 3600
     if int(time.time()) - issued_at > max_token_age:
         return None
 
@@ -147,7 +128,7 @@ def parse_user_invite_token(token: str) -> dict[str, Any] | None:
     }
 
 def build_user_invite_link(request: Request, token: str) -> str:
-    base_url = APP_PUBLIC_URL or str(request.base_url).rstrip("/")
+    base_url = settings.APP_PUBLIC_URL or str(request.base_url).rstrip("/")
     return f"{base_url}/users/invite/accept?token={quote(token, safe='')}"
 
 def send_user_invite_email(
@@ -157,7 +138,7 @@ def send_user_invite_email(
     invite_link: str,
     invited_by_name: str,
 ) -> tuple[bool, str]:
-    if not SMTP_HOST or not SMTP_FROM_EMAIL:
+    if not settings.SMTP_HOST or not settings.SMTP_FROM_EMAIL:
         return False, "Configuração de email incompleta. Defina SMTP_HOST e SMTP_FROM_EMAIL."
 
     recipient = (recipient_email or "").strip().lower()
@@ -187,17 +168,17 @@ def send_user_invite_email(
 
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
+    message["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
     message["To"] = recipient
     message.set_content(text_body)
     message.add_alternative(html_body, subtype="html")
 
     try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as smtp_client:
-            if SMTP_USE_TLS:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=20) as smtp_client:
+            if settings.SMTP_USE_TLS:
                 smtp_client.starttls()
-            if SMTP_USERNAME:
-                smtp_client.login(SMTP_USERNAME, SMTP_PASSWORD)
+            if settings.SMTP_USERNAME:
+                smtp_client.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             smtp_client.send_message(message)
     except Exception as exc:
         return False, f"Falha ao enviar email de convite: {exc!s}"
@@ -230,7 +211,7 @@ def build_password_reset_token(
     payload_json = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
     payload_encoded = _urlsafe_b64encode(payload_json)
     signature = hmac.new(
-        APP_SECRET_KEY.encode("utf-8"),
+        settings.APP_SECRET_KEY.encode("utf-8"),
         payload_encoded.encode("utf-8"),
         hashlib.sha256,
     ).digest()
@@ -248,7 +229,7 @@ def parse_password_reset_token(token: str) -> dict[str, Any] | None:
         return None
 
     expected_signature = hmac.new(
-        APP_SECRET_KEY.encode("utf-8"),
+        settings.APP_SECRET_KEY.encode("utf-8"),
         payload_encoded.encode("utf-8"),
         hashlib.sha256,
     ).digest()
@@ -305,7 +286,7 @@ def is_password_reset_token_valid_for_user(token_payload: dict[str, Any], passwo
 
 
 def build_password_reset_link(request: Request, token: str) -> str:
-    base_url = APP_PUBLIC_URL or str(request.base_url).rstrip("/")
+    base_url = settings.APP_PUBLIC_URL or str(request.base_url).rstrip("/")
     return f"{base_url}/password/reset?token={quote(token, safe='')}"
 
 
@@ -314,7 +295,7 @@ def send_password_reset_email(
     recipient_name: str,
     reset_link: str,
 ) -> tuple[bool, str]:
-    if not SMTP_HOST or not SMTP_FROM_EMAIL:
+    if not settings.SMTP_HOST or not settings.SMTP_FROM_EMAIL:
         return False, "Configuracao de email incompleta. Defina SMTP_HOST e SMTP_FROM_EMAIL."
 
     recipient = (recipient_email or "").strip().lower()
@@ -344,17 +325,17 @@ def send_password_reset_email(
 
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
+    message["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
     message["To"] = recipient
     message.set_content(text_body)
     message.add_alternative(html_body, subtype="html")
 
     try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as smtp_client:
-            if SMTP_USE_TLS:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=20) as smtp_client:
+            if settings.SMTP_USE_TLS:
                 smtp_client.starttls()
-            if SMTP_USERNAME:
-                smtp_client.login(SMTP_USERNAME, SMTP_PASSWORD)
+            if settings.SMTP_USERNAME:
+                smtp_client.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             smtp_client.send_message(message)
     except Exception as exc:
         return False, f"Falha ao enviar email de redefinicao: {exc!s}"
@@ -388,9 +369,9 @@ def validate_signup_phone_country(country: str, primary_phone: str) -> str:
 
 def get_oauth_flags() -> dict[str, bool]:
     return {
-        "oauth_google_enabled": bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET),
-        "oauth_microsoft_enabled": bool(MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET),
-        "oauth_github_enabled": bool(GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET),
+        "oauth_google_enabled": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
+        "oauth_microsoft_enabled": bool(settings.MICROSOFT_CLIENT_ID and settings.MICROSOFT_CLIENT_SECRET),
+        "oauth_github_enabled": bool(settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET),
     }
 
 def get_oauth_buttons() -> list[dict[str, Any]]:
@@ -479,7 +460,7 @@ def resolve_active_entity_by_email(
 def is_admin_user(session: Session, user_id: int, login_email: str) -> bool:
     from appgenesis.services.user_system import is_owner_system_v1
     clean_email = (login_email or "").strip().lower()
-    if ADMIN_LOGIN_EMAIL and clean_email == ADMIN_LOGIN_EMAIL:
+    if settings.ADMIN_LOGIN_EMAIL and clean_email == settings.ADMIN_LOGIN_EMAIL:
         return True
     system_type = session.execute(
         select(User.system_type).where(User.id == user_id)
@@ -489,19 +470,19 @@ def is_admin_user(session: Session, user_id: int, login_email: str) -> bool:
 
 def verify_login_password_v1(login_email: str, raw_password: str, stored_hash: str) -> bool:
     clean_email = (login_email or "").strip().lower()
-    configured_admin_password = str(ADMIN_LOGIN_PASSWORD or "")
+    configured_admin_password = str(settings.ADMIN_LOGIN_PASSWORD or "")
 
-    if ADMIN_LOGIN_EMAIL and clean_email == ADMIN_LOGIN_EMAIL and configured_admin_password:
+    if settings.ADMIN_LOGIN_EMAIL and clean_email == settings.ADMIN_LOGIN_EMAIL and configured_admin_password:
         return secrets.compare_digest(str(raw_password or ""), configured_admin_password)
 
     return verify_password(raw_password, stored_hash)
 
 def get_oauth_client(provider: str):
-    if provider == "google" and GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+    if provider == "google" and settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET:
         return oauth.create_client("google")
-    if provider == "microsoft" and MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET:
+    if provider == "microsoft" and settings.MICROSOFT_CLIENT_ID and settings.MICROSOFT_CLIENT_SECRET:
         return oauth.create_client("microsoft")
-    if provider == "github" and GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET:
+    if provider == "github" and settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET:
         return oauth.create_client("github")
     return None
 

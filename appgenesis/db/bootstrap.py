@@ -100,7 +100,10 @@ def ensure_members_optional_columns() -> None:
 
 
 def ensure_sidebar_menu_settings_table() -> None:
+    from appgenesis.services.entity_menu_data import ENTITY_MENU_DATA_TABLE_SQL
+
     with engine.begin() as connection:
+        connection.execute(text(ENTITY_MENU_DATA_TABLE_SQL))
         connection.execute(
             text(
                 """
@@ -215,4 +218,11 @@ def normalize_entities_entity_numbers() -> None:
             )
             next_number += 1
 
-
+# Reexportado: importado deste modulo por outros ficheiros.
+__all__ = [
+    "SessionLocal",
+    "ensure_entities_optional_columns",
+    "ensure_members_optional_columns",
+    "ensure_sidebar_menu_settings_table",
+    "normalize_entities_entity_numbers",
+]

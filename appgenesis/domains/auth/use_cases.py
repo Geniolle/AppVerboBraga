@@ -31,14 +31,13 @@ from appgenesis.services.auth import (
     is_password_reset_token_valid_for_user,
     send_password_reset_email,
     upsert_user_by_email,
-    validate_signup_phone_country,
     verify_login_password_v1,
 )
 from appgenesis.services.i18n import resolve_user_language_after_auth
 from appgenesis.services.phone_country import (
+    build_international_phone_value,
     normalize_country_code,
     normalize_phone_value,
-    validate_phone_prefix_for_country,
 )
 from appgenesis.services.session import get_current_user, get_entity_context_for_user
 from appgenesis.shared.results import RedirectOutcome
@@ -265,7 +264,7 @@ def execute_signup(session: Session, request: Request, form: SignupFormInput) ->
 
     if not clean_full_name:
         errors.append("Nome completo é obrigatório.")
-    phone_country_error = validate_signup_phone_country(clean_country, clean_primary_phone)
+    full_primary_phone, phone_country_error = build_international_phone_value(clean_country, clean_primary_phone)
     if phone_country_error:
         errors.append(phone_country_error)
     if not clean_email:
@@ -311,7 +310,7 @@ def execute_signup(session: Session, request: Request, form: SignupFormInput) ->
         session=session,
         email=clean_email,
         full_name=clean_full_name,
-        primary_phone=clean_primary_phone,
+        primary_phone=full_primary_phone,
         entity_id=parsed_entity_id,
     )
     user.password_hash = hash_password(form.password)
@@ -510,7 +509,7 @@ def execute_invite_accept(
     errors: list[str] = []
     if not clean_full_name:
         errors.append("Nome completo é obrigatório.")
-    phone_country_error = validate_phone_prefix_for_country(clean_country, clean_primary_phone)
+    full_primary_phone, phone_country_error = build_international_phone_value(clean_country, clean_primary_phone)
     if phone_country_error:
         errors.append(phone_country_error)
     if len(form.password) < 8:
@@ -552,7 +551,7 @@ def execute_invite_accept(
         )
 
     member.full_name = clean_full_name
-    member.primary_phone = clean_primary_phone
+    member.primary_phone = full_primary_phone
     member.country = clean_country or None
     user.password_hash = hash_password(form.password)
     user.account_status = UserAccountStatus.ACTIVE.value

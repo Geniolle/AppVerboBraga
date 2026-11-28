@@ -9,7 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.config.settings import settings
+from new_user_js_source import read_new_user_js
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -36,8 +37,8 @@ def _build_driver_v1():
 
 
 def _login_admin_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
-    admin_email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    admin_password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    admin_email = str(settings.ADMIN_LOGIN_EMAIL or "").strip()
+    admin_password = str(settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not admin_email or not admin_password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD nao definidos.")
 
@@ -55,7 +56,8 @@ def _login_admin_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
 ####################################################################################
 
 
-@pytest.mark.parametrize("data_menu", ["sessoes", "calendario", "perfil_de_autorizacao", "extrato"])
+# Menus que existem hoje (perfil_de_autorizacao e extrato deixaram de ser menus do sidebar).
+@pytest.mark.parametrize("data_menu", ["sessoes", "calendario", "empresa", "meu_perfil"])
 def test_reload_from_any_menu_normalizes_to_home(data_menu: str) -> None:
     driver = _build_driver_v1()
     wait = WebDriverWait(driver, 30)
@@ -231,7 +233,7 @@ def test_reload_guard_normalizes_regardless_of_feedback_markers() -> None:
 
 
 def test_post_save_uses_authoritative_menu_and_config_return_url() -> None:
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+    js_text = read_new_user_js()
 
     assert "function resolveAuthoritativeActiveMenuKeyForPostSaveV1()" in js_text
     assert "function findConfigProvidedReturnUrlV1(form)" in js_text

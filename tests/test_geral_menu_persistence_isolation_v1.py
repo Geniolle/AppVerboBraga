@@ -366,7 +366,7 @@ def test_update_sidebar_menu_label_rejects_invalid_sidebar_section():
     session.close()
 
     assert ok is False
-    assert error == "Sessão inválida."
+    assert error == "Definição inválida."
 
 
 ####################################################################################
@@ -661,7 +661,7 @@ def test_move_sidebar_menu_setting_blocks_moving_first_active_item_up():
 def test_move_sidebar_menu_setting_blocks_moving_last_active_item_down():
     SessionLocal = _build_session_factory()
     session = SessionLocal()
-    ok, error = move_sidebar_menu_setting(session, "tutorial", "down")
+    ok, error = move_sidebar_menu_setting(session, "meu_perfil", "down")
     session.close()
 
     assert ok is False

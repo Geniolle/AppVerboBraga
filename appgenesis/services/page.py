@@ -8,14 +8,13 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from appgenesis.services.phone_country import list_phone_country_options
-from appgenesis.services.profile import PERSONAL_GENDER_OPTIONS
-from appgenesis.core import (
-    ENTITY_NUMBER_MAX,
-    ENTITY_NUMBER_MIN,
-    ENTITY_PROFILE_SCOPE_LEGADO,
-    ENTITY_PROFILE_SCOPE_OWNER,
+from appgenesis.services.access_filter import (
+    apply_access_filter_to_menu_keys_v1,
+    resolve_allowed_menu_keys_v1,
 )
-from appgenesis.models import Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
+from appgenesis.services.profile import PERSONAL_GENDER_OPTIONS
+from appgenesis.config.settings import settings
+from appgenesis.models import Department, Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
 from appgenesis.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_FIELD_LABELS,
@@ -27,9 +26,15 @@ from appgenesis.menu_settings import (
     normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
+from appgenesis.services.sidebar_section_ownership import (
+    filter_sections_for_entity,
+    get_section_owner_map,
+    resolve_entity_number_v1,
+)
 from appgenesis.services.user_entity_scope import (
     get_actor_primary_entity_v1,
     get_entities_for_user_edit_form_v1,
+    get_legacy_entities_for_admin_form_v1,
 )
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.user_status import (
@@ -58,6 +63,11 @@ from appgenesis.domains.meu_perfil.visibility import apply_meu_perfil_subsequent
 
 
 
+from appgenesis.services.process_records_service import (
+    ENTITY_RECORD_MENU_KEYS,
+    list_process_records,
+)
+
 def _serialize_resolved_list_option_labels_v1(
     resolved_options: list[dict[str, str]] | None,
 ) -> list[str]:
@@ -78,12 +88,66 @@ def _serialize_resolved_list_option_labels_v1(
     ]
 
 
+def _active_department_options_v1(session: Session, entity_id: int | None) -> list[dict[str, str]]:
+    if not entity_id:
+        return []
+    names = session.execute(
+        select(Department.name)
+        .where(Department.entity_id == int(entity_id), Department.is_active.is_(True))
+        .order_by(Department.name)
+    ).scalars().all()
+    return [
+        {"value": str(name).strip(), "label": str(name).strip(), "status": "active"}
+        for name in names
+        if str(name or "").strip()
+    ]
+
+
+def _record_value_options_v1(
+    session: Session,
+    entity_id: int,
+    menu_key: str,
+    field_key: str,
+    extra_field_key: str = "",
+    url_field_key: str = "",
+    lyrics_field_key: str = "",
+) -> list[dict[str, str]]:
+    # Opcoes de uma lista = valores distintos de um campo nos registos de outro processo (A-Z).
+    # extra_field_key: outro campo do mesmo registo, levado junto (ex.: Autor = Versao da musica).
+    # url_field_key: link do registo, usado pelo icone de video da linha.
+    # lyrics_field_key: letra do registo, mostrada em modo leitura pelo icone de nota da linha.
+    rows = list_process_records(session, entity_id=entity_id, menu_key=menu_key)
+    extra_by_value: dict[str, str] = {}
+    url_by_value: dict[str, str] = {}
+    lyrics_by_value: dict[str, str] = {}
+    for row in rows:
+        row_values = row.get("values") or {}
+        value = str(row_values.get(field_key) or "").strip()
+        if value and value not in extra_by_value:
+            extra_by_value[value] = str(row_values.get(extra_field_key) or "").strip() if extra_field_key else ""
+            url_by_value[value] = str(row_values.get(url_field_key) or "").strip() if url_field_key else ""
+            lyrics_by_value[value] = str(row_values.get(lyrics_field_key) or "") if lyrics_field_key else ""
+    return [
+        {
+            "value": value,
+            "label": value,
+            "status": "active",
+            "extra": extra_by_value[value],
+            "url": url_by_value[value],
+            "lyrics": lyrics_by_value[value],
+        }
+        for value in sorted(extra_by_value, key=str.casefold)
+    ]
+
+
 def _decorate_sidebar_list_field_options_v1(
     *,
     sidebar_menu_settings: list[dict[str, Any]],
     visible_sidebar_menu_keys: set[str],
     menu_process_history_map: dict[str, list[dict[str, Any]]],
     selected_entity_id: int | None,
+    department_options: list[dict[str, str]] | None = None,
+    session: Session | None = None,
 ) -> None:
     for sidebar_item in sidebar_menu_settings:
         if not isinstance(sidebar_item, dict):
@@ -108,6 +172,28 @@ def _decorate_sidebar_list_field_options_v1(
                     field_definition.get("field_type") or field_definition.get("type") or ""
                 ).strip().lower()
 
+                if field_type == "rows" and session is not None and selected_entity_id is not None:
+                    decorated_row_fields: list[dict[str, Any]] = []
+                    for raw_row_field in field_definition.get("row_fields") or []:
+                        row_field = dict(raw_row_field)
+                        options_menu_key = str(row_field.get("options_menu_key") or "").strip().lower()
+                        options_field_key = str(row_field.get("options_field_key") or "").strip().lower()
+                        options_extra_key = str(row_field.get("options_extra_field_key") or "").strip().lower()
+                        options_url_key = str(row_field.get("options_url_field_key") or "").strip().lower()
+                        options_lyrics_key = str(row_field.get("options_lyrics_field_key") or "").strip().lower()
+                        if options_menu_key and options_field_key:
+                            row_field["list_options"] = _record_value_options_v1(
+                                session,
+                                selected_entity_id,
+                                options_menu_key,
+                                options_field_key,
+                                options_extra_key,
+                                options_url_key,
+                                options_lyrics_key,
+                            )
+                        decorated_row_fields.append(row_field)
+                    field_definition["row_fields"] = decorated_row_fields
+
                 if field_type == "list":
                     resolved_options = resolve_field_list_options_v1(
                         active_entity_id=selected_entity_id,
@@ -116,6 +202,7 @@ def _decorate_sidebar_list_field_options_v1(
                         sidebar_menu_settings=sidebar_menu_settings,
                         visible_sidebar_menu_keys=visible_sidebar_menu_keys,
                         menu_process_history_map=menu_process_history_map,
+                        department_options=department_options,
                     )
                     field_definition["resolved_list_options"] = [
                         dict(option)
@@ -148,7 +235,8 @@ def _resolve_actor_page_context(
         "allowed_structure_entity_ids": set(),
         "allowed_data_entity_ids": set(),
     }
-    allowed_entity_ids: set[int] | None = None
+    # Sem ator: escopo vazio (falha fechada), nunca "todas as entidades".
+    allowed_entity_ids: set[int] = set()
     if actor_user_id is not None:
         permissions = get_user_entity_permissions(
             session,
@@ -165,6 +253,7 @@ def _resolve_actor_page_context(
     actor_entity_number = None
     entities_for_user_form: list[dict[str, Any]] = []
     entities_for_user_edit_form: list[dict[str, Any]] = []
+    legacy_entities_for_admin_form: list[dict[str, Any]] = []
     can_select_user_entity = bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)))
     if actor_user_id is not None:
         actor_primary_entity = get_actor_primary_entity_v1(session, actor_user_id)
@@ -174,6 +263,7 @@ def _resolve_actor_page_context(
             actor_entity_number = actor_primary_entity["entity_number"]
         if can_select_user_entity:
             entities_for_user_form = get_entities_for_user_edit_form_v1(session, permissions)
+            legacy_entities_for_admin_form = get_legacy_entities_for_admin_form_v1(session)
         entities_for_user_edit_form = get_entities_for_user_edit_form_v1(session, permissions)
 
     current_entity_scope = ""
@@ -197,6 +287,7 @@ def _resolve_actor_page_context(
         "can_select_user_entity": can_select_user_entity,
         "entities_for_user_form": entities_for_user_form,
         "entities_for_user_edit_form": entities_for_user_edit_form,
+        "legacy_entities_for_admin_form": legacy_entities_for_admin_form,
     }
 
 
@@ -230,8 +321,15 @@ def _resolve_sidebar_menu_context(
         ),
         None,
     )
+    administrativo_menu_config = (administrativo_menu or {}).get("menu_config", {}) or {}
     sidebar_section_options = normalize_sidebar_sections(
-        (administrativo_menu or {}).get("menu_config", {}).get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+        administrativo_menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+    # Sessoes criadas por legado so aparecem para a entidade que as criou.
+    sidebar_section_options = filter_sections_for_entity(
+        sidebar_section_options,
+        get_section_owner_map(administrativo_menu_config),
+        resolve_entity_number_v1(session, selected_entity_id),
     )
     return {
         "sidebar_menu_settings": sidebar_menu_settings,
@@ -303,6 +401,23 @@ def _resolve_actor_menu_process_maps(
                 quantity_values_by_rule[rule_key] = quantity_values
         if quantity_values_by_rule:
             menu_process_quantity_values_map[menu_key] = quantity_values_by_rule
+        if menu_key in ENTITY_RECORD_MENU_KEYS:
+            # Processos partilhados por entidade (ex.: Agenda): registos na tabela process_records.
+            menu_history_rows = (
+                list_process_records(session, entity_id=selected_entity_id, menu_key=menu_key)
+                if selected_entity_id is not None
+                else []
+            )
+            sort_field = str(
+                (sidebar_item.get("process_list_config") or {}).get("sort_field") or ""
+            ).strip().lower()
+            if sort_field and menu_history_rows:
+                menu_history_rows.sort(
+                    key=lambda row: str((row.get("values") or {}).get(sort_field) or "").casefold()
+                )
+            if menu_history_rows:
+                menu_process_history_map[menu_key] = menu_history_rows
+            continue
         history_storage_key = build_menu_process_records_storage_key(menu_key)
         if history_storage_key:
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
@@ -313,6 +428,8 @@ def _resolve_actor_menu_process_maps(
         visible_sidebar_menu_keys=set(visible_sidebar_menu_keys),
         menu_process_history_map=menu_process_history_map,
         selected_entity_id=selected_entity_id,
+        department_options=_active_department_options_v1(session, selected_entity_id),
+        session=session,
     )
     return {
         "actor_profile_fields": actor_profile_fields,
@@ -340,10 +457,10 @@ def _serialize_entity_row_v1(row: Any) -> dict[str, Any]:
         "postal_code": row.postal_code or "",
         "country": row.country or "",
         "description": row.description or "",
-        "profile_scope": (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO),
+        "profile_scope": (row.profile_scope or settings.ENTITY_PROFILE_SCOPE_LEGADO),
         "profile_scope_label": (
             "Gestora do tenant"
-            if (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
+            if (row.profile_scope or settings.ENTITY_PROFILE_SCOPE_LEGADO) == settings.ENTITY_PROFILE_SCOPE_OWNER
             else "Entidade operacional"
         ),
         "logo_url": row.logo_url or "",
@@ -427,8 +544,9 @@ def _resolve_scoped_users(
     permissions: dict[str, Any],
     apply_scope_filter: bool,
     scoped_entity_ids: list[int],
+    system_types: set[str] | None = None,
 ) -> dict[str, Any]:
-    user_rows = session.execute(
+    users_stmt = (
         select(
             User.id,
             User.member_id,
@@ -441,29 +559,28 @@ def _resolve_scoped_users(
         )
        .join(Member, Member.id == User.member_id)
        .order_by(User.id.asc())
-    ).all()
+    )
+    if system_types is not None:
+        users_stmt = users_stmt.where(User.system_type.in_(sorted(system_types)))
 
-    # Escopo de dados operacionais: apenas as entidades onde o utilizador tem vínculo ativo.
+    # Isolamento por entidade: so utilizadores com vinculo ativo na entidade da sessao,
+    # e so se o ator tiver acesso de dados a ela. Filtro no SQL (nao carregar outros tenants).
     # A gestora do tenant NÃO vê dados operacionais de entidades Legado através deste filtro.
-    _data_entity_ids = sorted(permissions.get("allowed_data_entity_ids") or set())
+    _data_entity_ids: list[int] = []
     if apply_scope_filter:
-        if _data_entity_ids:
-            scoped_member_ids = {
-                int(raw_id)
-                for raw_id in session.execute(
-                    select(MemberEntity.member_id)
-                   .where(
-                        MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-                        MemberEntity.entity_id.in_(_data_entity_ids),
-                    )
-                   .distinct()
-                ).scalars().all()
-            }
-            user_rows = [
-                row for row in user_rows if int(row.member_id) in scoped_member_ids
-            ]
-        else:
-            user_rows = []
+        _allowed_data_ids = set(permissions.get("allowed_data_entity_ids") or set())
+        _selected_id = permissions.get("selected_entity_id")
+        if _selected_id is not None and int(_selected_id) in _allowed_data_ids:
+            _data_entity_ids = [int(_selected_id)]
+        users_stmt = users_stmt.where(
+            User.member_id.in_(
+                select(MemberEntity.member_id).where(
+                    MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+                    MemberEntity.entity_id.in_(_data_entity_ids or [-1]),
+                )
+            )
+        )
+    user_rows = session.execute(users_stmt).all()
 
     member_ids = [int(row.member_id) for row in user_rows]
 
@@ -477,10 +594,10 @@ def _resolve_scoped_users(
            .where(MemberEntity.member_id.in_(member_ids))
            .order_by(MemberEntity.member_id.asc(), MemberEntity.id.asc())
         )
-        if apply_scope_filter and scoped_entity_ids:
-            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id.in_(scoped_entity_ids))
-        elif apply_scope_filter:
-            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id == -1)
+        if apply_scope_filter:
+            entity_name_stmt = entity_name_stmt.where(
+                MemberEntity.entity_id.in_(_data_entity_ids or [-1])
+            )
 
         for row in session.execute(entity_name_stmt).all():
             member_id_value = int(row.member_id)
@@ -574,6 +691,74 @@ def _resolve_company_profile_data(
     return _serialize_entity_row_v1(company_entity)
 
 
+def _apply_actor_access_filter_v1(
+    session: Session,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+    *,
+    actor_user_id: int | None,
+    selected_entity_id: int | None,
+    current_entity_scope: str,
+) -> set[str]:
+    """Filtro de acesso por funcao (ativo com APPGENESIS_ACCESS_FILTER_V1=1)."""
+    actor_user = session.get(User, actor_user_id) if actor_user_id else None
+    allowed_menu_keys = resolve_allowed_menu_keys_v1(
+        session,
+        entity_id=selected_entity_id,
+        user_system_type=getattr(actor_user, "system_type", ""),
+    )
+    if allowed_menu_keys is None:
+        return visible_sidebar_menu_keys
+    # Com o filtro, a permissao vem da funcao (nao de requires_admin).
+    return apply_access_filter_to_menu_keys_v1(
+        get_visible_sidebar_menu_keys(
+            sidebar_menu_settings,
+            current_user_is_admin=True,
+            current_entity_scope=current_entity_scope,
+        ),
+        allowed_menu_keys,
+    )
+
+
+def resolve_visible_menu_keys_v1(
+    session: Session,
+    actor_user_id: int,
+    actor_login_email: str,
+    selected_entity_id: int | None,
+) -> set[str]:
+    """Menus visiveis ao ator, iguais aos de get_page_data, sem montar a pagina inteira.
+
+    Para guardas de permissao (ex.: funcoes, departamentos) que so precisam de saber o menu.
+    """
+    permissions = get_user_entity_permissions(session, actor_user_id, actor_login_email, selected_entity_id)
+    resolved_entity_id = permissions["selected_entity_id"]
+    current_entity_scope = ""
+    if resolved_entity_id is not None:
+        current_entity_scope = str(
+            session.execute(
+                select(Entity.profile_scope).where(Entity.id == resolved_entity_id).limit(1)
+            ).scalar_one_or_none()
+            or ""
+        ).strip().lower()
+    sidebar_menu_settings = get_sidebar_menu_settings(session, active_entity_id=resolved_entity_id)
+    visible = get_visible_sidebar_menu_keys(
+        sidebar_menu_settings,
+        current_user_is_admin=bool(permissions["is_admin"]),
+        current_entity_scope=current_entity_scope,
+    )
+    return {
+        str(key or "").strip().lower()
+        for key in _apply_actor_access_filter_v1(
+            session,
+            sidebar_menu_settings,
+            visible,
+            actor_user_id=actor_user_id,
+            selected_entity_id=resolved_entity_id,
+            current_entity_scope=current_entity_scope,
+        )
+    }
+
+
 def get_page_data(
     session: Session,
     actor_user_id: int | None = None,
@@ -593,7 +778,14 @@ def get_page_data(
         session, current_user_is_admin, current_entity_scope, selected_entity_id
     )
     sidebar_menu_settings = menu_context["sidebar_menu_settings"]
-    visible_sidebar_menu_keys = menu_context["visible_sidebar_menu_keys"]
+    visible_sidebar_menu_keys = _apply_actor_access_filter_v1(
+        session,
+        sidebar_menu_settings,
+        menu_context["visible_sidebar_menu_keys"],
+        actor_user_id=actor_user_id,
+        selected_entity_id=selected_entity_id,
+        current_entity_scope=current_entity_scope,
+    )
 
     process_maps = _resolve_actor_menu_process_maps(
         session,
@@ -738,6 +930,7 @@ def get_page_data(
                 "size": field_size,
                 "is_required": is_required,
                 "list_key": list_key,
+                "button_style": str(custom_field.get("button_style") or "").strip().lower(),
                 "list_source_type": str(custom_field.get("list_source_type") or "manual").strip().lower() or "manual",
                 "automatic_source_process_key": str(custom_field.get("automatic_source_process_key") or "").strip().lower(),
                 "automatic_source_section_key": str(custom_field.get("automatic_source_section_key") or "").strip().lower(),
@@ -954,6 +1147,16 @@ def get_page_data(
     inactive_users = scoped_users["inactive_users"]
     recent_users = scoped_users["recent_users"]
     account_status_summary = scoped_users["account_status_summary"]
+    # Administradores do sistema (gestao do owner): perfis Legado e Admin de TODAS as entidades,
+    # sem o escopo da entidade da sessao. So o owner recebe esta lista (isolamento entre tenants).
+    system_admin_active_users: list[dict[str, Any]] = []
+    system_admin_inactive_users: list[dict[str, Any]] = []
+    if permissions.get("can_manage_tenant_structure"):
+        _system_admin_users = _resolve_scoped_users(
+            session, permissions, False, [], system_types={"legado", "owner"}
+        )
+        system_admin_active_users = _system_admin_users["active_created_users"]
+        system_admin_inactive_users = _system_admin_users["inactive_users"]
 
     company_profile_data = _resolve_company_profile_data(
         session, selected_entity_id, permissions
@@ -984,6 +1187,8 @@ def get_page_data(
         ],
         "all_users": all_users,
         "created_users": created_users,
+        "system_admin_active_users": system_admin_active_users,
+        "system_admin_inactive_users": system_admin_inactive_users,
         "active_created_users": active_created_users,
         "inactive_users": inactive_users,
         "pending_users": pending_users,
@@ -997,6 +1202,7 @@ def get_page_data(
         "current_user_entity_number": actor_context["actor_entity_number"],
         "can_select_user_entity": actor_context["can_select_user_entity"],
         "entities_for_user_form": actor_context["entities_for_user_form"],
+        "legacy_entities_for_admin_form": actor_context["legacy_entities_for_admin_form"],
         "entities_for_user_edit_form": actor_context["entities_for_user_edit_form"],
         "sidebar_menu_settings": sidebar_menu_settings,
         "active_menu_rows": menu_context["active_menu_rows"],
@@ -1129,7 +1335,7 @@ def get_entity_form_defaults() -> dict[str, str]:
         "country": "",
         "phone": "",
         "description": "",
-        "profile_scope": ENTITY_PROFILE_SCOPE_LEGADO,
+        "profile_scope": settings.ENTITY_PROFILE_SCOPE_LEGADO,
         "created_at": date.today().strftime("%d/%m/%Y"),
     }
 
@@ -1150,7 +1356,7 @@ def get_entity_edit_defaults() -> dict[str, str]:
         "country": "",
         "phone": "",
         "description": "",
-        "profile_scope": ENTITY_PROFILE_SCOPE_LEGADO,
+        "profile_scope": settings.ENTITY_PROFILE_SCOPE_LEGADO,
         "created_at": "",
         "logo_url": "",
         "status": "active",
@@ -1188,7 +1394,7 @@ def get_entity_edit_data(
         "country": entity.country or "",
         "phone": entity.phone or "",
         "description": entity.description or "",
-        "profile_scope": entity.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO,
+        "profile_scope": entity.profile_scope or settings.ENTITY_PROFILE_SCOPE_LEGADO,
         "created_at": entity.created_at.strftime("%d/%m/%Y") if entity.created_at else "",
         "logo_url": entity.logo_url or "",
         "status": "active" if entity.is_active else "inactive",
@@ -1278,16 +1484,16 @@ def get_next_entity_number(session: Session) -> int:
         select(Entity.entity_number)
        .where(
             Entity.entity_number.is_not(None),
-            Entity.entity_number >= ENTITY_NUMBER_MIN,
-            Entity.entity_number <= ENTITY_NUMBER_MAX,
+            Entity.entity_number >= settings.ENTITY_NUMBER_MIN,
+            Entity.entity_number <= settings.ENTITY_NUMBER_MAX,
         )
        .order_by(Entity.entity_number.asc())
     ).all()
     used_set = {int(number) for number in used_numbers if isinstance(number, int)}
-    for candidate in range(ENTITY_NUMBER_MIN, ENTITY_NUMBER_MAX + 1):
+    for candidate in range(settings.ENTITY_NUMBER_MIN, settings.ENTITY_NUMBER_MAX + 1):
         if candidate not in used_set:
             return candidate
-    return ENTITY_NUMBER_MAX
+    return settings.ENTITY_NUMBER_MAX
 
 def build_users_new_url(**query_params: str) -> str:
     clean_query_params = {

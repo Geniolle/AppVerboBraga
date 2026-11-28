@@ -7,37 +7,36 @@
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-<script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260706-post-save-feedback-always-wins-v1"></script>
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20261119-ajax-save-v1">
-  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260713-page-size-72-v1">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260714-icon-all-v6">
-  <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
-<script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260709-auth-profile-remove-entity-scope-v1">
-  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260708-inline-create-extracted-v1" defer></script>
-  <script src="/static/js/modules/app_shell/admin_subprocess_inline_create_v1.js?v=20260708-inline-create-extracted-v1" defer></script>
-  <link rel="stylesheet" href="/static/css/modules/tabs_overflow_v1.css?v=20260626-tabs-overflow-v6">
-  <script src="/static/js/modules/tabs_overflow_v1.js?v=20260626-tabs-overflow-v7" defer></script>
-  <link rel="stylesheet" href="/static/css/modules/field_info_tooltip_v1.css?v=20260701-field-info-tooltip-v1">
-  <script src="/static/js/modules/field_info_tooltip_v1.js?v=20260701-field-info-tooltip-v1" defer></script>
+<script src="/static/js/modules/navigation_reload_guard_v1.js?v={{ asset_version }}"></script>
+<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v={{ asset_version }}">
+  {# new_user.css dividido por componente (Etapa 5c); a ordem e a cascata original. #}
+  <link rel="stylesheet" href="/static/css/new_user/01_base_layout.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/02_meus_dados_controls.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/03_forms_tables.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/04_process_settings.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/05_responsive.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/06_process_fields_entity_layout.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/07_table_pagination.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/08_admin_forms_buttons.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/09_meu_perfil_extras.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/10_empresa_entity_layout.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/11_process_lists_agenda.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v={{ asset_version }}">
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v={{ asset_version }}"></script>
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v={{ asset_version }}">
+  <script src="/static/js/modules/admin_subprocesses_v1.js?v={{ asset_version }}" defer></script>
+  <script src="/static/js/modules/app_shell/admin_subprocess_inline_create_v1.js?v={{ asset_version }}" defer></script>
+  <link rel="stylesheet" href="/static/css/modules/tabs_overflow_v1.css?v={{ asset_version }}">
+  <script src="/static/js/modules/tabs_overflow_v1.js?v={{ asset_version }}" defer></script>
+  <link rel="stylesheet" href="/static/css/modules/field_info_tooltip_v1.css?v={{ asset_version }}">
+  <script src="/static/js/modules/field_info_tooltip_v1.js?v={{ asset_version }}" defer></script>
   {% include "partials/app_shell/shell_assets_v1.html" %}
 {% endblock %}
 
 {% block body %}
-  {% if debug_flicker %}
-  <!--
-  [APPGENESIS FLICKER DEBUG BACKEND]
-  - menu resolvido: {{ initial_menu }}
-  - admin_tab resolvido: {{ admin_tab }}
-  - target resolvido: {{ initial_menu_target }}
-  - admin_subprocess_state presente: {{ admin_subprocess_state is not none }}
-  - qual subprocesso administrativo montado: {{ admin_subprocess_state.config.key if admin_subprocess_state else 'Nenhum' }}
-  - template renderizando Sessões: {{ 'Sim' if admin_subprocess_state and admin_subprocess_state.config.key == 'sessoes' else 'Não' }}
-  - template renderizando Perfil de autorização: {{ 'Sim' if auth_profile_subprocess_state is not none else 'Não' }}
-  -->
-  {% endif %}
+{% for _missing_action in (menu_missing_actions or []) %}<span class="access-no-{{ _missing_action }}" hidden></span>{% endfor %}
   <div class="layout">
     {% include "partials/app_shell/sidebar_modern_v1.html" %}
 
@@ -58,8 +57,11 @@
           {{ render_admin_subprocess_state(auth_profile_subprocess_state) }}
         {% endif %}
 
-        {% if auth_objeto_subprocess_state %}
-          {{ render_admin_subprocess_state(auth_objeto_subprocess_state) }}
+        {% if funcoes_subprocess_state %}
+          {{ render_admin_subprocess_state(funcoes_subprocess_state) }}
+        {% endif %}
+        {% if departamentos_subprocess_state %}
+          {{ render_admin_subprocess_state(departamentos_subprocess_state) }}
         {% endif %}
 
         <!-- APPGENESIS_MENU_SUBPROCESS_V1_START -->
@@ -80,22 +82,10 @@
 
 
 
-<section id="dynamic-process-action-card" class="card appgenesis-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
-          <div class="appgenesis-process-action-toolbar-v1">
-            <button
-              id="dynamic-process-edit-toggle"
-              type="button"
-              class="profile-edit-toggle appgenesis-process-action-toggle-v1"
-              data-edit-target="dynamic-process-card"
-            >
-              Editar
-            </button>
-          </div>
-        </section>
-
         <section id="dynamic-process-card" class="card appgenesis-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
+            <button id="dynamic-process-edit-toggle" type="button" class="profile-edit-toggle appgenesis-process-action-toggle-v1" data-edit-target="dynamic-process-card">Editar</button>
           </div>
           {% if profile_success and initial_menu not in ["perfil", "meu_perfil"] %}
             <div class="alert ok">{{ profile_success }}</div>
@@ -129,7 +119,7 @@
           <p id="dynamic-process-empty" class="empty" style="display: none;">Sem campos configurados para esta aba.</p>
         </section>
 
-        <section id="dynamic-process-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
+        <section id="dynamic-process-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" data-admin-subprocess-status="ativo" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
           <h2 id="dynamic-process-active-title">Registos ativos</h2>
           <div class="admin-subprocess-table-wrap-v1">
             <table
@@ -145,7 +135,7 @@
           <div id="dynamic-process-active-limiter" class="table-limiter"></div>
         </section>
 
-        <section id="dynamic-process-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
+        <section id="dynamic-process-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" data-admin-subprocess-status="inativo" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
           <h2 id="dynamic-process-inactive-title">Registos inativos</h2>
           <div class="admin-subprocess-table-wrap-v1">
             <table
@@ -200,17 +190,43 @@
           </div>
         </section>
 
-        <section id="empresa-card" class="card entity-panel-card" data-menu-scope="empresa" {% if initial_menu != 'empresa' %}style="display: none;"{% endif %}>
-          <h2>Perfil institucional da entidade ativa</h2>
-          <p>Estes dados pertencem à entidade atualmente ativa e serão refletidos no cadastro da entidade.</p>
-          {% if entity_error and initial_menu == "empresa" %}
+        <section id="empresa-card" class="card entity-panel-card" data-menu-scope="administrativo,empresa" {% if initial_menu != 'empresa' and (initial_menu != 'administrativo' or initial_menu_target != '#empresa-card') %}style="display: none;"{% endif %}>
+          {% if company_profile_data %}
+          <div class="profile-card-header">
+            <h2>Perfil institucional da entidade</h2>
+            <button type="button" class="profile-edit-toggle profile-edit-icon-v1" data-edit-target="empresa-card" aria-label="Editar" title="Editar"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm17.71-10.21a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+          </div>
+          {% else %}
+          <h2>Perfil institucional da entidade</h2>
+          {% endif %}
+          {% if entity_error and initial_menu == "administrativo" and initial_menu_target == "#empresa-card" %}
             <div class="alert error">{{ entity_error }}</div>
           {% endif %}
-          {% if entity_success and initial_menu == "empresa" %}
+          {% if entity_success and initial_menu == "administrativo" and initial_menu_target == "#empresa-card" %}
             <div class="alert ok">{{ entity_success }}</div>
           {% endif %}
           {% if company_profile_data %}
-          <form method="post" action="/empresa/update" enctype="multipart/form-data">
+          <div class="profile-readonly">
+            {% if company_profile_data.logo_url %}
+            <img class="profile-photo-readonly-v1" src="{{ company_profile_data.logo_url }}" alt="Imagem da entidade">
+            {% endif %}
+            <div class="personal-grid">
+              <div class="personal-item"><span class="personal-label">Nº da entidade</span><strong class="personal-value">{{ company_profile_data.entity_number or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nome da entidade</span><strong class="personal-value">{{ company_profile_data.name or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Acrónimo</span><strong class="personal-value">{{ company_profile_data.acronym or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nº Identificação Fiscal</span><strong class="personal-value">{{ company_profile_data.tax_id or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Email</span><strong class="personal-value">{{ company_profile_data.email or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Telefone</span><strong class="personal-value">{{ company_profile_data.phone or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nome do responsável</span><strong class="personal-value">{{ company_profile_data.responsible_name or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">País</span><strong class="personal-value">{{ company_profile_data.country or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Cidade</span><strong class="personal-value">{{ company_profile_data.city or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Freguesia</span><strong class="personal-value">{{ company_profile_data.freguesia or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Código postal</span><strong class="personal-value">{{ company_profile_data.postal_code or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Morada</span><strong class="personal-value">{{ company_profile_data.address or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nº da porta</span><strong class="personal-value">{{ company_profile_data.door_number or '-' }}</strong></div>
+            </div>
+          </div>
+          <form method="post" action="/empresa/update" enctype="multipart/form-data" class="profile-edit-form">
             <input type="hidden" name="entity_id" value="{{ company_profile_data.id }}">
             <div class="entity-first-row">
               <div class="field entity-first-row-client">
@@ -231,10 +247,6 @@
               </div>
             </div>
             <div class="entity-second-row">
-              <div class="field entity-second-row-profile">
-                <label>Papel no tenant</label>
-                <input class="readonly-field" value="{{ company_profile_data.profile_scope_label }}" readonly disabled>
-              </div>
               <div class="field entity-second-row-email">
                 <label for="empresa_email">Email *</label>
                 <input id="empresa_email" name="email" type="email" required value="{{ company_profile_data.email }}">
@@ -249,13 +261,13 @@
               </div>
             </div>
             <div class="entity-third-row">
-              <div class="field entity-third-row-address">
-                <label for="empresa_address">Morada *</label>
-                <input id="empresa_address" name="address" required value="{{ company_profile_data.address }}">
+              <div class="field entity-fourth-row-country">
+                <label for="empresa_country">País *</label>
+                <input id="empresa_country" name="country" maxlength="50" required value="{{ company_profile_data.country }}">
               </div>
-              <div class="field entity-third-row-door">
-                <label for="empresa_door_number">Nº da porta *</label>
-                <input id="empresa_door_number" name="door_number" maxlength="15" required value="{{ company_profile_data.door_number }}">
+              <div class="field entity-fourth-row-city">
+                <label for="empresa_city">Cidade *</label>
+                <input id="empresa_city" name="city" maxlength="120" required value="{{ company_profile_data.city }}">
               </div>
               <div class="field entity-third-row-freguesia">
                 <label for="empresa_freguesia">Freguesia *</label>
@@ -267,36 +279,39 @@
               </div>
             </div>
             <div class="entity-fourth-row">
-              <div class="field entity-fourth-row-city">
-                <label for="empresa_city">Cidade *</label>
-                <input id="empresa_city" name="city" maxlength="120" required value="{{ company_profile_data.city }}">
+              <div class="field entity-third-row-address">
+                <label for="empresa_address">Morada *</label>
+                <input id="empresa_address" name="address" required value="{{ company_profile_data.address }}">
               </div>
-              <div class="field entity-fourth-row-country">
-                <label for="empresa_country">País *</label>
-                <input id="empresa_country" name="country" maxlength="50" required value="{{ company_profile_data.country }}">
+              <div class="field entity-third-row-door">
+                <label for="empresa_door_number">Nº da porta *</label>
+                <input id="empresa_door_number" name="door_number" maxlength="15" required value="{{ company_profile_data.door_number }}">
               </div>
             </div>
             <div class="entity-fifth-row entity-fifth-row-edit">
-              <div class="field entity-fifth-row-logo">
-                <label for="empresa_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
-                <input id="empresa_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
-              </div>
-            </div>
-            {% if company_profile_data.logo_url %}
-            <div class="entity-edit-logo-row">
-              <div class="field entity-edit-current-logo">
-                <label>Logo atual</label>
-                <div class="entity-edit-current-logo-preview">
-                  <input id="empresa_remove_logo_checkbox" class="entity-edit-remove-logo-input" type="checkbox" name="remove_logo" value="1">
-                  <label for="empresa_remove_logo_checkbox" class="entity-edit-remove-logo-btn" title="Remover logo atual" aria-label="Remover logo atual">&#10005;</label>
-                  <img class="entity-edit-current-logo-image" src="{{ company_profile_data.logo_url }}" alt="Logo atual da entidade">
-                  <div class="entity-edit-remove-logo-placeholder">Logo marcado para remoção. Clique em Guardar para confirmar.</div>
+              <div class="field profile-photo-field-v1 entity-fifth-row-logo">
+                <span class="personal-label">Imagem/ícone da entidade</span>
+                <div class="profile-photo-row-v1">
+                  <div class="entity-logo-picker-wrap">
+                    <button type="button" class="profile-photo-picker-v1" id="empresa_logo_picker" aria-haspopup="menu" aria-expanded="false" aria-controls="empresa_logo_menu" title="Alterar imagem da entidade">
+                      <img id="empresa_logo_preview" class="profile-photo-preview-v1" alt="" src="{{ company_profile_data.logo_url or '' }}" {% if not company_profile_data.logo_url %}hidden{% endif %}>
+                      <span class="profile-photo-placeholder-v1" {% if company_profile_data.logo_url %}hidden{% endif %} aria-hidden="true">{{ (company_profile_data.name or '?')[:1] }}</span>
+                      <span class="profile-photo-camera-v1" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" focusable="false"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 14.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg></span>
+                    </button>
+                    <div id="empresa_logo_menu" class="entity-logo-menu" role="menu" hidden>
+                      <button type="button" class="entity-logo-menu-item" role="menuitem" data-logo-action="select">Selecionar imagem</button>
+                      <button type="button" class="entity-logo-menu-item" role="menuitem" data-logo-action="remove" {% if not company_profile_data.logo_url %}disabled{% endif %}>Remover imagem</button>
+                    </div>
+                  </div>
+                  <input id="empresa_logo_file" class="visually-hidden-v1" type="file" name="entity_logo_file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+                  <input id="empresa_remove_logo" type="hidden" name="remove_logo" value="">
                 </div>
+                <small class="entity-logo-hint">PNG, JPG ou WEBP, até 5MB.</small>
               </div>
             </div>
-            {% endif %}
             <div class="form-action-row">
               <button type="submit" class="action-btn">Guardar</button>
+              <button type="button" class="action-btn-cancel" data-appgenesis-cancel="1">Cancelar</button>
             </div>
           </form>
           {% else %}
@@ -462,18 +477,20 @@
                   <div class="phone-country-combo-v1" data-phone-combo-v1>
                     <input
                       id="edit_country_code"
-                      class="phone-country-input-v1"
                       type="text"
+                      class="phone-country-trigger-v1"
                       autocomplete="off"
                       role="combobox"
+                      aria-haspopup="listbox"
                       aria-expanded="false"
                       aria-controls="edit-country-listbox"
                       aria-label="Indicativo e país"
-                      data-phone-country-v1
+                      value="+351"
+                      data-phone-trigger-v1
                     >
                     <ul id="edit-country-listbox" class="phone-country-listbox-v1" role="listbox" hidden data-phone-listbox-v1>
                       {% for option in phone_country_options %}
-                      <li role="option" data-value="{{ option.dial_code }} ({{ option.label }})">{{ option.dial_code }} ({{ option.label }})</li>
+                      <li role="option" data-dial="{{ option.dial_code }}" data-country="{{ option.label }}">{{ option.dial_code }} {{ option.label }}</li>
                       {% endfor %}
                     </ul>
                   </div>
@@ -510,7 +527,7 @@
               {% endif %}
               {% if "data_nascimento" in profile_personal_visible_fields %}
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', '') }}">
-                <label for="edit_birth_date">Data de nascimento</label>
+                <label for="edit_birth_date">Data de nascimento *</label>
                 <input
                   id="edit_birth_date"
                   type="date"
@@ -565,7 +582,7 @@
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, '') }}" data-profile-field-key="{{ field_key }}">
                 <label for="edit_{{ field_key }}">{{ profile_personal_field_labels.get(field_key, field_key) }}{% if custom_required and custom_type != "flag" %} *{% endif %}</label>
                 {% if custom_type == "flag" %}
-                <label class="profile-custom-flag-control">
+                <label class="profile-custom-flag-control{% if custom_meta.get('button_style') == 'checkbox' %} profile-custom-flag-control--checkbox{% endif %}">
                   <input
                     id="edit_{{ field_key }}"
                     type="checkbox"
@@ -575,6 +592,21 @@
                   >
                   <span>Ativo</span>
                 </label>
+                {% elif custom_type == "list" and custom_meta.get("button_style") in ["radio", "segmented", "confirm"] %}
+                <div class="profile-button-group profile-button-group--{{ custom_meta.get('button_style') }}" role="radiogroup" aria-label="{{ profile_personal_field_labels.get(field_key, field_key) }}">
+                  {% for option_value in custom_list_options %}
+                  <label class="profile-button-option">
+                    <input
+                      type="radio"
+                      name="custom_field__{{ field_key }}"
+                      value="{{ option_value }}"
+                      {% if user_personal_data.custom_fields.get(field_key, '') == option_value %}checked{% endif %}
+                      {% if custom_required and loop.first %}required{% endif %}
+                    >
+                    <span>{{ option_value }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
                 {% elif custom_type == "list" %}
                 <select
                   id="edit_{{ field_key }}"
@@ -611,14 +643,9 @@
           </form>
         </section>
 
-        <section id="sessao-card" class="card" data-menu-scope="links,contato" {% if initial_menu not in ['links', 'contato'] or (initial_menu_target and initial_menu_target != '#sessao-card') %}style="display: none;"{% endif %}>
-          <h2>Sessão</h2>
-          <p>Ligado como <strong>{{ current_user.full_name }}</strong> ({{ current_user.login_email }})</p>
-        </section>
-
         {% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
-        <section id="create-user-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="utilizador" data-admin-subprocess-role="form" data-admin-subprocess-inline-create-enabled="1" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
+        <section id="create-user-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="utilizador" data-admin-subprocess-role="form" data-admin-subprocess-inline-create-enabled="1" data-menu-scope="administrativo,meu_perfil" {% if initial_menu not in ['administrativo', 'meu_perfil'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
             <div class="entity-create-toolbar appgenesis-process-action-toolbar-v1">
             <details id="create-user-collapse" class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1" data-appgenesis-user-create-details="1"{% if errors %} open{% endif %}>
               <summary class="appgenesis-process-action-toggle-v1">
@@ -626,6 +653,9 @@
               </summary>
               <div class="entity-create-body appgenesis-process-action-panel-v1">
                 <div class="admin-subsection">
+                  {% if errors %}
+                  <div class="alert error" role="alert">{% for error_message in errors %}<p>{{ error_message }}</p>{% endfor %}</div>
+                  {% endif %}
                   <form id="create-user-form" method="post" action="/users/new">
                     <input type="hidden" name="return_menu" value="administrativo">
                     <input type="hidden" name="return_admin_tab" value="utilizador">
@@ -647,42 +677,12 @@
                         <label for="create_user_system_profile">Perfil no Sistema</label>
                         <select id="create_user_system_profile" name="system_profile">
                           <option value="default" {% if not form_data.system_profile or form_data.system_profile == "default" %}selected{% endif %}>User</option>
+                          {% if current_user_can_manage_tenant_structure %}
                           <option value="owner" {% if form_data.system_profile == "owner" %}selected{% endif %}>Admin</option>
                           <option value="super_user" {% if form_data.system_profile == "super_user" %}selected{% endif %}>Super User</option>
+                          {% endif %}
                         </select>
                       </div>
-                      {% if can_select_user_entity %}
-                      <div class="field">
-                        <label for="create_user_entity_id">Entidade *</label>
-                        <select
-                          id="create_user_entity_id"
-                          name="entity_id"
-                          required
-                          data-user-entity-select="1"
-                          data-user-entity-number-target="create_user_entity_number"
-                        >
-                          <option value="">— Selecione uma entidade —</option>
-                          {% for entity in entities_for_user_form %}
-                          <option
-                            value="{{ entity.id }}"
-                            data-entity-number="{{ entity.entity_number if entity.entity_number is not none else '' }}"
-                            data-entity-name="{{ entity.name }}"
-                            {% if form_data.entity_id == entity.id | string %}selected{% endif %}
-                          >{{ entity.name }}{% if entity.entity_number is not none %} (Nº {{ entity.entity_number }}){% endif %}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <div class="field">
-                        <label for="create_user_entity_number">Nº da Entidade</label>
-                        <input
-                          id="create_user_entity_number"
-                          value="{{ form_data.entity_number if form_data.entity_number else '' }}"
-                          readonly
-                          disabled
-                          class="readonly-field"
-                        >
-                      </div>
-                      {% else %}
                       <div class="field">
                         <label for="entity_auto_name">Entidade</label>
                         <input
@@ -704,7 +704,6 @@
                           class="readonly-field"
                         >
                       </div>
-                      {% endif %}
                       <div class="field">
                         <label for="create_user_status">Estado da conta</label>
                         <input id="create_user_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
@@ -727,7 +726,7 @@
         {% endif %}
 
         {% if user_edit_data is defined and user_edit_data.id %}
-        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
+        <section id="edit-user-card" class="card entity-panel-card" data-admin-subprocess="utilizador" data-admin-inline-edit-form="1" data-menu-scope="administrativo,meu_perfil" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'meu_perfil'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
           <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
 
           <div class="admin-subsection">
@@ -759,8 +758,10 @@
                   {% else %}
                   <select id="edit_user_system_profile" name="system_profile" {% if user_readonly_mode %}disabled{% endif %}>
                     <option value="default" {% if user_edit_data.system_type == "default" %}selected{% endif %}>User</option>
+                    {% if current_user_can_manage_tenant_structure %}
                     <option value="owner" {% if user_edit_data.system_type == "owner" %}selected{% endif %}>Admin</option>
                     <option value="super_user" {% if user_edit_data.system_type == "super_user" %}selected{% endif %}>Super User</option>
+                    {% endif %}
                   </select>
                   {% endif %}
                 </div>
@@ -779,7 +780,7 @@
                     {% if not user_readonly_mode %}required{% endif %}
                     data-user-entity-select="1"
                     data-user-entity-name-target="edit_user_entity_name"
-                    {% if user_readonly_mode or not entities_for_user_edit_form %}disabled{% endif %}
+                    {% if user_readonly_mode or not entities_for_user_edit_form or not current_user_can_manage_tenant_structure %}disabled{% endif %}
                   >
                     <option
                       value=""
@@ -796,9 +797,10 @@
                     >{{ entity.entity_number }}</option>
                     {% endfor %}
                   </select>
+                  {% if not current_user_can_manage_tenant_structure %}<input type="hidden" name="entity_id" value="{{ user_edit_data.entity_id or '' }}">{% endif %}
                 </div>
                 <div class="field">
-                  <label for="edit_user_entity_name">Entidade (automática pelo Nº da Entidade)</label>
+                  <label for="edit_user_entity_name">Nome da entidade</label>
                   <input
                     id="edit_user_entity_name"
                     value="{{ user_edit_data.entity_name if user_edit_data.entity_name else '-' }}"
@@ -834,8 +836,64 @@
           </div>
         </section>
         {% endif %}
-        {% if admin_subprocess_user_state is not none %}
+        {% if admin_subprocess_user_state is defined and admin_subprocess_user_state is not none %}
           {{ render_admin_subprocess_tables(admin_subprocess_user_state) }}
+        {% endif %}
+
+        {% if current_user_can_manage_all_entities and admin_subprocess_system_admin_state is defined and admin_subprocess_system_admin_state is not none %}
+          {% set system_admin_create_html %}
+          <div id="system-admins-card" class="system-admins-create-wrap" data-admin-subprocess="admin_sistema" data-admin-subprocess-role="form">
+                      <div class="entity-create-toolbar appgenesis-process-action-toolbar-v1">
+                      <details id="system-admins-create-collapse" class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1"{% if errors and form_data and form_data.system_profile == 'legado' %} open{% endif %}>
+                        <summary class="system-admins-inline-create-trigger" aria-hidden="true">
+                          <span>Criar administrador do sistema</span>
+                        </summary>
+                        <div class="entity-create-body appgenesis-process-action-panel-v1">
+                          <div class="admin-subsection">
+                            <form id="create-system-admin-form" method="post" action="/users/new">
+                              <input type="hidden" name="system_profile" value="legado">
+                              <input type="hidden" name="return_menu" value="administrativo">
+                              <input type="hidden" name="return_admin_tab" value="admin_sistema">
+                              <input type="hidden" name="return_target" value="#system-admins-card">
+                              <div class="grid">
+                                <div class="field">
+                                  <label for="system_admin_full_name">Nome completo *</label>
+                                  <input id="system_admin_full_name" name="full_name" required value="{{ form_data.full_name if form_data and form_data.system_profile == 'legado' else '' }}">
+                                </div>
+                                <div class="field">
+                                  <label for="system_admin_primary_phone">Telefone principal *</label>
+                                  <input id="system_admin_primary_phone" name="primary_phone" required value="{{ form_data.primary_phone if form_data and form_data.system_profile == 'legado' else '' }}">
+                                </div>
+                                <div class="field">
+                                  <label for="system_admin_email">Email *</label>
+                                  <input id="system_admin_email" name="email" type="email" required value="{{ form_data.email if form_data and form_data.system_profile == 'legado' else '' }}">
+                                </div>
+                                <div class="field">
+                                  <label for="system_admin_entity_id">Entidade legada *</label>
+                                  <select id="system_admin_entity_id" name="entity_id" required>
+                                    <option value="">— Selecione uma entidade legada —</option>
+                                    {% for entity in legacy_entities_for_admin_form %}
+                                    <option value="{{ entity.id }}">{{ entity.name }}{% if entity.entity_number is not none %} (Nº {{ entity.entity_number }}){% endif %}</option>
+                                    {% endfor %}
+                                  </select>
+                                </div>
+                                <div class="field">
+                                  <label for="system_admin_status">Estado da conta</label>
+                                  <input id="system_admin_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
+                                </div>
+                              </div>
+                              <div class="form-action-row">
+                                <button type="submit" name="invite_delivery" value="email" class="action-btn">Enviar convite</button>
+                                <button type="button" class="action-btn-cancel" data-appgenesis-cancel="1">Cancelar</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </details>
+                    </div>
+          </div>
+          {% endset %}
+          {{ render_admin_subprocess_tables(admin_subprocess_system_admin_state, system_admin_create_html) }}
         {% endif %}
 
         {# APPGENESIS_UTILIZADOR_INVITE_LINK_HEADER_V1: marcacao de origem do
@@ -884,7 +942,7 @@
           <div class="appgenesis-process-action-toolbar-v1">
           <details class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1">
             <summary class="appgenesis-process-action-toggle-v1">
-              <span>{{ admin_subprocess_entity_state.config.create_title }}</span>
+              <span>{{ admin_subprocess_entity_state.config.create_title if admin_subprocess_entity_state is defined and admin_subprocess_entity_state else "Criar entidade" }}</span>
             </summary>
             <div class="entity-create-body appgenesis-process-action-panel-v1">
               <form method="post" action="/entities/new" enctype="multipart/form-data">
@@ -1052,13 +1110,13 @@
               </div>
             </div>
             <div class="entity-third-row">
-              <div class="field entity-third-row-address">
-                <label for="edit_entity_address">Morada *</label>
-                <input id="edit_entity_address" name="address" required value="{{ entity_edit_data.address }}">
+              <div class="field entity-fourth-row-country">
+                <label for="edit_entity_country">País *</label>
+                <input id="edit_entity_country" name="country" maxlength="50" required value="{{ entity_edit_data.country }}">
               </div>
-              <div class="field entity-third-row-door">
-                <label for="edit_entity_door_number">Nº da porta *</label>
-                <input id="edit_entity_door_number" name="door_number" maxlength="15" required value="{{ entity_edit_data.door_number }}">
+              <div class="field entity-fourth-row-city">
+                <label for="edit_entity_city">Cidade *</label>
+                <input id="edit_entity_city" name="city" maxlength="120" required value="{{ entity_edit_data.city }}">
               </div>
               <div class="field entity-third-row-freguesia">
                 <label for="edit_entity_freguesia">Freguesia *</label>
@@ -1070,23 +1128,17 @@
               </div>
             </div>
             <div class="entity-fourth-row">
-              <div class="field entity-fourth-row-city">
-                <label for="edit_entity_city">Cidade *</label>
-                <input id="edit_entity_city" name="city" maxlength="120" required value="{{ entity_edit_data.city }}">
+              <div class="field entity-third-row-address">
+                <label for="edit_entity_address">Morada *</label>
+                <input id="edit_entity_address" name="address" required value="{{ entity_edit_data.address }}">
               </div>
-              <div class="field entity-fourth-row-country">
-                <label for="edit_entity_country">País *</label>
-                <input id="edit_entity_country" name="country" maxlength="50" required value="{{ entity_edit_data.country }}">
+              <div class="field entity-third-row-door">
+                <label for="edit_entity_door_number">Nº da porta *</label>
+                <input id="edit_entity_door_number" name="door_number" maxlength="15" required value="{{ entity_edit_data.door_number }}">
               </div>
               <div class="field entity-fourth-row-created-at">
                 <label for="edit_entity_created_at">Data da criação</label>
                 <input id="edit_entity_created_at" class="readonly-field" value="{{ entity_edit_data.created_at }}" readonly disabled>
-              </div>
-            </div>
-            <div class="entity-fifth-row entity-fifth-row-edit">
-              <div class="field entity-fifth-row-logo">
-                <label for="edit_entity_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
-                <input id="edit_entity_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
               </div>
               <div class="field entity-edit-status-row">
                 <label for="edit_entity_status">Estado da entidade *</label>
@@ -1107,31 +1159,28 @@
                 {% endif %}
               </div>
             </div>
-
-            {% if entity_edit_data.logo_url %}
-              <div class="entity-edit-logo-row">
-                <div class="field entity-edit-current-logo">
-                  <label>Logo atual</label>
-                  <div class="entity-edit-current-logo-preview">
-                    <input
-                      id="remove_logo_checkbox"
-                      class="entity-edit-remove-logo-input"
-                      type="checkbox"
-                      name="remove_logo"
-                      value="1"
-                    >
-                    <label
-                      for="remove_logo_checkbox"
-                      class="entity-edit-remove-logo-btn"
-                      title="Remover logo atual"
-                      aria-label="Remover logo atual"
-                    >&#10005;</label>
-                    <img class="entity-edit-current-logo-image" src="{{ entity_edit_data.logo_url }}" alt="Logo atual da entidade">
-                    <div class="entity-edit-remove-logo-placeholder">Logo marcado para remoção. Clique em Guardar para confirmar.</div>
+            <div class="entity-fifth-row entity-fifth-row-edit">
+              <div class="field profile-photo-field-v1 entity-fifth-row-logo">
+                <span class="personal-label">Imagem/ícone da entidade</span>
+                <div class="profile-photo-row-v1">
+                  <div class="entity-logo-picker-wrap">
+                    <button type="button" class="profile-photo-picker-v1" id="edit_entity_logo_picker" aria-haspopup="menu" aria-expanded="false" aria-controls="edit_entity_logo_menu" title="Alterar imagem da entidade">
+                      <img id="edit_entity_logo_preview" class="profile-photo-preview-v1" alt="" src="{{ entity_edit_data.logo_url or '' }}" {% if not entity_edit_data.logo_url %}hidden{% endif %}>
+                      <span class="profile-photo-placeholder-v1" {% if entity_edit_data.logo_url %}hidden{% endif %} aria-hidden="true">{{ (entity_edit_data.name or '?')[:1] }}</span>
+                      <span class="profile-photo-camera-v1" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" focusable="false"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 14.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg></span>
+                    </button>
+                    <div id="edit_entity_logo_menu" class="entity-logo-menu" role="menu" hidden>
+                      <button type="button" class="entity-logo-menu-item" role="menuitem" data-logo-action="select">Selecionar imagem</button>
+                      <button type="button" class="entity-logo-menu-item" role="menuitem" data-logo-action="remove" {% if not entity_edit_data.logo_url %}disabled{% endif %}>Remover imagem</button>
+                    </div>
                   </div>
+                  <input id="edit_entity_logo_file" class="visually-hidden-v1" type="file" name="entity_logo_file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+                  <input id="edit_entity_remove_logo" type="hidden" name="remove_logo" value="">
                 </div>
+                <small class="entity-logo-hint">PNG, JPG ou WEBP, até 5MB.</small>
               </div>
-            {% endif %}
+            </div>
+
             <div class="form-action-row">
               {% if not entity_readonly_mode %}
               <button type="submit" class="action-btn">Guardar</button>
@@ -1149,9 +1198,9 @@
         </section>
         {% endif %}
 
-        {% if current_user_can_manage_tenant_structure and admin_subprocess_entity_state is not none %}
+        {% if current_user_can_manage_tenant_structure and admin_subprocess_entity_state is defined and admin_subprocess_entity_state is not none %}
           {{ render_admin_subprocess_tables(admin_subprocess_entity_state) }}
-        {% else %}
+        {% elif current_user_can_manage_tenant_structure %}
           <section id="recent-entities-card" class="card" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#recent-entities-card' %}style="display: none;"{% endif %}>
             <h2>Dados gerais</h2>
             {% set _dados_gerais_entities = recent_entities[:1] %}
@@ -1244,6 +1293,9 @@
           <p>Atualize as configurações deste processo.</p>
           {% if settings_has_process_fields %}
           <div class="process-edit-tabs" id="process-edit-tabs" role="tablist" aria-label="Abas de edição do processo">
+            {% if settings_owner_fields_enabled %}
+            <a href="#settings-tab-sessao" role="tab" aria-selected="{% if settings_edit_active_tab == 'sessao' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'sessao' %}active{% endif %}" data-process-edit-tab="sessao">Sessão</a>
+            {% endif %}
             <a href="#settings-tab-geral" role="tab" aria-selected="{% if settings_edit_active_tab == 'geral' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'geral' %}active{% endif %}" data-process-edit-tab="geral">Geral</a>
             {% set missing_header_ns = namespace(count=0) %}
             {% for field_row in (settings_process_visible_field_rows or []) %}
@@ -1258,6 +1310,36 @@
               <a href="#settings-tab-lista" role="tab" aria-selected="{% if settings_edit_active_tab == 'lista' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'lista' %}active{% endif %}" data-process-edit-tab="lista">Listas</a>
               <a href="#settings-tab-campos-subsequentes" role="tab" aria-selected="{% if settings_edit_active_tab == 'campos-subsequentes' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'campos-subsequentes' %}active{% endif %}" data-process-edit-tab="campos-subsequentes">Campos Subsequentes</a>
             {% endif %}
+          </div>
+          {% endif %}
+          {% if settings_owner_fields_enabled %}
+          <div id="settings-tab-sessao" class="process-edit-pane {% if settings_edit_active_tab == 'sessao' %}active{% endif %}" data-process-edit-pane="sessao">
+            <section class="card admin-subprocess-table-card-v1" id="settings-menu-session-card">
+              <h2>Sessão do menu</h2>
+              <form method="post" action="/settings/menu/session" data-menu-session-form-v1="1">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <label for="settings-menu-session-select">Sessão</label>
+                <select id="settings-menu-session-select" name="section_key" required>
+                  {% for session_option in (settings_edit_data.session_options or []) %}
+                  <option value="{{ session_option.key }}" {% if session_option.key == settings_edit_data.session_current_key %}selected{% endif %}>{{ session_option.label }}</option>
+                  {% endfor %}
+                </select>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <button
+                    type="button"
+                    class="action-btn-cancel"
+                    data-appgenesis-cancel="1"
+                    data-appgenesis-cancel-target="settings-menu-edit-card"
+                    data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                    data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
+                  >Cancelar</button>
+                </div>
+              </form>
+            </section>
           </div>
           {% endif %}
           <div id="settings-tab-geral" class="process-edit-pane {% if settings_edit_active_tab == 'geral' %}active{% endif %}" data-process-edit-pane="geral">
@@ -1943,6 +2025,7 @@
                       <input type="hidden" name="additional_field_key" value="{{ field.key }}" disabled>
                       <input type="hidden" name="additional_field_label" value="{{ field.label }}" disabled>
                       <input type="hidden" name="additional_field_type" value="{{ additional_field_type }}" disabled>
+                      <input type="hidden" name="additional_field_button_style" value="{% if additional_field_type == 'flag' %}{{ field.button_style|default('toggle') }}{% elif additional_field_type == 'list' %}{{ field.button_style|default('') }}{% endif %}" disabled>
                       <input type="hidden" name="additional_field_required" value="{% if additional_field_required %}1{% else %}{% endif %}" disabled>
                       <input type="hidden" name="additional_field_size" value="{{ field.size|default('') }}" disabled>
                       <input type="hidden" name="additional_field_list_key" value="{{ field.list_key|default('') }}" disabled>
@@ -1980,6 +2063,18 @@
                         >
                           {% for type_option in settings_edit_data.additional_field_type_options %}
                           <option value="{{ type_option.key }}">{{ type_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field" data-additional-field-button-style-wrap style="display: none;">
+                        <label for="process-additional-field-editor-button-style">Estilo do botão</label>
+                        <select
+                          id="process-additional-field-editor-button-style"
+                          data-additional-field-editor-button-style
+                        >
+                          {% for style_option in settings_edit_data.additional_field_button_style_options|default([]) %}
+                          <option value="{{ style_option.key }}">{{ style_option.label }}</option>
                           {% endfor %}
                         </select>
                       </div>
@@ -2043,9 +2138,28 @@
                         >
                           <option value="manual">Manual</option>
                           <option value="active_menus">Menus ativos</option>
+                          <option value="active_sessions">Sessões ativas</option>
+                          <option value="active_departments">Departamentos ativos</option>
                           <option value="profile_menu_tabs">Abas do processo selecionado</option>
                           <option value="automatic">Automática por registos</option>
                           <option value="field_list">Lista de outro campo</option>
+                        </select>
+                      </div>
+
+                      <div
+                        class="field"
+                        data-additional-field-list-key-wrap
+                        style="display: none;"
+                      >
+                        <label for="process-additional-field-editor-list-key">Nome da Lista</label>
+                        <select
+                          id="process-additional-field-editor-list-key"
+                          data-additional-field-editor-list-key
+                        >
+                          <option value="">Escrever opções manualmente</option>
+                          {% for process_list in settings_edit_data.process_lists|default([]) %}
+                          <option value="{{ process_list.key }}">{{ process_list.label }}{% if process_list.status|default('ativo') == 'inativo' %} (Inativa){% endif %}</option>
+                          {% endfor %}
                         </select>
                       </div>
 
@@ -2218,7 +2332,7 @@
         {# Blocos manuais de Menu (admin-account-create-card, admin-account-status-card, inactive-menu-settings-card) removidos — substituídos pelo macro render_admin_subprocess_state(admin_subprocess_menu_state) #}
 
         <!-- APPGENESIS_MENU_SUBPROCESS_TABLES_V1_START -->
-        {% if admin_subprocess_menu_state is not none %}
+        {% if admin_subprocess_menu_state is defined and admin_subprocess_menu_state is not none %}
           {{ render_admin_subprocess_tables(admin_subprocess_menu_state) }}
         {% endif %}
         <!-- APPGENESIS_MENU_SUBPROCESS_TABLES_V1_END -->
@@ -2236,7 +2350,7 @@
             <thead>
               <tr>
                 <th>Menu lateral</th>
-                <th>Sessão</th>
+                <th>Definição</th>
                 {% if current_entity_scope == "owner" %}
                 <th>Sistema</th>
                 {% endif %}
@@ -2405,81 +2519,100 @@
     </main>
     </div>
   </div>
-<script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v={{ asset_version }}"></script>
 {% endblock %}
 
 {% block scripts %}
-  <script src="/static/js/modules/debug_flicker_cards_v1.js?v=20260627-flicker-debug-v1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
-  <script>
-    window.__APPGENESIS_BOOTSTRAP__ = {
-      currentUserName: {{ current_user.full_name|tojson }},
-      currentUserEmail: {{ current_user.login_email|tojson }},
-      currentUserIsAdmin: {{ current_user_is_admin|tojson }},
-      currentUserCanManageTenantStructure: {{ current_user_can_manage_tenant_structure|tojson }},
-      dashboardData: {{ dashboard_data|tojson }},
-      currentUserPhone: {{ user_personal_data.primary_phone|tojson }},
-      currentUserAccountStatus: {{ user_personal_data.account_status|tojson }},
-      currentUserMemberStatus: {{ user_personal_data.member_status|tojson }},
-      currentUserEntities: {{ user_personal_data.entities|tojson }},
-      currentUserAddress: {{ user_personal_data.address|tojson }},
-      currentUserCity: {{ user_personal_data.city|tojson }},
-      currentUserFreguesia: {{ user_personal_data.freguesia|tojson }},
-      currentUserPostalCode: {{ user_personal_data.postal_code|tojson }},
-      profilePersonalSections: {{ profile_personal_sections|tojson }},
-      profilePersonalVisibleFields: {{ profile_personal_visible_fields|tojson }},
-      profilePersonalFieldLabels: {{ profile_personal_field_labels|tojson }},
-      initialProfileTab: {{ profile_tab|tojson }},
-      initialMenu: {{ initial_menu|tojson }},
-      initialMenuTarget: {{ initial_menu_target|tojson }},
-      initialDynamicProcessSection: {{ initial_dynamic_process_section|tojson }},
-      initialAdminTab: {{ admin_tab|tojson }},
-      currentEntityId: {{ entity_permissions.selected_entity_id|tojson }},
-      settingsAction: {{ settings_action|tojson }},
-      settingsTab: {{ settings_tab|tojson }},
-      settingsEditKey: {{ settings_edit_key|tojson }},
-      sidebarMenuSettings: {{ sidebar_menu_settings|tojson }},
-      visibleSidebarMenuKeys: {{ visible_sidebar_menu_keys|tojson }},
-      menuProcessValuesMap: {{ menu_process_values_map|tojson }},
-      menuProcessHistoryMap: {{ menu_process_history_map|tojson }},
-      menuProcessQuantityValuesMap: {{ menu_process_quantity_values_map|tojson }}
-    };
+  <script type="application/json" id="appgenesis-bootstrap">
+    {
+      "currentUserName": {{ current_user.full_name|tojson }},
+      "currentUserEmail": {{ current_user.login_email|tojson }},
+      "currentUserIsAdmin": {{ (current_user_is_owner_admin|default(false))|tojson }},
+      "currentUserCanManageTenantStructure": {{ current_user_can_manage_tenant_structure|tojson }},
+      "dashboardData": {{ dashboard_data|tojson }},
+      "currentUserPhone": {{ user_personal_data.primary_phone|tojson }},
+      "currentUserAccountStatus": {{ user_personal_data.account_status|tojson }},
+      "currentUserMemberStatus": {{ user_personal_data.member_status|tojson }},
+      "currentUserEntities": {{ user_personal_data.entities|tojson }},
+      "currentUserAddress": {{ user_personal_data.address|tojson }},
+      "currentUserCity": {{ user_personal_data.city|tojson }},
+      "currentUserFreguesia": {{ user_personal_data.freguesia|tojson }},
+      "currentUserPostalCode": {{ user_personal_data.postal_code|tojson }},
+      "profilePersonalSections": {{ profile_personal_sections|tojson }},
+      "profilePersonalVisibleFields": {{ profile_personal_visible_fields|tojson }},
+      "profilePersonalFieldLabels": {{ profile_personal_field_labels|tojson }},
+      "initialProfileTab": {{ profile_tab|tojson }},
+      "initialMenu": {{ initial_menu|tojson }},
+      "initialMenuTarget": {{ initial_menu_target|tojson }},
+      "initialDynamicProcessSection": {{ initial_dynamic_process_section|tojson }},
+      "initialAdminTab": {{ admin_tab|tojson }},
+      "currentEntityId": {{ entity_permissions.selected_entity_id|tojson }},
+      "settingsAction": {{ settings_action|tojson }},
+      "settingsTab": {{ settings_tab|tojson }},
+      "settingsEditKey": {{ settings_edit_key|tojson }},
+      "sidebarMenuSettings": {{ sidebar_menu_settings|tojson }},
+      "visibleSidebarMenuKeys": {{ visible_sidebar_menu_keys|tojson }},
+      "menuProcessValuesMap": {{ menu_process_values_map|tojson }},
+      "menuProcessHistoryMap": {{ menu_process_history_map|tojson }},
+      "menuProcessQuantityValuesMap": {{ menu_process_quantity_values_map|tojson }}
+    }
   </script>
-  <script src="/static/js/modules/debug_flicker_v1.js?v=20260627-flicker-debug-v1"></script>
-  <script src="/static/js/modules/appgenesis_dialog_v1.js?v=20260704-dialog-v1"></script>
-  <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
-  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20261119-tag-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20261119-default-size-v1"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260717-inline-editor-v1"></script>
-  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20261119-checklist-header-v1"></script>
-  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260717-inline-editor-v1"></script>
-  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260716-flash-timing-v1"></script>
-  <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260710-process-editor-stay-v1"></script>
-  <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/modules/process_keys_registry_v1.js?v=20260707-process-keys-registry-v1"></script>
-  <script src="/static/js/modules/process_reference_registry_v1.js?v=20260707-process-reference-stage8-v1"></script>
-  <script src="/static/js/modules/admin_target_registry_v1.js?v=20260707-admin-target-registry-v1"></script>
-  <script src="/static/js/modules/process_menu_config_builder_v1.js?v=20260715-sections-tabs-v3"></script>
-  <script src="/static/js/modules/process_navigation_state_v1.js?v=20260713-entity-edit-startup-v1"></script>
-  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260714-recent-users-home-only-v1"></script>
-  <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
-  <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260713-entity-edit-hash-v1"></script>
-  <script src="/static/js/modules/profile_phone_field_v1.js?v=20260716-reset-v8"></script>
-  <script src="/static/js/new_user.js?v=20261118-tab-dot-observer-v1"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
-  <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
-  <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
-<script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
-  <script src="/static/js/modules/return_after_save.js?v=20260626-ignore-sessoes-save-v1"></script>
-  <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
-  <script src="/static/js/modules/settings_process_tabs.js?v=20261119-dot-keep-v1"></script>
-  <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
-<script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
-  <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
-  <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260706-stop-on-submit-capture-v2"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20261119-reload-v1"></script>
-  <script src="/static/js/modules/user_entity_selector_v1.js?v=20260623-user-entity-selector-v1"></script>
+  <script src="/static/js/modules/app_bootstrap_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/appgenesis_dialog_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_field_options_resolver_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/top_submenu_runtime_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_keys_registry_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_reference_registry_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/admin_target_registry_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_menu_config_builder_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_navigation_state_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_cards_visibility_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_submenu_runtime_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_menu_runtime_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/profile_phone_field_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/cidade_por_pais_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/codigo_postal_morada_v1.js?v={{ asset_version }}"></script>
+  {# new_user.js dividido por dominio (Etapa 5); a ordem conta: escopo global partilhado. #}
+  <script src="/static/js/new_user/01_state.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/02_menu_config.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/03_home_user_menu.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/04_dynamic_process_lists.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/05_dynamic_process_quantity.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/06_dynamic_process_card.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/07_navigation.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/08_meu_perfil.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/09_process_settings_builders.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/10_runtime_wiring.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/11_admin_users.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/12_boot.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/13_meu_perfil_runtime.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/14_post_save_return.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/15_meu_perfil_sections.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/16_ui_feedback.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/auth_profile_inline_editor_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/admin_subprocess_inline_editor_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/admin_profile_multi_select_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/auth_profile_menu_origin_filter_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/sidebar_sections_layout_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_lists_runtime_v5.js?v={{ asset_version }}"></script>
+<script src="/static/js/modules/profile_field_order.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/return_after_save.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/settings_edit_focus_mode.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/settings_process_tabs.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/settings_default_tab.js?v={{ asset_version }}"></script>
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/sidebar_global_refresh_v1.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v7.js?v={{ asset_version }}"></script>
+  <script src="/static/js/modules/user_entity_selector_v1.js?v={{ asset_version }}"></script>
 {% endblock %}

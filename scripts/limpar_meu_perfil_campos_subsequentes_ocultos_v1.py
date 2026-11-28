@@ -23,7 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from sqlalchemy import text
 
-from appgenesis.core import SessionLocal
+from appgenesis.db.session import SessionLocal
 from appgenesis.services.profile import (
     get_hidden_process_targets_from_rules,
     parse_member_profile_fields,

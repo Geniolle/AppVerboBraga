@@ -9,7 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.config.settings import settings
+from new_user_js_source import read_new_user_js
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -36,8 +37,8 @@ def _build_driver_v1():
 
 
 def _login_admin_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
-    admin_email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    admin_password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    admin_email = str(settings.ADMIN_LOGIN_EMAIL or "").strip()
+    admin_password = str(settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not admin_email or not admin_password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD nao definidos.")
 
@@ -251,9 +252,7 @@ def test_top_menu_active_scopes_sticky_label_to_administrativo() -> None:
 
 
 def test_new_user_js_exposes_active_menu_key_signal() -> None:
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(
-        encoding="utf-8"
-    )
+    js_text = read_new_user_js()
 
     assert "window.__appgenesisGetActiveMenuKeyV1 = function () {" in js_text
     assert "return activeMenuKey;" in js_text
@@ -401,6 +400,24 @@ def _open_process_editor_from_list_v1(
     wait.until(lambda drv: "settings_edit_key" in _current_href_v1(drv))
 
 
+def _activate_editor_tab_v1(driver: webdriver.Chrome, wait: WebDriverWait, tab: str) -> None:
+    # O editor pode ainda estar a acabar de carregar (reload apos "Editar"); um clique feito
+    # antes perde-se. Volta a clicar ate a aba ficar ativa.
+    wait.until(
+        lambda drv: drv.execute_script(
+            """
+            const tab = arguments[0];
+            const active = document.querySelector(".process-edit-pane.active");
+            if (active && (active.getAttribute("data-process-edit-pane") || "").includes(tab)) return true;
+            const link = document.querySelector(`[data-process-edit-tab='${tab}']`);
+            if (link) link.click();
+            return false;
+            """,
+            tab,
+        )
+    )
+
+
 def _editor_card_closed_v1(driver: webdriver.Chrome) -> bool:
     # O editor pode fechar de duas formas legitimas: escondido via JS (Cancelar, sem reload)
     # ou ausente do DOM porque o backend so renderiza a section quando settings_edit_data
@@ -431,8 +448,10 @@ def test_process_editor_cancel_returns_to_origin_list_on_multiple_tabs() -> None
         _login_admin_v1(driver, wait)
         _open_estruturas_menu_list_v1(driver, wait)
 
-        # (a) Cancelar na aba "Geral" (aba ativa por omissao).
+        # (a) Cancelar na aba "Sessao". A aba "Geral" (por omissao) so lista os campos e nao
+        # tem Guardar/Cancelar.
         _open_process_editor_from_list_v1(driver, wait)
+        _activate_editor_tab_v1(driver, wait, "sessao")
         driver.find_element(
             By.CSS_SELECTOR, ".process-edit-pane.active .action-btn-cancel"
         ).click()
@@ -440,29 +459,25 @@ def test_process_editor_cancel_returns_to_origin_list_on_multiple_tabs() -> None
 
         # (b) Reabrir e cancelar numa segunda aba ("Configuração dos campos"), provando que
         # a saida do editor e generica e nao depende da aba especifica.
+        # O Cancelar desta aba esta no formulario que so abre com "+ Configurar campo".
         _open_process_editor_from_list_v1(driver, wait)
+        _activate_editor_tab_v1(driver, wait, "campos-config")
         driver.find_element(
-            By.CSS_SELECTOR, "[data-process-edit-tab='campos-config']"
+            By.CSS_SELECTOR, ".process-edit-pane.active [data-configurable-create-trigger]"
         ).click()
-        wait.until(
-            lambda drv: (
-                "campos-config"
-                in (
-                    drv.find_element(
-                        By.CSS_SELECTOR, ".process-edit-pane.active"
-                    ).get_attribute("data-process-edit-pane")
-                )
-            )
-        )
-        driver.find_element(
+        cancel_button = driver.find_element(
             By.CSS_SELECTOR, ".process-edit-pane.active .action-btn-cancel"
-        ).click()
+        )
+        wait.until(EC.visibility_of(cancel_button))
+        cancel_button.click()
         _assert_editor_closed_and_list_visible_v1(driver, wait)
     finally:
         driver.quit()
 
 
-def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> None:
+def test_process_editor_save_stays_in_editor_tab_with_success_toast() -> None:
+    # Guardar no editor mantem o processo, o card e a aba (ver
+    # test_process_editor_stay_after_save_cancel.py); so Cancelar volta a lista.
     driver = _build_driver_v1()
     wait = WebDriverWait(driver, 30)
 
@@ -472,14 +487,21 @@ def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> 
 
         _open_process_editor_from_list_v1(driver, wait)
 
-        # Guarda na aba "Geral" sem tocar em nenhum campo -- reenvia os mesmos valores ja
-        # carregados no formulario, cobrindo "Guardar" sem alterar dados criticos.
-        driver.find_element(
+        # Guarda na aba "Sessao" sem tocar em nenhum campo -- reenvia os mesmos valores ja
+        # carregados no formulario, cobrindo "Guardar" sem alterar dados criticos. ("Geral" so
+        # lista os campos e nao tem formulario.)
+        _activate_editor_tab_v1(driver, wait, "sessao")
+        submit_button = driver.find_element(
             By.CSS_SELECTOR, ".process-edit-pane.active .action-btn[type='submit']"
-        ).click()
+        )
+        submit_button.click()
+        wait.until(EC.staleness_of(submit_button))
 
-        wait.until(lambda drv: "settings_edit_key" not in _current_href_v1(drv))
-        _assert_editor_closed_and_list_visible_v1(driver, wait)
+        wait.until(lambda drv: "settings_tab=sessao" in _current_href_v1(drv))
+        assert "settings_edit_key" in _current_href_v1(driver)
+        wait.until(lambda drv: _card_state(drv, "settings-menu-edit-card").get("computedDisplay") == "block")
+        active_pane = driver.find_element(By.CSS_SELECTOR, ".process-edit-pane.active")
+        assert "sessao" in active_pane.get_attribute("data-process-edit-pane")
         # No subprocesso "Sessoes > Menu" o alerta inline ".alert.ok" e' deliberadamente
         # suprimido (ver _suppress_inline_success_feedback em macros/admin_subprocess.html) --
         # o feedback de sucesso desse fluxo e' promovido a um toast global lido do query
@@ -498,9 +520,7 @@ def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> 
 def test_new_user_js_exposes_activate_subprocess_cards_alias_and_source_tracking() -> (
     None
 ):
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(
-        encoding="utf-8"
-    )
+    js_text = read_new_user_js()
     module_text = (
         PROJECT_ROOT / "static" / "js" / "modules" / "process_cards_visibility_v1.js"
     ).read_text(encoding="utf-8")

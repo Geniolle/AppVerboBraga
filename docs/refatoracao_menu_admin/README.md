@@ -4,7 +4,7 @@ Objetivo: centralizar a regra das abas internas Geral, Configuracao dos campos e
 
 Regra: essas abas aparecem somente quando o utilizador edita um processo dentro de Administrativo -> Menu.
 
-A regra nao depende do nome do processo. Exemplos: Meu perfil, Funcionarios, Empresa, Departamentos ou qualquer nova pasta criada dentro de Administrativo -> Menu.
+A regra nao depende do nome do processo. Exemplos: Meu perfil, Empresa, Departamentos ou qualquer nova pasta criada dentro de Administrativo -> Menu.
 
 Estrutura criada:
 - appgenesis/process_settings/

@@ -11,6 +11,18 @@
 
   const ROOT_SELECTOR = "[data-process-additional-fields-manager-v3]";
   const SUPPORTED_TYPES = new Set(["text", "number", "email", "phone", "date", "time", "flag", "header", "list"]);
+  const BUTTON_STYLES_V3 = new Set(["checkbox", "radio", "toggle", "segmented", "confirm"]);
+  const DEFAULT_BUTTON_STYLE_V3 = "toggle";
+  const LIST_BUTTON_STYLES_V3 = new Set(["radio", "segmented", "confirm"]);
+
+  function effectiveFieldType_v3(fieldType, buttonStyle) {
+    return fieldType === "flag" && LIST_BUTTON_STYLES_V3.has(buttonStyle) ? "list" : fieldType;
+  }
+
+  function normalizeButtonStyle_v3(value) {
+    const clean = toSafeString_v3(value).trim().toLowerCase();
+    return BUTTON_STYLES_V3.has(clean) ? clean : DEFAULT_BUTTON_STYLE_V3;
+  }
   const TEXTUAL_TYPES = new Set(["text", "number", "email", "phone"]);
 
   const TYPE_LABELS = {
@@ -91,7 +103,7 @@
 
   function normalizeListSourceType_v3(value) {
     const clean = normalizeLookup_v3(value);
-    if (clean === "automatic" || clean === "field_list" || clean === "active_menus" || clean === "profile_menu_tabs") return clean;
+    if (clean === "automatic" || clean === "field_list" || clean === "active_menus" || clean === "active_sessions" || clean === "active_departments" || clean === "profile_menu_tabs") return clean;
     return "manual";
   }
 
@@ -313,6 +325,14 @@
       return "Menus ativos";
     }
 
+    if (listSourceType === "active_sessions") {
+      return "Sessões ativas";
+    }
+
+    if (listSourceType === "active_departments") {
+      return "Departamentos ativos";
+    }
+
     if (listSourceType === "profile_menu_tabs") {
       return "Abas do processo selecionado";
     }
@@ -336,7 +356,15 @@
     }
 
     const manualCsvText = item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "");
-    return manualCsvText ? `Manual: ${manualCsvText}` : "Manual: -";
+    if (manualCsvText) {
+      return `Manual: ${manualCsvText}`;
+    }
+    const listKey = normalizeListKey_v3(item.manualListKey || item.listKey);
+    const listOption = listKey ? findProcessListOption_v3(root, listKey) : null;
+    if (listOption) {
+      return `Lista: ${listOption.textContent.trim()}`;
+    }
+    return listKey ? `Lista indisponível (${listKey})` : "Manual: -";
   }
 
   function refreshAutomaticSourceOptions_v3(root, selectedValues) {
@@ -415,6 +443,15 @@
     }
   }
 
+  // Lista da aba Listas escolhida no editor; vazio = opções escritas manualmente.
+  function findProcessListOption_v3(root, listKey) {
+    const select = getEditorRoot_v3(root).querySelector("[data-additional-field-editor-list-key]");
+    if (!select) {
+      return null;
+    }
+    return Array.from(select.options || []).find((option) => option.value === listKey && !option.dataset.appgenesisInjectedOption) || null;
+  }
+
   function resetListSourceFields_v3(root, options) {
     const editor = getEditorRoot_v3(root);
     const safeOptions = options && typeof options === "object" ? options : {};
@@ -428,6 +465,7 @@
 
     if (resetManual) {
       setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", "");
+      setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
     }
 
     if (resetAutomatic) {
@@ -467,6 +505,7 @@
     const keys = getLegacyValues_v3(container, "additional_field_key");
     const labels = getLegacyValues_v3(container, "additional_field_label");
     const types = getLegacyValues_v3(container, "additional_field_type");
+    const buttonStyles = getLegacyValues_v3(container, "additional_field_button_style");
     const requiredValues = getLegacyValues_v3(container, "additional_field_required");
     const sizes = getLegacyValues_v3(container, "additional_field_size");
     const listKeys = getLegacyValues_v3(container, "additional_field_list_key");
@@ -542,6 +581,11 @@
         automaticOnlyActive: fieldType === "list"
           ? normalizeRequired_v3(automaticOnlyActiveValues[index])
           : false,
+        buttonStyle: fieldType === "flag"
+          ? normalizeButtonStyle_v3(buttonStyles[index])
+          : (fieldType === "list" && LIST_BUTTON_STYLES_V3.has(toSafeString_v3(buttonStyles[index]).trim().toLowerCase())
+            ? toSafeString_v3(buttonStyles[index]).trim().toLowerCase()
+            : ""),
         order: index + 1
       });
     }
@@ -560,10 +604,12 @@
     setInputValue_v3(editor, "[data-additional-field-editor-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-label]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-type]", "text");
+    setInputValue_v3(editor, "[data-additional-field-editor-button-style]", DEFAULT_BUTTON_STYLE_V3);
     setInputValue_v3(editor, "[data-additional-field-editor-size]", "255");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", "manual");
     setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", "");
+    setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", "");
@@ -589,11 +635,23 @@
 
     setInputValue_v3(editor, "[data-additional-field-editor-key]", item.key || "");
     setInputValue_v3(editor, "[data-additional-field-editor-label]", item.label || "");
-    setInputValue_v3(editor, "[data-additional-field-editor-type]", item.fieldType || "text");
+    const isRadioLike = item.fieldType === "list" && LIST_BUTTON_STYLES_V3.has(item.buttonStyle);
+    setInputValue_v3(editor, "[data-additional-field-editor-type]", isRadioLike ? "flag" : (item.fieldType || "text"));
+    setInputValue_v3(editor, "[data-additional-field-editor-button-style]", isRadioLike ? item.buttonStyle : normalizeButtonStyle_v3(item.buttonStyle));
     setInputValue_v3(editor, "[data-additional-field-editor-size]", item.size || "");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", item.isRequired ? "1" : "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", item.listSourceType || "manual");
-    setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "") || "");
+    const loadedManualCsv = item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "") || "";
+    setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", loadedManualCsv);
+    // Opções escritas à mão têm prioridade no backend; sem elas, o campo usa a lista da aba Listas.
+    const loadedListKey = item.fieldType === "list" && !loadedManualCsv
+      ? normalizeListKey_v3(item.manualListKey || item.listKey)
+      : "";
+    const listKeySelect = editor.querySelector("[data-additional-field-editor-list-key]");
+    if (listKeySelect) {
+      ensureSelectOption_v3(listKeySelect, loadedListKey, `Lista indisponível (${loadedListKey})`);
+      listKeySelect.value = loadedListKey;
+    }
     setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", item.automaticSourceProcessKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", item.automaticSourceSectionKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", item.automaticSourceFieldKey || "");
@@ -620,7 +678,12 @@
     const label = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-label]")).trim();
     const explicitRawKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-key]")).trim();
     const rawKey = explicitRawKey || label;
-    const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const selectedType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const selectedStyle = selectedType === "flag"
+      ? normalizeButtonStyle_v3(getInputValue_v3(editor, "[data-additional-field-editor-button-style]"))
+      : "";
+    const fieldType = effectiveFieldType_v3(selectedType, selectedStyle);
+    const buttonStyle = selectedType === "flag" ? selectedStyle : "";
     const key = normalizeFieldKey_v3(rawKey);
     const listSourceType = normalizeListSourceType_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
@@ -628,7 +691,10 @@
     const manualItemsRaw = toSafeString_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-manual-items]")
     ).trim();
-    const manualListItemsParsed = manualItemsRaw
+    const selectedListKey = fieldType === "list" && listSourceType === "manual"
+      ? normalizeListKey_v3(getInputValue_v3(editor, "[data-additional-field-editor-list-key]"))
+      : "";
+    const manualListItemsParsed = manualItemsRaw && !selectedListKey
       ? manualItemsRaw.split(",").map(function(s) { return s.trim(); }).filter(Boolean)
       : [];
     const manualListItemsCsv = manualListItemsParsed.join(", ");
@@ -648,13 +714,14 @@
       explicitKey: normalizeFieldKey_v3(explicitRawKey),
       label,
       fieldType,
+      buttonStyle,
       isRequired: fieldType === "header"
         ? false
         : normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-required]")),
       size: normalizeSize_v3(getInputValue_v3(editor, "[data-additional-field-editor-size]"), fieldType),
       listSourceType: fieldType === "list" ? listSourceType : "manual",
-      manualListKey: "",
-      listKey: "",
+      manualListKey: selectedListKey,
+      listKey: selectedListKey,
       manualListItemsCsv: fieldType === "list" && listSourceType === "manual" ? manualListItemsCsv : "",
       manualListItems: fieldType === "list" && listSourceType === "manual" ? manualListItemsParsed : [],
       automaticSourceProcessKey: fieldType === "list" ? automaticSourceProcessKey : "",
@@ -785,8 +852,8 @@
       return { valid: false, message: "Informe a chave do campo." };
     }
 
-    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "manual" && !item.manualListItemsCsv) {
-      return { valid: false, message: "Informe pelo menos uma opção da lista manual." };
+    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "manual" && !item.manualListItemsCsv && !item.manualListKey) {
+      return { valid: false, message: "Selecione o Nome da Lista ou informe pelo menos uma opção da lista manual." };
     }
 
     if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "automatic") {
@@ -838,7 +905,9 @@
 
   function updateEditorVisibility_v3(root) {
     const editor = getEditorRoot_v3(root);
-    const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const selectedType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const selectedStyle = normalizeButtonStyle_v3(getInputValue_v3(editor, "[data-additional-field-editor-button-style]"));
+    const fieldType = effectiveFieldType_v3(selectedType, selectedStyle);
     const listSourceType = normalizeListSourceType_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
     );
@@ -864,7 +933,7 @@
         resetManual: false,
         resetAutomatic: true
       });
-    } else if (listSourceType === "active_menus" || listSourceType === "profile_menu_tabs") {
+    } else if (listSourceType === "active_menus" || listSourceType === "active_sessions" || listSourceType === "active_departments" || listSourceType === "profile_menu_tabs") {
       resetListSourceFields_v3(root, {
         resetSourceType: false,
         resetManual: true,
@@ -886,8 +955,20 @@
       listSourceWrap.style.display = isListField ? "" : "none";
     }
 
+    const buttonStyleWrap = editor.querySelector("[data-additional-field-button-style-wrap]");
+    if (buttonStyleWrap) {
+      buttonStyleWrap.style.display = selectedType === "flag" ? "" : "none";
+    }
+
+    const listKeyWrap = editor.querySelector("[data-additional-field-list-key-wrap]");
+    const hasSelectedListKey = Boolean(getInputValue_v3(editor, "[data-additional-field-editor-list-key]"));
+
+    if (listKeyWrap) {
+      listKeyWrap.style.display = isListField && listSourceType === "manual" ? "" : "none";
+    }
+
     if (manualListWrap) {
-      manualListWrap.style.display = isListField && listSourceType === "manual" ? "" : "none";
+      manualListWrap.style.display = isListField && listSourceType === "manual" && !hasSelectedListKey ? "" : "none";
     }
 
     const isSourceGroupVisible = isListField && (listSourceType === "automatic" || listSourceType === "field_list");
@@ -998,6 +1079,7 @@
 
     const editor = getEditorRoot_v3(root);
     const typeSelect = editor.querySelector("[data-additional-field-editor-type]");
+    const buttonStyleSelect = editor.querySelector("[data-additional-field-editor-button-style]");
     const listSourceTypeSelect = editor.querySelector("[data-additional-field-editor-list-source-type]");
     const sourceProcessSelect = editor.querySelector("[data-additional-field-editor-source-process-key]");
     const sourceSectionSelect = editor.querySelector("[data-additional-field-editor-source-section-key]");
@@ -1008,6 +1090,12 @@
       typeSelect.addEventListener("change", () => {
         applyDefaultSizeForType_v3(root);
         refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    if (buttonStyleSelect) {
+      buttonStyleSelect.addEventListener("change", () => {
         updateEditorVisibility_v3(root);
       });
     }
@@ -1078,6 +1166,11 @@
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_key", item.key || ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_label", item.label || ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_type", fieldType));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_button_style",
+        fieldType === "flag"
+          ? normalizeButtonStyle_v3(item.buttonStyle)
+          : (fieldType === "list" && LIST_BUTTON_STYLES_V3.has(item.buttonStyle) ? item.buttonStyle : "")
+      ));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_required", item.isRequired ? "1" : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_size", normalizeSize_v3(item.size, fieldType)));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_list_key", fieldType === "list" && listSourceType === "manual" ? manualListKey : ""));
@@ -1219,6 +1312,7 @@
     const editor = getEditorRoot_v3(root);
     const parentForm = root.closest("form");
     const typeSelect = editor.querySelector("[data-additional-field-editor-type]");
+    const buttonStyleSelect = editor.querySelector("[data-additional-field-editor-button-style]");
     const listSourceTypeSelect = editor.querySelector("[data-additional-field-editor-list-source-type]");
     const sourceProcessSelect = editor.querySelector("[data-additional-field-editor-source-process-key]");
     const sourceSectionSelect = editor.querySelector("[data-additional-field-editor-source-section-key]");
@@ -1233,9 +1327,22 @@
       });
     }
 
+    if (buttonStyleSelect) {
+      buttonStyleSelect.addEventListener("change", () => {
+        updateEditorVisibility_v3(root);
+      });
+    }
+
     if (listSourceTypeSelect) {
       listSourceTypeSelect.addEventListener("change", () => {
         refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    const listKeySelect = editor.querySelector("[data-additional-field-editor-list-key]");
+    if (listKeySelect) {
+      listKeySelect.addEventListener("change", () => {
         updateEditorVisibility_v3(root);
       });
     }
@@ -1361,7 +1468,7 @@
           key: "fieldType",
           label: "Tipo do campo",
           render: function (item) {
-            return getFieldTypeLabel_v3(item.fieldType);
+            return item.buttonStyle ? "Botão" : getFieldTypeLabel_v3(item.fieldType);
           }
         },
         {

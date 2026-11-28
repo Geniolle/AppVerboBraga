@@ -6,4 +6,7 @@ router = APIRouter()
 
 from appgenesis.routes.empresa import update_handler  # noqa: F401,E402
 
-__all__ = ["router"]
+__all__ = [
+    "router",
+    "update_handler",
+]

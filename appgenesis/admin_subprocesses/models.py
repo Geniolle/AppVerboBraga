@@ -25,6 +25,14 @@ class AdminFieldConfig:
     readonly_on_edit: bool = False
     css_class: str = ""
     default_value: str = ""
+    # Select dependente: cada opcao pertence a um grupo; so aparecem as opcoes do grupo
+    # escolhido no select indicado em depends_on_input (input_name).
+    option_groups: tuple[tuple[str, str], ...] = ()
+    depends_on_input: str = ""
+    # Campo bloqueado (disabled) no formulario; o servidor aplica o mesmo valor.
+    locked: bool = False
+    # Select de selecao multipla (valores separados por virgula no armazenamento).
+    multiple: bool = False
 
 
 @dataclass(frozen=True)
@@ -118,6 +126,8 @@ class AdminSubprocessConfig:
     dynamic_fields_section_header_key: str = ""
     create_toggle_in_active_header: bool = False
     form_grid_css_class: str = ""
+    copy_param: str = ""
+    row_click_edit: bool = False
 
 
 @dataclass
@@ -135,6 +145,7 @@ class AdminSubprocessState:
     return_url: str = ""
     resolved_dynamic_fields: list[dict[str, Any]] = field(default_factory=list)
     edit_values: dict[str, Any] = field(default_factory=dict)
+    prefill_values: dict[str, Any] = field(default_factory=dict)
 
     @property
     def is_editing(self) -> bool:

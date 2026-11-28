@@ -9,7 +9,8 @@ from appgenesis.menu_settings import (
     resolve_menu_key_alias,
     update_sidebar_menu_process_fields,
 )
-from appgenesis.core import SessionLocal
+from appgenesis.services.process_settings.field_service import update_sidebar_menu_session_v1
+from appgenesis.db.session import SessionLocal
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.permissions import get_user_entity_permissions
@@ -17,10 +18,7 @@ from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _build_settings_editor_stay_redirect_url_v1,
-    _SETTINGS_MENU_EDITOR_STAY_TARGET_V1,
-    _log_process_editor_flow_v1,
 )
-
 
 @router.post("/settings/menu/process-fields", response_class=HTMLResponse, response_model=None)
 def edit_sidebar_menu_process_fields_handler(
@@ -36,16 +34,6 @@ def edit_sidebar_menu_process_fields_handler(
     clean_menu_key = resolve_menu_key_alias(menu_key)
     # Gravacao AJAX (JS): responde JSON, sem redirect nem recarregamento da pagina.
     is_ajax_save = request.headers.get("x-requested-with") == "appgenesis-ajax-save"
-
-    _log_process_editor_flow_v1(
-        request,
-        "process_fields:received",
-        menu_key=menu_key,
-        clean_menu_key=clean_menu_key,
-        redirect_menu=redirect_menu,
-        redirect_target=redirect_target,
-        return_url=return_url,
-    )
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -210,19 +198,86 @@ def edit_sidebar_menu_process_fields_handler(
             settings_tab="campos-config",
             return_url=return_url,
         )
-        _log_process_editor_flow_v1(
-            request,
-            "process_fields:success_redirect",
-            redirect_menu=redirect_menu,
-            redirect_target=_SETTINGS_MENU_EDITOR_STAY_TARGET_V1,
-            final_url=success_redirect_url,
-            return_url=return_url,
-        )
 
         if is_ajax_save:
             return JSONResponse({"ok": True, "redirect_url": success_redirect_url})
 
         return RedirectResponse(
             url=success_redirect_url,
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+
+@router.post("/settings/menu/session", response_class=HTMLResponse, response_model=None)
+def edit_sidebar_menu_session_handler(
+    request: Request,
+    menu_key: str = Form(...),
+    section_key: str = Form(""),
+    redirect_menu: str = Form("administrativo"),
+    redirect_target: str = Form("#settings-menu-edit-card"),
+    return_url: str = Form(""),
+) -> RedirectResponse:
+    clean_menu_key = resolve_menu_key_alias(menu_key)
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas Owner pode alterar a sessão do menu.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="sessao",
+                    return_url=return_url,
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        ok, error_message = update_sidebar_menu_session_v1(
+            session=session,
+            menu_key=clean_menu_key,
+            section_key=section_key,
+        )
+
+        if not ok:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível atualizar a sessão do menu.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="sessao",
+                    return_url=return_url,
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=_build_settings_editor_stay_redirect_url_v1(
+                success_message="Sessão do menu atualizada com sucesso.",
+                redirect_menu=redirect_menu,
+                settings_edit_key=clean_menu_key,
+                settings_tab="sessao",
+                return_url=return_url,
+            ),
             status_code=status.HTTP_303_SEE_OTHER,
         )

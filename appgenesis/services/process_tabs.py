@@ -45,7 +45,7 @@ def _normalize_process_tab_size_v1(raw_size: Any, field_type: str) -> int | None
 
 def _normalize_process_tab_list_source_type_v1(raw_value: Any, field_definition: dict[str, Any]) -> str:
     clean_source_type = _normalize_process_tab_lookup_v1(raw_value)
-    if clean_source_type in {"manual", "automatic", "field_list", "active_menus", "profile_menu_tabs"}:
+    if clean_source_type in {"manual", "automatic", "field_list", "active_menus", "active_sessions", "active_departments", "profile_menu_tabs"}:
         return clean_source_type
     if (
         field_definition.get("automatic_source_process_key")
@@ -503,17 +503,21 @@ def resolve_process_tabs_v1(menu_key: str, sidebar_menu_settings: list[dict[str,
     if clean_menu == "administrativo":
         return [
             ProcessTabConfig("entidade", "Entidade", "#create-entity-card", "custom"),
+            ProcessTabConfig("dados_empresa", "Dados da empresa", "#empresa-card", "custom"),
             ProcessTabConfig("utilizador", "Utilizador", "#create-user-card", "custom"),
+            ProcessTabConfig("admin_sistema", "Administradores do sistema", "#system-admins-card", "custom"),
+            ProcessTabConfig("perfil_de_autorizacao", "Perfil de autorização", "#auth-profile-card", "custom"),
+            ProcessTabConfig("funcoes_administrativas", "Funções Administrativas", "#funcoes-administrativas-card", "custom"),
         ]
     elif clean_menu == "sessoes":
         return [
             ProcessTabConfig("sessoes", "Sessões", "#admin-sidebar-sections-card", "custom"),
             ProcessTabConfig("contas", "Menu", "#menu-subprocess-card-active", "custom"),
+            ProcessTabConfig("departamentos", "Departamentos", "#departamentos-card", "custom"),
         ]
     elif clean_menu == "perfil_de_autorizacao":
         return [
             ProcessTabConfig("perfis", "Perfis", "#auth-profile-card", "list"),
-            ProcessTabConfig("objeto_de_autorizacao", "Objeto de autorização", "#auth-objeto-card", "list"),
         ]
 
     # 2. Dynamic processes sections resolution (e.g. from header options)

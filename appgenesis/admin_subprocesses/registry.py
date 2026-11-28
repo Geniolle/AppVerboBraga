@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from .models import (
     AdminActionConfig,
     AdminColumnConfig,
@@ -43,6 +45,12 @@ SIDEBAR_SECTION_FIELDS = (
         placeholder="Informe o nome da sessão",
     ),
     AdminFieldConfig(
+        key="entity_number",
+        label="Nº DA ENTIDADE",
+        input_name="section_entity_number",
+        field_type="readonly",
+    ),
+    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="section_visibility_scope_mode",
@@ -70,7 +78,8 @@ SIDEBAR_SECTION_FIELDS = (
 
 DEFAULT_COLUMNS = (
     AdminColumnConfig(key="label", label="NOME", source="label", css_class="admin-col-main-v1", always_visible=True),
-    AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1"),
+    AdminColumnConfig(key="entity_number", label="Nº DA ENTIDADE", source="entity_number", css_class="admin-col-number-v1"),
+    AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1", sortable=True, sort_type="text", default_sort="desc"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1", always_visible=True),
 )
 
@@ -254,6 +263,8 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     plural_label="Sessões",
     edit_param="sidebar_section_edit_key",
     default_target="admin-sidebar-sections-card",
+    row_click_edit=True,
+    form_grid_css_class="admin-sessoes-form-grid-v1",
     # Cartoes reais da lista (o "admin-sidebar-sections-card" nao existe no DOM):
     # o Cancelar do formulario de edicao precisa do alvo de retorno correto.
     active_card_id="admin-sidebar-sections-card-active",
@@ -284,6 +295,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     migration_status="native_next",
     fields=SIDEBAR_SECTION_FIELDS,
     columns=DEFAULT_COLUMNS,
+    table_css_class="admin-sessoes-table-v1",
     actions=DEFAULT_ACTIVE_ACTIONS + (SIDEBAR_SECTION_DELETE_ACTION,),
     menu_scope="administrativo,sessoes",
     empty_active_message="Sem sessões ativas.",
@@ -294,6 +306,52 @@ SESSOES_CONFIG = AdminSubprocessConfig(
 
 
 AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
+    AdminFieldConfig(
+        key="label",
+        label="Nome de perfil",
+        input_name="auth_profile_label",
+        field_type="text",
+        required=True,
+        max_length=80,
+    ),
+    AdminFieldConfig(
+        key="session_origin",
+        label="Definição da origem",
+        input_name="auth_profile_session_origin",
+        field_type="select",
+        required=True,
+        options=(),
+    ),
+    AdminFieldConfig(
+        key="menu_origin",
+        label="Menu de origem",
+        input_name="auth_profile_menu_origin",
+        field_type="select",
+        required=True,
+        options=(),
+    ),
+    AdminFieldConfig(
+        key="tab_origin",
+        label="Cabeçalho (aba)",
+        input_name="auth_profile_tab_origin",
+        field_type="select",
+        required=True,
+        options=(),
+    ),
+    AdminFieldConfig(
+        key="authorization_level",
+        label="Autorização",
+        input_name="auth_profile_authorization_level",
+        field_type="select",
+        required=True,
+        multiple=True,
+        options=(
+            ("exibir", "Exibir"),
+            ("editar", "Editar"),
+            ("criar", "Criar"),
+            ("eliminar", "Eliminar"),
+        ),
+    ),
     AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
@@ -343,8 +401,10 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     singular_label="Perfil",
     plural_label="Perfis",
     edit_param="auth_profile_edit_key",
+    copy_param="auth_profile_copy_key",
     default_target="auth-profile-card",
     edit_target="auth-profile-form-card",
+    edit_url_extra_params="admin_tab=perfil_de_autorizacao",
     create_title="Criar perfil",
     edit_title="Editar perfil",
     active_title="Perfis ativos",
@@ -383,6 +443,30 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
             default_sort="asc",
         ),
         AdminColumnConfig(
+            key="session_origin",
+            label="DEFINIÇÃO DA ORIGEM",
+            source="session_origin_label",
+            css_class="admin-col-text-v1",
+        ),
+        AdminColumnConfig(
+            key="menu_origin",
+            label="MENU DE ORIGEM",
+            source="menu_origin_label",
+            css_class="admin-col-text-v1",
+        ),
+        AdminColumnConfig(
+            key="tab_origin",
+            label="CABEÇALHO (ABA)",
+            source="tab_origin_label",
+            css_class="admin-col-text-v1",
+        ),
+        AdminColumnConfig(
+            key="authorization",
+            label="AUTORIZAÇÃO",
+            source="authorization_label",
+            css_class="admin-col-text-v1",
+        ),
+        AdminColumnConfig(
             key="system",
             label="SISTEMA",
             source="visibility_scope_label",
@@ -413,7 +497,7 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
         ),
         AUTH_PROFILE_DELETE_ACTION,
     ),
-    menu_scope="perfil_de_autorizacao",
+    menu_scope="administrativo,perfil_de_autorizacao",
     empty_active_message="Sem perfis ativos.",
     empty_inactive_message="Sem perfis inativos.",
     action_form_key_field="auth_profile_key",
@@ -424,134 +508,6 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     inactive_table_id="auth-profile-inactive-table",
     active_limiter_id="auth-profile-active-limiter",
     inactive_limiter_id="auth-profile-inactive-limiter",
-)
-
-
-OBJETO_AUTORIZACAO_TECHNICAL_FIELDS = (
-    AdminFieldConfig(
-        key="visibility_scope_mode",
-        label="Sistema",
-        input_name="auth_objeto_visibility_scope_mode",
-        field_type="select",
-        required=True,
-        options=(
-            ("all", "Default"),
-            ("owner", "Owner"),
-            ("legado", "Legado"),
-        ),
-    ),
-    AdminFieldConfig(
-        key="status",
-        label="Estado",
-        input_name="auth_objeto_status",
-        field_type="select",
-        required=True,
-        options=(
-            ("ativo", "Ativo"),
-            ("inativo", "Inativo"),
-        ),
-    ),
-)
-
-
-OBJETO_AUTORIZACAO_CONFIG = AdminSubprocessConfig(
-    key="objeto_de_autorizacao",
-    label="Objeto de autorização",
-    singular_label="Objeto",
-    plural_label="Objetos de autorização",
-    edit_param="auth_objeto_edit_key",
-    default_target="auth-objeto-card",
-    edit_target="auth-objeto-form-card",
-    create_title="Criar objeto de autorização",
-    edit_title="Editar objeto de autorização",
-    active_title="Objetos de autorização ativos",
-    inactive_title="Objetos de autorização inativos",
-    save_endpoint="/users/profile/auth-objeto-save",
-    create_endpoint="/users/profile/auth-objeto-save",
-    update_endpoint="/users/profile/auth-objeto-save",
-    repository_name="objeto_de_autorizacao",
-    repository_class="appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository.ObjetoAutorizacaoAdminRepository",
-    status_field="status",
-    active_value="ativo",
-    inactive_value="inativo",
-    identity_field="key",
-    label_field="label",
-    mode_field="auth_objeto_mode",
-    edit_key_field="original_auth_objeto_key",
-    return_url_field="auth_objeto_return_url",
-    create_mode_value="create",
-    edit_mode_value="edit",
-    enabled=True,
-    migration_status="native",
-    uses_dynamic_fields=True,
-    dynamic_fields_menu_key="perfil_de_autorizacao",
-    dynamic_fields_section_header_key="custom_objeto_de_autorizacao",
-    form_grid_css_class="admin-subprocess-grid-objeto-autorizacao-v1",
-    fields=OBJETO_AUTORIZACAO_TECHNICAL_FIELDS,
-    columns=(
-        AdminColumnConfig(
-            key="label",
-            label="OBJETO",
-            source="label",
-            css_class="admin-col-main-v1",
-            always_visible=True,
-            sortable=True,
-            default_sort="asc",
-        ),
-        AdminColumnConfig(
-            key="process",
-            label="PROCESSO",
-            source="process_label",
-            css_class="admin-col-text-v1",
-            responsive_priority=3,
-        ),
-        AdminColumnConfig(
-            key="authorization",
-            label="AUTORIZAÇÃO",
-            source="authorization_label",
-            css_class="admin-col-text-v1",
-            responsive_priority=4,
-        ),
-        AdminColumnConfig(
-            key="system",
-            label="SISTEMA",
-            source="visibility_scope_label",
-            css_class="admin-col-system-v1",
-        ),
-        AdminColumnConfig(
-            key="status",
-            label="ESTADO",
-            source="status_label",
-            css_class="admin-col-status-v1",
-            always_visible=True,
-        ),
-    ),
-    actions=(
-        AdminActionConfig(
-            key="view",
-            label="Visualizar",
-            icon="👁",
-            action_type="button",
-            visible_when=("ativo", "inativo"),
-        ),
-        AdminActionConfig(
-            key="edit",
-            label="Editar",
-            icon="✎",
-            action_type="link",
-            visible_when=("ativo", "inativo"),
-        ),
-    ),
-    menu_scope="perfil_de_autorizacao",
-    empty_active_message="Sem objetos de autorização ativos.",
-    empty_inactive_message="Sem objetos de autorização inativos.",
-    create_toggle_in_active_header=True,
-    active_card_id="auth-objeto-active-card",
-    inactive_card_id="auth-objeto-inactive-card",
-    active_table_id="auth-objeto-active-table",
-    inactive_table_id="auth-objeto-inactive-table",
-    active_limiter_id="auth-objeto-active-limiter",
-    inactive_limiter_id="auth-objeto-inactive-limiter",
 )
 
 
@@ -573,6 +529,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     edit_param="user_edit_id",
     default_target="create-user-card",
     edit_target="edit-user-card",
+    row_click_edit=True,
     create_title="Criar utilizador",
     edit_title="Editar utilizador",
     active_title="Utilizador ativo",
@@ -668,6 +625,32 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     active_limiter_id="admin-users-table-limiter",
     inactive_limiter_id="inactive-users-table-limiter",
     create_toggle_in_active_header=True,
+)
+
+
+# Separador Administradores do sistema (so owner): utilizadores com system_type='legado',
+# criados pelo owner para entidades legadas. Reutiliza o config de Utilizador.
+LEGACY_ADMIN_TAB_KEY = "admin_sistema"
+ADMIN_SISTEMA_CONFIG = replace(
+    UTILIZADOR_CONFIG,
+    key=LEGACY_ADMIN_TAB_KEY,
+    label="Administradores do sistema",
+    singular_label="Administrador do sistema",
+    plural_label="Administradores do sistema",
+    default_target="system-admins-card",
+    create_title="Criar administrador do sistema",
+    active_title="Administradores do sistema ativos",
+    inactive_title="Administradores do sistema inativos",
+    empty_active_message="Sem administradores do sistema ativos.",
+    empty_inactive_message="Sem administradores do sistema inativos.",
+    columns=tuple(c for c in UTILIZADOR_CONFIG.columns if c.key != "system_profile"),
+    edit_url_extra_params="admin_tab=admin_sistema",
+    active_card_id="admin-system-admins-card",
+    inactive_card_id="inactive-system-admins-card",
+    active_table_id="admin-system-admins-table",
+    inactive_table_id="inactive-system-admins-table",
+    active_limiter_id="admin-system-admins-table-limiter",
+    inactive_limiter_id="inactive-system-admins-table-limiter",
 )
 
 
@@ -776,7 +759,7 @@ MENU_CONFIG = AdminSubprocessConfig(
     columns=(
         AdminColumnConfig(key="label", label="MENU LATERAL", source="label", css_class="admin-col-main-v1", always_visible=True),
         AdminColumnConfig(key="entity_number", label="Nº DA ENTIDADE", source="entity_number", css_class="admin-col-number-v1"),
-        AdminColumnConfig(key="sidebar_section", label="SESSÃO", source="sidebar_section_label", css_class="admin-col-section-v1"),
+        AdminColumnConfig(key="sidebar_section", label="DEFINIÇÃO", source="sidebar_section_label", css_class="admin-col-section-v1"),
         AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1"),
         AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1", always_visible=True),
     ),
@@ -817,12 +800,233 @@ CONTAS_CONFIG = AdminSubprocessConfig(
 )
 
 
+FUNCTIONS_ADMIN_TECHNICAL_FIELDS = (
+    AdminFieldConfig(
+        key="label",
+        label="Nome da função",
+        input_name="functions_label",
+        field_type="text",
+        required=True,
+        max_length=80,
+    ),
+    AdminFieldConfig(
+        key="system_profile",
+        label="Perfil no sistema",
+        input_name="functions_system_profile",
+        field_type="select",
+        required=True,
+        options=(
+            ("default", "User"),
+            ("owner", "Admin"),
+            ("super_user", "Super User"),
+            ("legado", "Legado"),
+        ),
+    ),
+    AdminFieldConfig(
+        key="status",
+        label="Estado",
+        input_name="functions_status",
+        field_type="select",
+        required=True,
+        options=(
+            ("ativo", "Ativo"),
+            ("inativo", "Inativo"),
+        ),
+    ),
+    AdminFieldConfig(
+        key="visibility_scope_mode",
+        label="Sistema",
+        input_name="functions_visibility_scope_mode",
+        field_type="select",
+        required=True,
+        options=(
+            ("all", "Default"),
+            ("owner", "Owner"),
+            ("legado", "Legado"),
+        ),
+    ),
+    AdminFieldConfig(
+        key="entity_number",
+        label="Entidade",
+        input_name="functions_entity_number_display",
+        field_type="readonly",
+    ),
+    AdminFieldConfig(
+        key="authorization_profiles",
+        label="Perfil de autorização",
+        input_name="functions_authorization_profiles",
+        field_type="profile_multi",
+        required=True,
+    ),
+)
+
+
+_FUNCTIONS_ADMIN_COLUMNS = (
+    AdminColumnConfig(
+        key="label",
+        label="FUNÇÕES",
+        source="label",
+        css_class="admin-col-main-v1",
+        always_visible=True,
+        sortable=True,
+        default_sort="asc",
+    ),
+    AdminColumnConfig(
+        key="system_profile",
+        label="PERFIL NO SISTEMA",
+        source="system_profile_label",
+        css_class="admin-col-text-v1",
+    ),
+    AdminColumnConfig(
+        key="status",
+        label="ESTADO",
+        source="status_label",
+        css_class="admin-col-status-v1",
+        always_visible=True,
+    ),
+)
+
+FUNCTIONS_ADMIN_CONFIG = AdminSubprocessConfig(
+    key="funcoes_administrativas",
+    label="Funções administrativas",
+    singular_label="Função",
+    plural_label="Funções",
+    edit_param="functions_edit_key",
+    copy_param="functions_copy_key",
+    row_click_edit=True,
+    default_target="funcoes-administrativas-card",
+    edit_target="funcoes-administrativas-form-card",
+    edit_url_extra_params="admin_tab=funcoes_administrativas",
+    create_title="Criar função",
+    edit_title="Editar função",
+    active_title="Funções ativas",
+    inactive_title="Funções inativas",
+    active_card_id="funcoes-administrativas-active-card",
+    inactive_card_id="funcoes-administrativas-inactive-card",
+    active_table_id="funcoes-administrativas-active-table",
+    inactive_table_id="funcoes-administrativas-inactive-table",
+    active_limiter_id="funcoes-administrativas-active-limiter",
+    inactive_limiter_id="funcoes-administrativas-inactive-limiter",
+    save_endpoint="/users/functions/save",
+    create_endpoint="/users/functions/save",
+    update_endpoint="/users/functions/save",
+    delete_endpoint="/users/functions/delete",
+    repository_name="functions",
+    repository_class="appgenesis.admin_subprocesses.repositories.functions_repository.FunctionsAdminRepository",
+    status_field="status",
+    active_value="ativo",
+    inactive_value="inativo",
+    identity_field="key",
+    label_field="label",
+    mode_field="functions_mode",
+    edit_key_field="original_functions_key",
+    return_url_field="functions_return_url",
+    create_mode_value="create",
+    edit_mode_value="edit",
+    enabled=True,
+    migration_status="native",
+    form_grid_css_class="admin-subprocess-grid-auth-profile-v1",
+    fields=FUNCTIONS_ADMIN_TECHNICAL_FIELDS,
+    columns=_FUNCTIONS_ADMIN_COLUMNS,
+    actions=AUTHORIZATION_PROFILE_CONFIG.actions,
+    create_toggle_in_active_header=True,
+    menu_scope="administrativo",
+    empty_active_message="Sem funções ativas.",
+    empty_inactive_message="Sem funções inativas.",
+)
+
+
+DEPARTAMENTOS_ADMIN_TECHNICAL_FIELDS = (
+    AdminFieldConfig(
+        key="label",
+        label="Nome do departamento",
+        input_name="departments_label",
+        field_type="text",
+        required=True,
+        max_length=150,
+    ),
+    AdminFieldConfig(
+        key="description",
+        label="Descrição",
+        input_name="departments_description",
+        field_type="text",
+        max_length=500,
+    ),
+    AdminFieldConfig(
+        key="status",
+        label="Estado",
+        input_name="departments_status",
+        field_type="select",
+        required=True,
+        options=(
+            ("ativo", "Ativo"),
+            ("inativo", "Inativo"),
+        ),
+    ),
+)
+
+_DEPARTAMENTOS_ADMIN_COLUMNS = tuple(
+    replace(column, label="DEPARTAMENTO") if column.key == "label" else column
+    for column in AUTHORIZATION_PROFILE_CONFIG.columns
+    if column.key in {"label", "status"}
+)
+
+DEPARTAMENTOS_ADMIN_CONFIG = AdminSubprocessConfig(
+    key="departamentos",
+    label="Departamentos",
+    singular_label="Departamento",
+    plural_label="Departamentos",
+    edit_param="departments_edit_key",
+    row_click_edit=True,
+    default_target="departamentos-card",
+    edit_target="departamentos-form-card",
+    create_title="Criar departamento",
+    edit_title="Editar departamento",
+    active_title="Departamentos ativos",
+    inactive_title="Departamentos inativos",
+    active_card_id="departamentos-active-card",
+    inactive_card_id="departamentos-inactive-card",
+    active_table_id="departamentos-active-table",
+    inactive_table_id="departamentos-inactive-table",
+    active_limiter_id="departamentos-active-limiter",
+    inactive_limiter_id="departamentos-inactive-limiter",
+    save_endpoint="/users/departments/save",
+    create_endpoint="/users/departments/save",
+    update_endpoint="/users/departments/save",
+    delete_endpoint="/users/departments/delete",
+    repository_name="departments",
+    repository_class="appgenesis.admin_subprocesses.repositories.departments_repository.DepartmentsAdminRepository",
+    status_field="status",
+    active_value="ativo",
+    inactive_value="inativo",
+    identity_field="key",
+    label_field="label",
+    mode_field="departments_mode",
+    edit_key_field="original_departments_key",
+    return_url_field="departments_return_url",
+    create_mode_value="create",
+    edit_mode_value="edit",
+    enabled=True,
+    migration_status="native",
+    form_grid_css_class="",
+    fields=DEPARTAMENTOS_ADMIN_TECHNICAL_FIELDS,
+    columns=_DEPARTAMENTOS_ADMIN_COLUMNS,
+    actions=AUTHORIZATION_PROFILE_CONFIG.actions,
+    create_toggle_in_active_header=True,
+    menu_scope="sessoes",
+    empty_active_message="Sem departamentos ativos.",
+    empty_inactive_message="Sem departamentos inativos.",
+)
+
+
 ADMIN_SUBPROCESS_REGISTRY = {
     ENTIDADE_CONFIG.key: ENTIDADE_CONFIG,
     SESSOES_CONFIG.key: SESSOES_CONFIG,
     AUTHORIZATION_PROFILE_CONFIG.key: AUTHORIZATION_PROFILE_CONFIG,
-    OBJETO_AUTORIZACAO_CONFIG.key: OBJETO_AUTORIZACAO_CONFIG,
+    FUNCTIONS_ADMIN_CONFIG.key: FUNCTIONS_ADMIN_CONFIG,
+    DEPARTAMENTOS_ADMIN_CONFIG.key: DEPARTAMENTOS_ADMIN_CONFIG,
     UTILIZADOR_CONFIG.key: UTILIZADOR_CONFIG,
+    ADMIN_SISTEMA_CONFIG.key: ADMIN_SISTEMA_CONFIG,
     MENU_CONFIG.key: MENU_CONFIG,
     CONTAS_CONFIG.key: CONTAS_CONFIG,
 }

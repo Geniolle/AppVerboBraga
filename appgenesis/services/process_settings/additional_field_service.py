@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
+from functools import lru_cache
 from typing import Any
 from uuid import uuid4
 
@@ -18,11 +19,11 @@ from appgenesis.services.process_settings.normalizers import (
     SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS,
     _build_custom_field_key_from_label,
     _build_group_scoped_custom_field_key,
-    _fix_common_mojibake,
     _get_additional_field_group_key,
     _load_menu_config,
     _menu_exists,
     _normalize_additional_field_type,
+    _normalize_additional_field_button_style_for_type,
     _normalize_custom_field_key,
     _normalize_menu_key,
     _normalize_sentence_case_text,
@@ -59,7 +60,12 @@ def _normalize_sentence_case_label_keep_acronyms(raw_label: str) -> str:
 
 
 def _normalize_additional_field_label(raw_label: Any) -> str:
-    clean_label = _fix_common_mojibake(str(raw_label or ""))
+    return _normalize_additional_field_label_cached(str(raw_label or ""))
+
+
+# Funcao pura (texto + constantes do modulo); chamada dezenas de milhares de vezes por pedido.
+@lru_cache(maxsize=8192)
+def _normalize_additional_field_label_cached(clean_label: str) -> str:
     clean_label = " ".join(clean_label.strip().split())
     if not clean_label:
         return ""
@@ -196,6 +202,12 @@ def normalize_menu_process_additional_fields_v1(
 
         if item_size is not None:
             normalized_item["size"] = item_size
+
+        item_button_style = _normalize_additional_field_button_style_for_type(
+            item_type, raw_item.get("button_style")
+        )
+        if item_button_style:
+            normalized_item["button_style"] = item_button_style
 
         if item_type == "list" and item_list_key:
             normalized_item["list_key"] = item_list_key
@@ -492,12 +504,10 @@ def move_sidebar_menu_additional_field(
             if next_field_type == "header":
                 break
             block_end = idx
-        block_size = block_end - block_start + 1
     else:
         # Campo normal, mover apenas ele
         block_start = field_index
         block_end = field_index
-        block_size = 1
 
     # Calcular o alvo
     if clean_direction == "up":
@@ -573,7 +583,12 @@ def move_sidebar_menu_additional_field(
 
 
 def _normalize_process_list_key_v8(raw_key: Any) -> str:
-    clean_value = str(raw_key or "").strip().lower()
+    return _normalize_process_list_key_v8_cached(str(raw_key or ""))
+
+
+@lru_cache(maxsize=8192)
+def _normalize_process_list_key_v8_cached(raw_key: str) -> str:
+    clean_value = raw_key.strip().lower()
     clean_value = (
         unicodedata.normalize("NFKD", clean_value)
         .encode("ascii", "ignore")
@@ -586,13 +601,74 @@ def _normalize_process_list_key_v8(raw_key: Any) -> str:
 
 def _normalize_additional_field_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    if clean_value in {"automatic", "field_list", "active_menus", "profile_menu_tabs"}:
+    if clean_value in {"automatic", "field_list", "active_menus", "active_sessions", "active_departments", "profile_menu_tabs"}:
         return clean_value
     return "manual"
 
 
 def _normalize_additional_field_source_key_v1(raw_value: Any) -> str:
     return _normalize_menu_key(raw_value)
+
+
+def _normalize_row_fields_v1(raw_row_fields: Any) -> list[dict[str, Any]]:
+    # Campos de cada linha de um campo "rows" (ex.: Musica + Tom).
+    if not isinstance(raw_row_fields, list):
+        return []
+    row_fields: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for raw_field in raw_row_fields:
+        if not isinstance(raw_field, dict):
+            continue
+        key = str(raw_field.get("key") or "").strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        row_field: dict[str, Any] = {
+            "key": key,
+            "label": str(raw_field.get("label") or key).strip() or key,
+            "required": bool(raw_field.get("required")),
+        }
+        options_menu_key = str(raw_field.get("options_menu_key") or "").strip().lower()
+        options_field_key = str(raw_field.get("options_field_key") or "").strip().lower()
+        if options_menu_key and options_field_key:
+            row_field["options_menu_key"] = options_menu_key
+            row_field["options_field_key"] = options_field_key
+            options_extra_key = str(raw_field.get("options_extra_field_key") or "").strip().lower()
+            if options_extra_key:
+                row_field["options_extra_field_key"] = options_extra_key
+        options_url_key = str(raw_field.get("options_url_field_key") or "").strip().lower()
+        if options_menu_key and options_url_key:
+            row_field["options_url_field_key"] = options_url_key
+        options_lyrics_key = str(raw_field.get("options_lyrics_field_key") or "").strip().lower()
+        if options_menu_key and options_lyrics_key:
+            row_field["options_lyrics_field_key"] = options_lyrics_key
+        link_button_from = str(raw_field.get("link_button_from") or "").strip().lower()
+        if link_button_from:
+            row_field["link_button_from"] = link_button_from
+        lyrics_button_from = str(raw_field.get("lyrics_button_from") or "").strip().lower()
+        if lyrics_button_from:
+            row_field["lyrics_button_from"] = lyrics_button_from
+        autofill_from = str(raw_field.get("autofill_from") or "").strip().lower()
+        if raw_field.get("readonly"):
+            row_field["readonly"] = True
+        if autofill_from:
+            row_field["autofill_from"] = autofill_from
+        row_fields.append(row_field)
+    return row_fields
+
+
+def _normalize_conditional_field_rule_v1(raw_rule: Any) -> dict[str, str] | None:
+    # Regra "so quando o campo X tem o valor Y" (editable_when / required_when).
+    if not isinstance(raw_rule, dict):
+        return None
+    trigger_field = str(raw_rule.get("trigger_field") or "").strip().lower()
+    trigger_value = str(raw_rule.get("trigger_value") or "").strip()
+    operator = str(raw_rule.get("operator") or "equals").strip().lower()
+    if operator not in {"equals", "is_not_empty"}:
+        operator = "equals"
+    if not trigger_field or (operator == "equals" and not trigger_value):
+        return None
+    return {"trigger_field": trigger_field, "trigger_value": trigger_value, "operator": operator}
 
 
 def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, Any]]:
@@ -764,6 +840,46 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
         if item_size is not None:
             normalized_item["size"] = item_size
+
+        add_button_label = str(raw_item.get("add_button_label") or "").strip()
+        if add_button_label:
+            normalized_item["add_button_label"] = add_button_label
+
+        if item_type == "rows":
+            normalized_item["row_fields"] = _normalize_row_fields_v1(raw_item.get("row_fields"))
+
+        if str(raw_item.get("text_format") or "").strip().lower() == "sentence" and item_type in {"text", "longtext"}:
+            normalized_item["text_format"] = "sentence"
+
+        capitalize_words = [
+            str(word).strip()
+            for word in (raw_item.get("capitalize_words") or [])
+            if str(word or "").strip()
+        ]
+        if capitalize_words and item_type in {"text", "longtext"}:
+            normalized_item["capitalize_words"] = capitalize_words
+
+        auto_number_rule = raw_item.get("auto_document_number")
+        if isinstance(auto_number_rule, dict) and item_type == "text":
+            auto_date_field = str(auto_number_rule.get("date_field") or "").strip().lower()
+            if auto_date_field:
+                auto_format = str(auto_number_rule.get("format") or "").strip().lower()
+                normalized_item["auto_document_number"] = {
+                    "prefix": str(auto_number_rule.get("prefix") or "")[:10],
+                    "date_field": auto_date_field,
+                    "format": auto_format if auto_format == "weekday" else "aammdd",
+                }
+
+        item_button_style = _normalize_additional_field_button_style_for_type(
+            item_type, raw_item.get("button_style")
+        )
+        if item_button_style:
+            normalized_item["button_style"] = item_button_style
+
+        for conditional_key in ("editable_when", "required_when", "visible_when"):
+            conditional_rule = _normalize_conditional_field_rule_v1(raw_item.get(conditional_key))
+            if conditional_rule:
+                normalized_item[conditional_key] = conditional_rule
 
         if item_type == "list":
             normalized_item["list_source_type"] = item_list_source_type

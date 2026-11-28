@@ -1,12 +1,17 @@
 ﻿from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from appgenesis.models.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from appgenesis.models.entity import Entity
+    from appgenesis.models.modules.app_module import AppModule
+    from appgenesis.models.user import User
 
 
 class EntityModuleEntitlement(Base, TimestampMixin):

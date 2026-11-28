@@ -95,6 +95,15 @@
     if (cleanTab === "utilizador") {
       return "#create-user-card";
     }
+    if (cleanTab === "perfil_de_autorizacao") {
+      return "#auth-profile-card";
+    }
+    if (cleanTab === "funcoes_administrativas") {
+      return "#funcoes-administrativas-card";
+    }
+    if (cleanTab === "departamentos") {
+      return "#departamentos-card";
+    }
     if (cleanTab === "contas") {
       return "#menu-subprocess-card-active";
     }

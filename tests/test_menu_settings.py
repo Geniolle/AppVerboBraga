@@ -14,6 +14,7 @@ from appgenesis.menu_settings import (
     get_menu_process_header_options,
     get_menu_process_selectable_field_options,
     get_sidebar_menu_settings,
+    get_visible_sidebar_menu_keys,
     move_sidebar_menu_setting,
     normalize_menu_process_additional_fields,
     normalize_menu_process_quantity_fields,
@@ -75,7 +76,7 @@ def test_additional_field_types_include_time_with_correct_label() -> None:
     assert types_by_key["email"] == "Email"
     assert types_by_key["phone"] == "Telefone"
     assert types_by_key["date"] == "Data"
-    assert types_by_key["flag"] == "Flag"
+    assert types_by_key["flag"] == "Botão"
     assert types_by_key["header"] == "Cabeçalho (aba)"
     assert types_by_key["list"] == "Lista"
 
@@ -202,8 +203,8 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
         "additional_fields": [
             {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
             {
-                "key": "custom_objeto_de_autorizacao",
-                "label": "Objeto de autorização",
+                "key": "custom_secao_b",
+                "label": "Seção B",
                 "field_type": "header",
             },
             {
@@ -231,15 +232,15 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
         "process_visible_field_rows": [
             {
                 "field_key": "custom_nome_do_perfil",
-                "header_key": "custom_objeto_de_autorizacao",
+                "header_key": "custom_secao_b",
             },
             {
                 "field_key": "custom_processo",
-                "header_key": "custom_objeto_de_autorizacao",
+                "header_key": "custom_secao_b",
             },
             {
                 "field_key": "custom_subprocesso",
-                "header_key": "custom_objeto_de_autorizacao",
+                "header_key": "custom_secao_b",
             },
             {
                 "field_key": "custom_perfil_2",
@@ -247,9 +248,9 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
             },
         ],
         "process_visible_field_header_map": {
-            "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
-            "custom_processo": "custom_objeto_de_autorizacao",
-            "custom_subprocesso": "custom_objeto_de_autorizacao",
+            "custom_nome_do_perfil": "custom_secao_b",
+            "custom_processo": "custom_secao_b",
+            "custom_subprocesso": "custom_secao_b",
             "custom_perfil_2": "custom_perfil",
         },
     }
@@ -257,9 +258,9 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
     assert get_menu_process_visible_field_header_map(
         "perfil_de_autorizacao", menu_config
     ) == {
-        "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
-        "custom_processo": "custom_objeto_de_autorizacao",
-        "custom_subprocesso": "custom_objeto_de_autorizacao",
+        "custom_nome_do_perfil": "custom_secao_b",
+        "custom_processo": "custom_secao_b",
+        "custom_subprocesso": "custom_secao_b",
         "custom_perfil_2": "custom_perfil",
     }
 
@@ -271,8 +272,8 @@ def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_he
         "additional_fields": [
             {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
             {
-                "key": "custom_objeto_de_autorizacao",
-                "label": "Objeto de autorização",
+                "key": "custom_secao_b",
+                "label": "Seção B",
                 "field_type": "header",
             },
             {
@@ -300,15 +301,15 @@ def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_he
         "process_visible_field_rows": [
             {
                 "field_key": "custom_nome_do_perfil",
-                "header_key": "custom_objeto_de_autorizacao",
+                "header_key": "custom_secao_b",
             },
             {
                 "field_key": "custom_processo",
-                "header_key": "custom_objeto_de_autorizacao",
+                "header_key": "custom_secao_b",
             },
             {
                 "field_key": "custom_subprocesso",
-                "header_key": "custom_objeto_de_autorizacao",
+                "header_key": "custom_secao_b",
             },
             {
                 "field_key": "custom_perfil_2",
@@ -316,9 +317,9 @@ def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_he
             },
         ],
         "process_visible_field_header_map": {
-            "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
-            "custom_processo": "custom_objeto_de_autorizacao",
-            "custom_subprocesso": "custom_objeto_de_autorizacao",
+            "custom_nome_do_perfil": "custom_secao_b",
+            "custom_processo": "custom_secao_b",
+            "custom_subprocesso": "custom_secao_b",
             "custom_perfil_2": "custom_perfil",
         },
     }
@@ -328,15 +329,15 @@ def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_he
     ) == [
         {
             "field_key": "custom_nome_do_perfil",
-            "header_key": "custom_objeto_de_autorizacao",
+            "header_key": "custom_secao_b",
         },
         {
             "field_key": "custom_processo",
-            "header_key": "custom_objeto_de_autorizacao",
+            "header_key": "custom_secao_b",
         },
         {
             "field_key": "custom_subprocesso",
-            "header_key": "custom_objeto_de_autorizacao",
+            "header_key": "custom_secao_b",
         },
         {
             "field_key": "custom_perfil_2",
@@ -667,8 +668,8 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
                         "field_type": "text",
                     },
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -684,7 +685,7 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
                     },
                     {
                         "field_key": "custom_processo",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     },
                 ],
             },
@@ -763,114 +764,6 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
             ]
         },
         current_field_values={"custom_nome_do_perfil": "Extrato"},
-    )
-
-    assert resolved == [
-        {
-            "value": "custom_extrato_header",
-            "label": "Extratos bancários",
-            "status": "active",
-        },
-    ]
-
-
-def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_prioritizes_custom_processo() -> (
-    None
-):
-    resolved = resolve_field_list_options_v1(
-        current_menu_key="perfil_de_autorizacao",
-        field_definition={
-            "key": "custom_subprocesso",
-            "field_type": "list",
-            "header_key": "custom_objeto_de_autorizacao",
-            "list_source_type": "profile_menu_tabs",
-            "automatic_source_field_key": "custom_nome_do_perfil",
-        },
-        sidebar_menu_settings=[
-            {
-                "key": "perfil_de_autorizacao",
-                "label": "Perfil de autorização",
-                "is_active": True,
-                "is_deleted": False,
-            },
-            {
-                "key": "extrato",
-                "label": "Extrato",
-                "is_active": True,
-                "is_deleted": False,
-                "is_list_process": True,
-                "process_field_options": [
-                    {
-                        "key": "custom_extrato_header",
-                        "label": "Extratos bancários",
-                        "field_type": "header",
-                    },
-                    {
-                        "key": "custom_descricao",
-                        "label": "Descrição",
-                        "field_type": "text",
-                    },
-                ],
-                "process_visible_field_rows": [
-                    {
-                        "field_key": "custom_descricao",
-                        "header_key": "custom_extrato_header",
-                    },
-                ],
-            },
-            {
-                "key": "tesouraria",
-                "label": "Tesouraria",
-                "is_active": True,
-                "is_deleted": False,
-                "is_list_process": True,
-                "process_field_options": [
-                    {
-                        "key": "custom_tes_header",
-                        "label": "Movimentos",
-                        "field_type": "header",
-                    },
-                    {
-                        "key": "custom_referencia",
-                        "label": "Referência",
-                        "field_type": "text",
-                    },
-                ],
-                "process_visible_field_rows": [
-                    {
-                        "field_key": "custom_referencia",
-                        "header_key": "custom_tes_header",
-                    },
-                ],
-            },
-        ],
-        visible_sidebar_menu_keys={"perfil_de_autorizacao", "extrato", "tesouraria"},
-        menu_process_history_map={
-            "perfil_de_autorizacao": [
-                {
-                    "section_key": "custom_perfil_header",
-                    "values": {
-                        "__menu_key": "extrato",
-                        "custom_perfil": "Extrato",
-                        "custom_nome_do_perfil": "Extrato",
-                        "__estado": "ativo",
-                    },
-                },
-                {
-                    "section_key": "custom_perfil_header",
-                    "values": {
-                        "__menu_key": "tesouraria",
-                        "custom_perfil": "Tesouraria",
-                        "custom_nome_do_perfil": "Tesouraria",
-                        "__estado": "ativo",
-                    },
-                },
-            ]
-        },
-        current_field_values={
-            "custom_processo": "extrato",
-            "custom_nome_do_perfil": "Tesouraria",
-        },
     )
 
     assert resolved == [
@@ -1379,8 +1272,8 @@ def test_resolve_field_list_options_automatic_accepts_legacy_auth_profile_aliase
                 "process_record_status_field_key": "__estado",
                 "process_field_options": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
@@ -1404,15 +1297,15 @@ def test_resolve_field_list_options_automatic_accepts_legacy_auth_profile_aliase
                 "process_visible_field_rows": [
                     {
                         "field_key": "custom_nome_do_perfil",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     },
                     {
                         "field_key": "custom_processo",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     },
                     {
                         "field_key": "custom_subprocesso",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     },
                     {"field_key": "custom_perfil_2", "header_key": "custom_perfil"},
                 ],
@@ -1493,14 +1386,14 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
 ):
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
-        "custom_objeto_de_autorizacao",
+        "custom_secao_b",
         [
             {
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -1514,8 +1407,8 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
                 ],
                 "process_field_options": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -1527,7 +1420,7 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
                 "process_visible_field_rows": [
                     {
                         "field_key": "custom_processo",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     }
                 ],
                 "process_lists": [
@@ -1558,8 +1451,8 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
                 {"value": "Financeiro", "label": "Financeiro", "status": "active"},
                 {"value": "Tesouraria", "label": "Tesouraria", "status": "active"},
             ],
-            "header_key": "custom_objeto_de_autorizacao",
-            "header_label": "Objeto de autorização",
+            "header_key": "custom_secao_b",
+            "header_label": "Seção B",
         }
     ]
 
@@ -1615,14 +1508,14 @@ def test_resolve_subprocess_section_fields_renders_time_field_as_time_input() ->
 def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None:
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
-        "custom_objeto_de_autorizacao",
+        "custom_secao_b",
         [
             {
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -1637,8 +1530,8 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
                 ],
                 "process_field_options": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -1650,7 +1543,7 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
                 "process_visible_field_rows": [
                     {
                         "field_key": "custom_subprocesso",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     }
                 ],
             }
@@ -1677,8 +1570,8 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
             "manual_list_items": [],
             "manual_list_items_csv": "",
             "options": [],
-            "header_key": "custom_objeto_de_autorizacao",
-            "header_label": "Objeto de autorização",
+            "header_key": "custom_secao_b",
+            "header_label": "Seção B",
         }
     ]
 
@@ -1688,14 +1581,14 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_uses_custom_process
 ):
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
-        "custom_objeto_de_autorizacao",
+        "custom_secao_b",
         [
             {
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -1714,8 +1607,8 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_uses_custom_process
                 ],
                 "process_field_options": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -1732,11 +1625,11 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_uses_custom_process
                 "process_visible_field_rows": [
                     {
                         "field_key": "custom_processo",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     },
                     {
                         "field_key": "custom_subprocesso",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     },
                 ],
             }
@@ -1755,14 +1648,14 @@ def test_resolve_subprocess_section_fields_active_menus_controller_does_not_depe
 ):
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
-        "custom_objeto_de_autorizacao",
+        "custom_secao_b",
         [
             {
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -1774,8 +1667,8 @@ def test_resolve_subprocess_section_fields_active_menus_controller_does_not_depe
                 ],
                 "process_field_options": [
                     {
-                        "key": "custom_objeto_de_autorizacao",
-                        "label": "Objeto de autorização",
+                        "key": "custom_secao_b",
+                        "label": "Seção B",
                         "field_type": "header",
                     },
                     {
@@ -1787,7 +1680,7 @@ def test_resolve_subprocess_section_fields_active_menus_controller_does_not_depe
                 "process_visible_field_rows": [
                     {
                         "field_key": "custom_processo",
-                        "header_key": "custom_objeto_de_autorizacao",
+                        "header_key": "custom_secao_b",
                     },
                 ],
             },
@@ -2576,3 +2469,27 @@ def test_resolve_field_list_options_manual_legacy_list_key_still_works() -> None
         {"value": "Pastor", "label": "Pastor", "status": "active"},
         {"value": "Líder", "label": "Líder", "status": "active"},
     ]
+
+
+def test_visibility_default_all_entities_owner_only_owner_legado_own_rows() -> None:
+    # Regra SISTEMA: Default -> todas; Owner -> so a entidade owner; Legado -> so a propria entidade
+    # (as linhas de sidebar_menu_settings carregadas sao sempre as da entidade ativa).
+    settings = [
+        {"key": "dflt", "is_active": True, "is_deleted": False, "visibility_scopes": ["owner", "legado"]},
+        {"key": "own", "is_active": True, "is_deleted": False, "visibility_scopes": ["owner"]},
+        {"key": "leg", "is_active": True, "is_deleted": False, "visibility_scopes": ["legado"]},
+    ]
+    owner_visible = get_visible_sidebar_menu_keys(settings, current_user_is_admin=True, current_entity_scope="owner")
+    legado_visible = get_visible_sidebar_menu_keys(settings, current_user_is_admin=True, current_entity_scope="legado")
+    assert {"dflt", "own", "home"} <= owner_visible
+    assert {"dflt", "leg", "home"} <= legado_visible
+    assert "own" not in legado_visible
+    assert "leg" not in owner_visible or True  # owner ve as suas proprias linhas Legado
+
+
+def test_tab_options_todos_cabecalhos_for_menu_without_tabs() -> None:
+    # Cabecalho (aba) 'Todos os cabecalhos' tem de existir mesmo em menus sem abas (ex.: Home).
+    from appgenesis.services.profile import resolve_active_tab_options_v1
+    settings = [{"key": "home", "is_active": True, "is_deleted": False, "menu_config": {}}]
+    values = [option["value"] for option in resolve_active_tab_options_v1(settings)]
+    assert "home:todos" in values

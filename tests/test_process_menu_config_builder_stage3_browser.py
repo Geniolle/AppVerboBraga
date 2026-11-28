@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.config.settings import settings
 
 
 ####################################################################################
@@ -31,8 +31,8 @@ def _build_driver_v1():
 
 
 def _login_admin_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
-    admin_email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    admin_password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    admin_email = str(settings.ADMIN_LOGIN_EMAIL or "").strip()
+    admin_password = str(settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not admin_email or not admin_password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD nao definidos.")
 
@@ -100,18 +100,8 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
             "menu-subprocess-card-active",
             "Menu",
         ),
-        (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-profile-card#auth-profile-card",
-            "perfil_de_autorizacao",
-            "auth-profile-card",
-            "Perfis",
-        ),
-        (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-objeto-card#auth-objeto-card",
-            "perfil_de_autorizacao",
-            "auth-objeto-card",
-            "Objeto de autorização",
-        ),
+        # Perfil de autorizacao deixou de ser menu proprio: e uma aba de Administrativo.
+        ("/users/new?menu=administrativo&admin_tab=perfil_de_autorizacao", "administrativo", "auth-profile-active-card", None),  # a aba pode ficar no menu "Mais"
     ],
 )
 def test_stage3_process_menu_config_builder_routes_keep_runtime_behavior(
@@ -156,17 +146,11 @@ def test_stage3_process_menu_config_builder_finds_at_least_one_dynamic_process()
             const fixedKeys = new Set([
               "home",
               "perfil",
-              "links",
-              "contato",
-              "tutorial",
               "administrativo",
               "meu_perfil",
               "sessoes",
               "empresa",
               "perfil_de_autorizacao",
-              "funcionarios",
-              "financeiro",
-              "relatorios"
             ]);
             return Array.from(document.querySelectorAll(".menu-item[data-menu]"))
               .map((element) => String(element.getAttribute("data-menu") || "").trim().toLowerCase())

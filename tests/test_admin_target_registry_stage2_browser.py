@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.config.settings import settings
 
 
 ####################################################################################
@@ -31,8 +31,8 @@ def _build_driver_v1():
 
 
 def _login_admin_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
-    admin_email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    admin_password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    admin_email = str(settings.ADMIN_LOGIN_EMAIL or "").strip()
+    admin_password = str(settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not admin_email or not admin_password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD nao definidos.")
 
@@ -101,18 +101,8 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
             "menu-subprocess-card-active",
             "Menu",
         ),
-        (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-profile-active-card#auth-profile-active-card",
-            "perfil_de_autorizacao",
-            "auth-profile-active-card",
-            "Perfis",
-        ),
-        (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-objeto-active-card#auth-objeto-active-card",
-            "perfil_de_autorizacao",
-            "auth-objeto-active-card",
-            "Objeto de autorização",
-        ),
+        # Perfil de autorizacao deixou de ser menu proprio: e uma aba de Administrativo.
+        ("/users/new?menu=administrativo&admin_tab=perfil_de_autorizacao", "administrativo", "auth-profile-active-card", None),  # a aba pode ficar no menu "Mais"
     ],
 )
 def test_stage2_admin_target_registry_browser_routes_keep_runtime_behavior(

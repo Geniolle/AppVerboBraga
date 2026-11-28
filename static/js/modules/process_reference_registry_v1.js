@@ -34,7 +34,6 @@
   const ENTIDADE_SUBPROCESS_KEY_V1 = "entidade";
   const UTILIZADOR_SUBPROCESS_KEY_V1 = "utilizador";
   const MENU_SUBPROCESS_KEY_V1 = "menu";
-  const OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1 = "objeto_de_autorizacao";
 
   global.AppGenesisProcessReferenceRegistryV1 = Object.freeze({
     HOME_MENU_KEY_V1,
@@ -46,7 +45,6 @@
     PERFIL_AUTORIZACAO_MENU_KEY_V1,
     ENTIDADE_SUBPROCESS_KEY_V1,
     UTILIZADOR_SUBPROCESS_KEY_V1,
-    MENU_SUBPROCESS_KEY_V1,
-    OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1
+    MENU_SUBPROCESS_KEY_V1
   });
 })(window);

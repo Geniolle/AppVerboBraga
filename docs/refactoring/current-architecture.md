@@ -1,5 +1,8 @@
 # Arquitetura atual — AppGenesis (Fase 0)
 
+> **Medição 2026-11-28:** números deste ficheiro são históricos. Hoje: 0 `import *` em `appgenesis/`; 0 funções de topo redefinidas; `menu_settings.py` 1720 linhas, `services/page.py` 1466, `admin_subprocesses/registry.py` 1057, `core.py` 181 (53 importadores explícitos). Tabela completa em `docs/refactor-roadmap.md` ("Estado medido em 2026-11-28").
+
+
 ## Visão geral
 
 AppGenesis é uma aplicação FastAPI + SQLAlchemy + Jinja2, multi-tenant (por `Entity`), com uma

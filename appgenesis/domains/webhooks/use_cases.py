@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from appgenesis.core import WHATSAPP_WEBHOOK_VERIFY_TOKEN
+from appgenesis.config.settings import settings
 from appgenesis.domains.webhooks.repositories import find_member_by_whatsapp_message_id
 from appgenesis.services.whatsapp import map_whatsapp_delivery_status
 
@@ -18,11 +20,24 @@ def verify_whatsapp_subscription_challenge(
     if (
         hub_mode == "subscribe"
         and hub_challenge is not None
-        and WHATSAPP_WEBHOOK_VERIFY_TOKEN
-        and hub_verify_token == WHATSAPP_WEBHOOK_VERIFY_TOKEN
+        and settings.WHATSAPP_WEBHOOK_VERIFY_TOKEN
+        and hub_verify_token == settings.WHATSAPP_WEBHOOK_VERIFY_TOKEN
     ):
         return hub_challenge
     return None
+
+
+def is_valid_whatsapp_signature(raw_body: bytes, signature_header: str | None) -> bool:
+    """Valida X-Hub-Signature-256 (HMAC-SHA256 do corpo com o app secret).
+
+    Sem WHATSAPP_APP_SECRET configurado o webhook fica fechado (falha fechada).
+    """
+    secret = settings.WHATSAPP_APP_SECRET
+    header = str(signature_header or "").strip()
+    if not secret or not header.startswith("sha256="):
+        return False
+    expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(header.removeprefix("sha256="), expected)
 
 
 def record_whatsapp_delivery_statuses(session: Session, payload: dict[str, Any]) -> int:

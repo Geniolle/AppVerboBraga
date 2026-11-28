@@ -10,4 +10,11 @@ from appgenesis.routes.auth import invite_handlers  # noqa: F401,E402
 from appgenesis.routes.auth import oauth_handlers  # noqa: F401,E402
 from appgenesis.routes.auth import password_reset_handlers  # noqa: F401,E402
 
-__all__ = ["router"]
+__all__ = [
+    "router",
+    "invite_handlers",
+    "oauth_handlers",
+    "pages",
+    "password_reset_handlers",
+    "session_handlers",
+]

@@ -1,15 +1,23 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
-from typing import Any
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
+from fastapi import (
+    Form,
+    Request,
+    status,
+)
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+)
+from sqlalchemy import (
+    delete,
+    func,
+    select,
+)
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 
-from appgenesis.core import BASE_DIR
+from appgenesis.config.settings import settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.navigation_context import build_post_save_return_url_v1, build_return_url_v1
@@ -20,12 +28,8 @@ from appgenesis.services.permissions import (
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.models import (
     Entity,
-    Member,
     MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
     User,
-    UserAccountStatus,
 )
 
 from appgenesis.routes.entities.router import router
@@ -83,7 +87,10 @@ def delete_entity(
             current_user["login_email"],
             selected_entity_id,
         )
-        if not is_entity_within_permissions(parsed_entity_id, entity_permissions):
+        # Entidades sao estrutura do tenant: so o owner elimina (admin de entidade legado nao).
+        if not entity_permissions.get(
+            "can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False)
+        ) or not is_entity_within_permissions(parsed_entity_id, entity_permissions):
             return RedirectResponse(
                 url=build_return_url_v1(
                     return_menu=return_menu,
@@ -167,7 +174,7 @@ def delete_entity(
             )
 
     if logo_url_to_remove.startswith("/static/entities/"):
-        (BASE_DIR / logo_url_to_remove.lstrip("/")).unlink(missing_ok=True)
+        (settings.BASE_DIR / logo_url_to_remove.lstrip("/")).unlink(missing_ok=True)
 
     return RedirectResponse(
         url=build_post_save_return_url_v1(

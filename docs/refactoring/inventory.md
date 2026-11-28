@@ -32,9 +32,9 @@ appgenesis/
   use_cases/
     users/create_user.py      # único use case "puro" já existente — referência de padrão para a Fase 3
   integrations/oauth.py
+  web_app.py                  # entrypoint ASGI (`uvicorn appgenesis.web_app:app`)
   i18n/{pt,en,es,fr}.json
 
-web_app.py                    # entrypoint ASGI na raiz
 scripts/                      # ver secção 9
 templates/                    # Jinja2, base.html + partials/ + macros/admin_subprocess.html
 static/{css,js}/              # static/js/new_user.js + static/js/modules/*

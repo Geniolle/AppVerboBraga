@@ -10,7 +10,6 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from appgenesis.menu_settings import get_sidebar_menu_settings
 from appgenesis.models import Entity, Member, MemberEntity, MemberEntityStatus, User
 
 PROCESS_SUBSEQUENT_ALLOWED_OPERATORS = {
@@ -467,7 +466,7 @@ def serialize_menu_process_records(values: list[dict[str, Any]] | tuple[dict[str
 
 def normalize_process_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    if clean_value in {"automatic", "field_list", "active_menus", "profile_menu_tabs"}:
+    if clean_value in {"automatic", "field_list", "active_menus", "active_sessions", "active_departments", "profile_menu_tabs"}:
         return clean_value
     return "manual"
 
@@ -496,6 +495,94 @@ def _normalize_visible_sidebar_menu_keys_for_list_resolver_v1(
         )
         if clean_key
     }
+
+
+def resolve_active_menu_options_v1(
+    sidebar_menu_settings: list[dict[str, Any]] | None,
+) -> list[dict[str, str]]:
+    settings = [dict(row) for row in (sidebar_menu_settings or []) if isinstance(row, dict)]
+    section_by_menu = {
+        _normalize_process_list_source_key_v1(row.get("key")): str(row.get("sidebar_section_key") or "").strip().lower()
+        for row in settings
+    }
+    options = _resolve_active_sidebar_menu_list_options_v1(
+        sidebar_menu_settings=settings,
+        visible_sidebar_menu_keys=set(),
+    )
+    for option in options:
+        option["section"] = section_by_menu.get(option["value"], "")
+    return options
+
+
+def resolve_active_tab_options_v1(
+    sidebar_menu_settings: list[dict[str, Any]] | None,
+) -> list[dict[str, str]]:
+    # Cabecalhos (abas) de cada menu ativo. O valor e "menu:aba" para ser unico entre menus.
+    from appgenesis.services.process_tabs import resolve_process_tabs_v1
+
+    options: list[dict[str, str]] = []
+    for menu_option in resolve_active_menu_options_v1(sidebar_menu_settings):
+        menu_key = menu_option["value"]
+        # 'Todos os cabecalhos' existe em todos os menus ativos, mesmo sem abas (ex.: Home).
+        options.append(
+            {
+                "value": f"{menu_key}:todos",
+                "label": "Todos os cabeçalhos",
+                "menu": menu_key,
+            }
+        )
+        tabs = resolve_process_tabs_v1(menu_key, sidebar_menu_settings or [])
+        for tab in tabs:
+            options.append(
+                {
+                    "value": f"{menu_key}:{tab.key}",
+                    "label": tab.label,
+                    "menu": menu_key,
+                }
+            )
+    return options
+
+
+def resolve_active_session_options_v1(
+    sidebar_menu_settings: list[dict[str, Any]] | None,
+) -> list[dict[str, str]]:
+    settings = [dict(row) for row in (sidebar_menu_settings or []) if isinstance(row, dict)]
+    return _resolve_active_sidebar_sections_list_options_v1(sidebar_menu_settings=settings)
+
+
+def _resolve_active_sidebar_sections_list_options_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    # Sessoes = secoes da barra lateral (sidebar_sections) guardadas no menu Administrativo.
+    from appgenesis.services.process_settings.normalizers import (
+        MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
+        normalize_sidebar_sections,
+    )
+
+    administrativo_row = next(
+        (
+            row
+            for row in sidebar_menu_settings
+            if _normalize_process_list_source_key_v1(row.get("key")) == "administrativo"
+        ),
+        None,
+    )
+    if administrativo_row is None:
+        return []
+
+    menu_config = administrativo_row.get("menu_config") or {}
+    sections = normalize_sidebar_sections(menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY) or [])
+
+    return [
+        {
+            "value": str(section["key"]),
+            "label": str(section["label"]),
+            "status": "active",
+        }
+        for section in sections
+        if section.get("is_active")
+    ]
 
 
 def _resolve_active_sidebar_menu_list_options_v1(
@@ -798,13 +885,6 @@ def _build_profile_menu_tabs_controller_key_candidates_v1(
         if clean_candidate and clean_candidate not in candidates:
             candidates.append(clean_candidate)
 
-    if (
-        _normalize_process_list_source_key_v1(current_menu_key) == "perfil_de_autorizacao"
-        and _normalize_process_list_source_key_v1(field_definition.get("header_key"))
-        == "custom_objeto_de_autorizacao"
-    ):
-        append_candidate("custom_processo")
-
     for raw_candidate in (
         field_definition.get("profile_source_field_key"),
         field_definition.get("profileSourceFieldKey"),
@@ -996,6 +1076,7 @@ def resolve_field_list_options_v1(
     visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
     menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
     current_field_values: dict[str, Any] | None = None,
+    department_options: list[dict[str, str]] | None = None,
     _visited: frozenset[tuple[str, str]] | None = None,
 ) -> list[dict[str, str]]:
     del active_entity_id
@@ -1053,6 +1134,14 @@ def resolve_field_list_options_v1(
             sidebar_menu_settings=settings,
             visible_sidebar_menu_keys=visible_keys,
         )
+
+    if list_source_type == "active_sessions":
+        return _resolve_active_sidebar_sections_list_options_v1(
+            sidebar_menu_settings=settings,
+        )
+
+    if list_source_type == "active_departments":
+        return [dict(option) for option in (department_options or [])]
 
     if list_source_type == "profile_menu_tabs":
         return _resolve_profile_menu_tabs_list_options_v1(

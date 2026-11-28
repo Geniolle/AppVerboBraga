@@ -6,17 +6,19 @@ from appgenesis.services.page import build_users_new_url
 # return_after_save.js (isBackendPostSaveReturnUrl) nao aplique a heuristica de
 # navegacao corretiva via sessionStorage e reabra o card/editor com o contexto
 # antigo do submit. Mesmo parametro ja usado em
-# appgenesis/routes/profile/settings_handlers.py (_build_settings_redirect_url).
+# appgenesis/routes/profile/process_settings/common.py (_build_settings_redirect_url).
 POST_SAVE_MARKER_PARAM_V1 = "appgenesis_after_save"
 
 _ALLOWED_ADMIN_TABS: frozenset[str] = frozenset({
     "utilizador",
+    "admin_sistema",
     "entidade",
     "sessoes",
     "menu",
     "perfil_autorizacao",
     "contas",
     "definicoes",
+    "dados_empresa",
 })
 
 

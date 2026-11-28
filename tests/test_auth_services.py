@@ -1,3 +1,4 @@
+from dataclasses import replace
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
@@ -86,8 +87,11 @@ def test_hash_password_and_verify() -> None:
 
 
 def test_verify_login_password_uses_env_password_for_admin_email(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "P@1internet")
+    monkeypatch.setattr(
+        auth_service,
+        "settings",
+        replace(auth_service.settings, ADMIN_LOGIN_EMAIL="admin@appgenesis.local", ADMIN_LOGIN_PASSWORD="P@1internet"),
+    )
 
     stored_hash = hash_password("OutraSenha123!")
 
@@ -104,8 +108,11 @@ def test_verify_login_password_uses_env_password_for_admin_email(monkeypatch) ->
 
 
 def test_verify_login_password_falls_back_to_hash_for_other_users(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "P@1internet")
+    monkeypatch.setattr(
+        auth_service,
+        "settings",
+        replace(auth_service.settings, ADMIN_LOGIN_EMAIL="admin@appgenesis.local", ADMIN_LOGIN_PASSWORD="P@1internet"),
+    )
 
     stored_hash = hash_password("SenhaUtilizador123!")
 
@@ -122,8 +129,11 @@ def test_verify_login_password_falls_back_to_hash_for_other_users(monkeypatch) -
 
 
 def test_verify_login_password_falls_back_to_hash_when_admin_env_password_is_empty(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "")
+    monkeypatch.setattr(
+        auth_service,
+        "settings",
+        replace(auth_service.settings, ADMIN_LOGIN_EMAIL="admin@appgenesis.local", ADMIN_LOGIN_PASSWORD=""),
+    )
 
     stored_hash = hash_password("SenhaBD123!")
 
@@ -721,3 +731,12 @@ def test_pending_user_invite_token_keeps_member_user_identity() -> None:
         assert activated_user.account_status == UserAccountStatus.ACTIVE.value
         assert member.member_status == MemberStatus.ACTIVE.value
         assert session.scalar(select(func.count()).select_from(User)) == 1
+
+
+def test_build_international_phone_value_adds_country_prefix_to_national_number() -> None:
+    from appgenesis.services.phone_country import build_international_phone_value
+
+    assert build_international_phone_value("PT", "999999999") == ("+351999999999", "")
+    assert build_international_phone_value("PT", "+351 912 345 678") == ("+351912345678", "")
+    assert build_international_phone_value("PT", "") == ("", "Telefone principal é obrigatório.")
+    assert build_international_phone_value("PT", "+55 11 99999-9999")[1] != ""

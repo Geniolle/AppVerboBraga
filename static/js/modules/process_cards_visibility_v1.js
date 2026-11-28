@@ -25,7 +25,6 @@
     ESTRUTURAS_MENU_KEY_V1: "sessoes",
     scopedCards: [],
     dynamicProcessCardEl: null,
-    dynamicProcessActionCardEl: null,
     dynamicProcessActiveCardEl: null,
     dynamicProcessInactiveCardEl: null,
     debugTabsLog: function () {},
@@ -58,9 +57,6 @@
     if ("dynamicProcessCardEl" in safeOptions) {
       state.dynamicProcessCardEl = safeOptions.dynamicProcessCardEl;
     }
-    if ("dynamicProcessActionCardEl" in safeOptions) {
-      state.dynamicProcessActionCardEl = safeOptions.dynamicProcessActionCardEl;
-    }
     if ("dynamicProcessActiveCardEl" in safeOptions) {
       state.dynamicProcessActiveCardEl = safeOptions.dynamicProcessActiveCardEl;
     }
@@ -87,9 +83,6 @@
     if (state.dynamicProcessCardEl) {
       state.dynamicProcessCardEl.style.display = displayValue;
     }
-    if (state.dynamicProcessActionCardEl) {
-      state.dynamicProcessActionCardEl.style.display = displayValue;
-    }
     if (state.dynamicProcessActiveCardEl) {
       state.dynamicProcessActiveCardEl.style.display = displayValue;
     }
@@ -102,7 +95,8 @@
     Array.from(state.scopedCards || []).forEach((card) => {
       const rawScope = card.getAttribute("data-menu-scope") || "";
       const scopes = rawScope.split(",").map((value) => state.normalizeMenuKey(value)).filter(Boolean);
-      card.style.display = scopes.includes(menuKey) ? "" : "none";
+      // edit-user-card so e mostrado pelo alvo de edicao, nunca pelo escopo do menu.
+      card.style.display = scopes.includes(menuKey) && card.id !== "edit-user-card" ? "" : "none";
     });
     setDynamicProcessCardsVisibility(false);
   }
@@ -125,12 +119,20 @@
   }
 
   function cardBelongsToUserGroup(menuKey, targetSelector, card) {
+    if (menuKey !== "administrativo") {
+      return false;
+    }
+    // Edicao de utilizador so aparece quando o alvo e a edicao (nao fica aberta ao voltar ao menu).
+    if (card.id === "edit-user-card") {
+      return targetSelector === "#edit-user-card";
+    }
+    if (targetSelector === "#system-admins-card") {
+      return card.id === "system-admins-card" || card.id === "admin-system-admins-card" || card.id === "inactive-system-admins-card";
+    }
     return (
-      menuKey === "administrativo" &&
       targetSelector === "#create-user-card" &&
       (
         card.id === "create-user-card" ||
-        card.id === "edit-user-card" ||
         card.id === "admin-users-created-card" ||
         card.id === "inactive-users-card"
       )
@@ -214,7 +216,8 @@
       const isAdminSubprocessGroupedBlock =
         allowAdminSubprocessGroupForTarget &&
         Boolean(adminSubprocessKey) &&
-        card.getAttribute("data-admin-subprocess") === adminSubprocessKey;
+        card.getAttribute("data-admin-subprocess") === adminSubprocessKey &&
+        card.id !== "edit-user-card";
       const shouldShowCard =
         targetSelector === ("#" + card.id) ||
         isAdminSubprocessGroupedBlock ||

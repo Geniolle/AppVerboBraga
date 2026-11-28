@@ -32,6 +32,7 @@ services:
       - "127.0.0.1:8000:8000"
     environment:
       PRODUCTION: "true"
+      APPGENESIS_ACCESS_FILTER_V1: ${APPGENESIS_ACCESS_FILTER_V1:-0}
       AGENDA_OUTPUT_FILE: /app/static/agenda/eventos.json
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-app_igreja}
       APP_SECRET_KEY: ${APP_SECRET_KEY}
@@ -50,6 +51,7 @@ services:
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
       WHATSAPP_TEMPLATE_NAME: ${WHATSAPP_TEMPLATE_NAME}
       WHATSAPP_WEBHOOK_VERIFY_TOKEN: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USERNAME: ${SMTP_USERNAME}
@@ -58,7 +60,11 @@ services:
       SMTP_USE_TLS: ${SMTP_USE_TLS}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     volumes:
-      - static_prod:/app/static
+      # Apenas dados escritos em runtime. O codigo estatico (css/js/img) vem da imagem,
+      # para que cada deploy o atualize sem docker cp.
+      - entities_prod:/app/static/entities
+      - profile_photos_prod:/app/static/profile_photos
+      - agenda_prod:/app/static/agenda
       - ./backups:/backups
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
@@ -72,7 +78,10 @@ services:
 
 volumes:
   pg_data_prod:
-  static_prod:
+  entities_prod:
+  profile_photos_prod:
+  agenda_prod:
+  static_prod:  # legado: mantido ate migracao confirmada, depois remover
 
 networks:
   app_network:

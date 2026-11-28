@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from appgenesis.core import ENTITY_PROFILE_SCOPE_OWNER
+from appgenesis.config.settings import settings
 from appgenesis.models import Entity, MemberEntity, MemberEntityStatus, User
 
 def owner_entity_exists(session: Session) -> bool:
@@ -16,7 +16,7 @@ def owner_entity_exists(session: Session) -> bool:
     owner_id = session.scalar(
         select(Entity.id)
        .where(
-            Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER,
+            Entity.profile_scope == settings.ENTITY_PROFILE_SCOPE_OWNER,
             Entity.is_active.is_(True),
         )
        .limit(1)
@@ -31,7 +31,7 @@ def user_has_owner_entity_membership(session: Session, user_id: int) -> bool:
        .where(
             User.id == user_id,
             MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-            Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER,
+            Entity.profile_scope == settings.ENTITY_PROFILE_SCOPE_OWNER,
             Entity.is_active.is_(True),
         )
        .limit(1)
@@ -150,6 +150,33 @@ def get_user_entity_permissions(
         "allowed_entity_ids": allowed_structure_entity_ids,
     }
 
+def is_entity_admin_v1(
+    session: Session,
+    user_id: int,
+    login_email: str,
+    entity_id: int | None,
+) -> bool:
+    """Pode gerir utilizadores, funcoes e perfis da entidade da sessao?
+
+    - Owner (is_admin_user): sim.
+    - Administrador de entidade legado (system_type 'legado'): so com o filtro por funcao ligado
+      e uma funcao ativa que lhe de o menu Administrativo nessa entidade.
+    Membros ('default') nunca, mesmo com o menu: o perfil 'legado' e que identifica o administrador.
+    """
+    from appgenesis.services.access_filter import access_filter_enabled, resolve_allowed_menu_keys_v1
+    from appgenesis.services.auth import is_admin_user
+
+    if is_admin_user(session, user_id, login_email):
+        return True
+    if entity_id is None or not access_filter_enabled():
+        return False
+    system_type = session.execute(select(User.system_type).where(User.id == user_id)).scalar_one_or_none()
+    if str(system_type or "").strip().lower() != "legado":
+        return False
+    allowed = resolve_allowed_menu_keys_v1(session, entity_id=entity_id, user_system_type="legado")
+    return bool(allowed) and "administrativo" in allowed
+
+
 def is_entity_within_permissions(entity_id: int, permissions: dict[str, Any]) -> bool:
     if permissions.get("can_manage_tenant_structure") or permissions.get("can_manage_all_entities"):
         return True
@@ -162,4 +189,5 @@ __all__ = [
     "_get_user_linked_entity_ids",
     "get_user_entity_permissions",
     "is_entity_within_permissions",
+    "is_entity_admin_v1",
 ]

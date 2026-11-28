@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from appgenesis.repositories import user_repository as users_repo
 from appgenesis.models import (
     Entity,
     Member,
@@ -20,7 +21,6 @@ from appgenesis.models import (
 from appgenesis.services.auth import (
     build_user_invite_link,
     build_user_invite_token,
-    is_admin_user,
     send_user_invite_email,
 )
 from appgenesis.services.user_entity_scope import (
@@ -35,7 +35,7 @@ from appgenesis.services.page import (
     get_page_data,
     get_user_edit_defaults,
 )
-from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.permissions import get_user_entity_permissions, is_entity_admin_v1
 from appgenesis.services.profile import get_user_personal_data
 from appgenesis.services.user_system import normalize_user_system_type_v1
 
@@ -165,42 +165,6 @@ def _resolve_entity_from_user_email_v2(
 
 _resolve_entity_from_user_email = _resolve_entity_from_user_email_v2
 
-def _get_primary_entity_for_member(session: Session, member_id: int) -> tuple[int | None, str]:
-    entity_row = session.execute(
-        select(Entity.id, Entity.name)
-        .join(MemberEntity, MemberEntity.entity_id == Entity.id)
-        .where(
-            MemberEntity.member_id == member_id,
-            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-        )
-        .order_by(MemberEntity.id.asc())
-        .limit(1)
-    ).one_or_none()
-    if entity_row is None:
-        return None, "-"
-    return int(entity_row.id), str(entity_row.name or "-")
-
-
-def _member_is_within_permissions(
-    session: Session,
-    member_id: int,
-    permissions: dict[str, Any],
-) -> bool:
-    if permissions.get("can_manage_all_entities"):
-        return True
-    allowed_entity_ids = sorted(set(permissions.get("allowed_entity_ids") or set()))
-    if not allowed_entity_ids:
-        return False
-    scoped_link_id = session.scalar(
-        select(MemberEntity.id)
-        .where(
-            MemberEntity.member_id == member_id,
-            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-            MemberEntity.entity_id.in_(allowed_entity_ids),
-        )
-        .limit(1)
-    )
-    return scoped_link_id is not None
 
 
 @dataclass(frozen=True)
@@ -231,6 +195,7 @@ def normalize_create_user_input_v1(
     entity_id: str = "",
     invite_delivery: str,
     system_profile: str = "",
+    legacy_admin_form: bool = False,
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
@@ -240,6 +205,13 @@ def normalize_create_user_input_v1(
     clean_invite_delivery = invite_delivery.strip().lower()
     if clean_invite_delivery not in {"email", "link"}:
         clean_invite_delivery = "email"
+    # Perfil Legado so existe no separador Administradores do sistema (owner).
+    legacy_profile_error = ""
+    if legacy_admin_form:
+        clean_system_type = "legado"
+    elif clean_system_type == "legado":
+        clean_system_type = LEGACY_USER_SYSTEM_TYPE_DEFAULT
+        legacy_profile_error = "O perfil Legado só pode ser criado em Administradores do sistema."
 
     form_data = {
         "full_name": clean_full_name,
@@ -252,6 +224,8 @@ def normalize_create_user_input_v1(
     }
 
     errors: list[str] = []
+    if legacy_profile_error:
+        errors.append(legacy_profile_error)
     if not clean_full_name:
         errors.append("Nome completo é obrigatório.")
     if not clean_primary_phone:
@@ -283,6 +257,8 @@ def _build_error_context(
     user_personal_data: dict[str, Any],
     next_entity_number: int,
     page_data: dict[str, Any],
+    admin_tab: str = "utilizador",
+    admin_target: str = "#create-user-card",
 ) -> dict[str, Any]:
     return {
         "request": request,
@@ -297,6 +273,7 @@ def _build_error_context(
         "user_readonly_mode": False,
         "current_user": current_user,
         "current_user_is_admin": current_user_is_admin,
+        "current_user_is_owner_admin": bool(can_manage_all_entities),
         "current_user_can_manage_tenant_structure": bool(can_manage_all_entities),
         "current_user_can_manage_all_entities": bool(can_manage_all_entities),
         "user_personal_data": user_personal_data,
@@ -313,13 +290,13 @@ def _build_error_context(
         "settings_tab": "",
         "profile_tab": "pessoal",
         "initial_menu": "administrativo",
-        "initial_menu_target": "#create-user-card",
+        "initial_menu_target": admin_target,
         "initial_dynamic_process_section": "",
         "initial_profile_section": "",
         "requested_profile_section": "",
         "requested_dynamic_process_section": "",
         "appgenesis_after_save": False,
-        "admin_tab": "utilizador",
+        "admin_tab": admin_tab,
         **page_data,
     }
 
@@ -332,12 +309,11 @@ def execute_create_user(
     selected_entity_id: int | None,
     payload: CreateUserInput,
 ) -> CreateUserOutcome:
-    current_user_is_admin = bool(
-        is_admin_user(
-            session,
-            int(actor_user["id"]),
-            str(actor_user["login_email"]),
-        )
+    current_user_is_admin = is_entity_admin_v1(
+        session,
+        int(actor_user["id"]),
+        str(actor_user["login_email"]),
+        selected_entity_id,
     )
     entity_permissions = get_user_entity_permissions(
         session,
@@ -368,12 +344,15 @@ def execute_create_user(
     errors = list(payload.errors)
     form_data = dict(payload.form_data)
     selected_entity = None
+    # Perfil Legado volta ao separador Administradores do sistema; os restantes ao Utilizador.
+    _admin_tab_v1 = "admin_sistema" if payload.clean_system_type == "legado" else "utilizador"
+    _admin_target_v1 = "#system-admins-card" if payload.clean_system_type == "legado" else "#create-user-card"
 
     # APPGENESIS_ENTITY_SCOPE_RESOLUTION_V1_START
     # A entidade do novo utilizador depende das permissões ativas do utilizador logado:
-    # - can_manage_all_entities → escolhe qualquer entidade ativa no dropdown
-    # - restantes → ficam restritos à entidade ativa do próprio ator
-    if entity_permissions.get("can_manage_all_entities"):
+    # - Administrador do sistema (legado, so owner) → escolhe entidade legada no dropdown
+    # - Utilizador (local) → sempre a entidade do próprio ator (owner: entidade 1000)
+    if entity_permissions.get("can_manage_all_entities") and payload.clean_system_type == "legado":
         submitted_entity_id = form_data.get("entity_id", "")
         if submitted_entity_id:
             try:
@@ -420,6 +399,16 @@ def execute_create_user(
             if selected_entity is None:
                 errors.append("Entidade do utilizador logado está inativa ou não foi encontrada.")
 
+    # Admin de entidade (nao owner) so cria membros ('default').
+    if not entity_permissions.get("can_manage_all_entities") and payload.clean_system_type not in ("default", "legado"):
+        errors.append("Só o owner cria utilizadores com perfil Admin ou Super User.")
+
+    if payload.clean_system_type == "legado":
+        if not entity_permissions.get("can_manage_all_entities"):
+            errors.append("Apenas o owner pode criar administradores do sistema.")
+        if selected_entity is not None and str(selected_entity.profile_scope or "") != "legado":
+            errors.append("Administrador do sistema só pode ser criado para entidade legada.")
+
     if selected_entity is not None:
         form_data["entity_id"] = str(selected_entity.id)
         form_data["entity_name"] = selected_entity.name or ""
@@ -437,20 +426,25 @@ def execute_create_user(
             select(Member).where(func.lower(Member.email) == payload.clean_email)
         ).scalar_one_or_none()
         existing_user_row = session.execute(
-            select(User.id, User.account_status, User.login_email, User.member_id).where(
-                func.lower(User.login_email) == payload.clean_email
-            )
+            select(
+                User.id, User.account_status, User.login_email, User.member_id, User.system_type
+            ).where(func.lower(User.login_email) == payload.clean_email)
         ).one_or_none()
 
         if existing_user_row is not None:
-            existing_user_entity_id, existing_user_entity_name = _get_primary_entity_for_member(
+            existing_user_entity_id, existing_user_entity_name = users_repo.get_primary_entity_for_member(
                 session,
                 int(existing_user_row.member_id),
             )
-            can_manage_existing_user = _member_is_within_permissions(
+            can_manage_existing_user = users_repo.member_is_within_permissions(
                 session,
                 int(existing_user_row.member_id),
                 entity_permissions,
+                system_admin_target=(
+                    str(existing_user_row.system_type or "") in users_repo.SYSTEM_ADMIN_TYPES
+                    or payload.clean_system_type in users_repo.SYSTEM_ADMIN_TYPES
+                ),
+                target_system_type=str(existing_user_row.system_type or ""),
             )
             if not can_manage_existing_user:
                 errors.append("Sem permissão para gerir utilizador com este email.")
@@ -483,9 +477,9 @@ def execute_create_user(
                             success="Utilizador já estava pendente. Link de ativação gerado.",
                             invite_link=invite_link,
                             menu="administrativo",
-                            admin_tab="utilizador",
+                            admin_tab=_admin_tab_v1,
                         )
-                        + "#create-user-card",
+                        + _admin_target_v1,
                     )
                 email_sent, email_error = send_user_invite_email(
                     recipient_email=payload.clean_email,
@@ -500,9 +494,9 @@ def execute_create_user(
                         redirect_url=build_users_new_url(
                             success="Utilizador já estava pendente. Convite reenviado por email.",
                             menu="administrativo",
-                            admin_tab="utilizador",
+                            admin_tab=_admin_tab_v1,
                         )
-                        + "#create-user-card",
+                        + _admin_target_v1,
                     )
                 return CreateUserOutcome(
                     kind="redirect",
@@ -510,23 +504,24 @@ def execute_create_user(
                         success="Utilizador já estava pendente.",
                         error=f"{email_error} Link de ativação: {invite_link}",
                         menu="administrativo",
-                        admin_tab="utilizador",
+                        admin_tab=_admin_tab_v1,
                     )
-                    + "#create-user-card",
+                    + _admin_target_v1,
                 )
             errors.append("Já existe um utilizador com este email de login.")
 
         if existing_member is not None and existing_user_row is None:
-            existing_member_entity_id, _ = _get_primary_entity_for_member(
+            existing_member_entity_id, _ = users_repo.get_primary_entity_for_member(
                 session,
                 int(existing_member.id),
             )
             if (
                 existing_member_entity_id is not None
-                and not _member_is_within_permissions(
+                and not users_repo.member_is_within_permissions(
                     session,
                     int(existing_member.id),
                     entity_permissions,
+                    system_admin_target=payload.clean_system_type in users_repo.SYSTEM_ADMIN_TYPES,
                 )
             ):
                 errors.append("Sem permissão para utilizar este email noutra entidade.")
@@ -545,6 +540,8 @@ def execute_create_user(
                 user_personal_data=user_personal_data,
                 next_entity_number=next_entity_number,
                 page_data=page_data,
+                admin_tab=_admin_tab_v1,
+                admin_target=_admin_target_v1,
             ),
         )
 
@@ -615,6 +612,8 @@ def execute_create_user(
                 user_personal_data=user_personal_data,
                 next_entity_number=next_entity_number,
                 page_data=page_data,
+                admin_tab=_admin_tab_v1,
+                admin_target=_admin_target_v1,
             ),
         )
 
@@ -631,9 +630,9 @@ def execute_create_user(
                 success="Utilizador criado em estado pendente. Link de ativação gerado.",
                 invite_link=invite_link,
                 menu="administrativo",
-                admin_tab="utilizador",
+                admin_tab=_admin_tab_v1,
             )
-            + "#create-user-card",
+            + _admin_target_v1,
         )
 
     email_sent, email_error = send_user_invite_email(
@@ -649,9 +648,9 @@ def execute_create_user(
             redirect_url=build_users_new_url(
                 success="Utilizador criado em estado pendente. Convite enviado por email.",
                 menu="administrativo",
-                admin_tab="utilizador",
+                admin_tab=_admin_tab_v1,
             )
-            + "#create-user-card",
+            + _admin_target_v1,
         )
 
     return CreateUserOutcome(
@@ -660,7 +659,7 @@ def execute_create_user(
             success="Utilizador criado em estado pendente.",
             error=f"{email_error} Link de ativação: {invite_link}",
             menu="administrativo",
-            admin_tab="utilizador",
+            admin_tab=_admin_tab_v1,
         )
-        + "#create-user-card",
+        + _admin_target_v1,
     )

@@ -18,19 +18,12 @@ SIDEBAR_MENU_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "administrativo", "label": "Administrativo", "requires_admin": True},
     {"key": "empresa", "label": "Empresa", "requires_admin": True},
     {"key": MENU_MEU_PERFIL_KEY, "label": "Meus dados", "requires_admin": True},
-    {"key": "funcionarios", "label": "Funcionarios", "requires_admin": True},
-    {"key": "financeiro", "label": "Financeiro", "requires_admin": True},
-    {"key": "relatorios", "label": "Relatorios", "requires_admin": True},
-    {"key": "links", "label": "Links", "requires_admin": False},
-    {"key": "contato", "label": "Contacto", "requires_admin": False},
-    {"key": "tutorial", "label": "Tutorial", "requires_admin": False},
 )
 
 SIDEBAR_MENU_KEYS = {item["key"] for item in SIDEBAR_MENU_DEFAULTS}
 SIDEBAR_MENU_PROTECTED_KEYS = {"home", "administrativo"}
 SIDEBAR_MENU_DELETE_PROTECTED_KEYS = {"home", "administrativo"}
 SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS = {"home"}
-MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home", MENU_MEU_PERFIL_KEY}
 MENU_VISIBILITY_SCOPES = ("owner", "legado")
 MENU_VISIBILITY_SCOPE_ALL = "all"
 MENU_CONFIG_DISPLAY_ORDER_KEY = "display_order"
@@ -45,16 +38,11 @@ MENU_SECTION_OPTIONS: tuple[dict[str, str], ...] = (
 MENU_SECTION_LABELS = {item["key"]: item["label"] for item in MENU_SECTION_OPTIONS}
 MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "administrativo": "sistema",
+    "sessoes": "sistema",
     "perfil_de_autorizacao": "sistema",
     "empresa": "dados_gerais",
     "home": "geral",
     MENU_MEU_PERFIL_KEY: "igreja",
-    "funcionarios": "igreja",
-    "financeiro": "igreja",
-    "relatorios": "igreja",
-    "links": "igreja",
-    "contato": "igreja",
-    "tutorial": "igreja",
     "tesouraria": "tesouraria",
 }
 MENU_CONFIG_SIDEBAR_SECTION_KEY = "sidebar_section"
@@ -95,11 +83,39 @@ ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "phone", "label": "Telefone"},
     {"key": "date", "label": "Data"},
     {"key": "time", "label": "Horário"},
-    {"key": "flag", "label": "Flag"},
+    {"key": "flag", "label": "Botão"},
     {"key": "header", "label": "Cabeçalho (aba)"},
     {"key": "list", "label": "Lista"},
 )
-ADDITIONAL_FIELD_TYPE_KEYS = {item["key"] for item in ADDITIONAL_FIELD_TYPES}
+ADDITIONAL_FIELD_TYPE_KEYS = {item["key"] for item in ADDITIONAL_FIELD_TYPES} | {"rows", "longtext"}
+ADDITIONAL_FIELD_BUTTON_STYLES: tuple[dict[str, str], ...] = (
+    {"key": "checkbox", "label": "Checkbox"},
+    {"key": "radio", "label": "Radio button"},
+    {"key": "toggle", "label": "Toggle switch"},
+    {"key": "segmented", "label": "Botões segmentados"},
+    {"key": "confirm", "label": "Aceitar / Rejeitar"},
+)
+ADDITIONAL_FIELD_BUTTON_STYLE_KEYS = {item["key"] for item in ADDITIONAL_FIELD_BUTTON_STYLES}
+ADDITIONAL_FIELD_BUTTON_STYLE_DEFAULT = "toggle"
+
+
+def _normalize_additional_field_button_style(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    if clean_value in ADDITIONAL_FIELD_BUTTON_STYLE_KEYS:
+        return clean_value
+    return ADDITIONAL_FIELD_BUTTON_STYLE_DEFAULT
+
+
+ADDITIONAL_FIELD_LIST_BUTTON_STYLES = ("radio", "segmented", "confirm")
+
+
+def _normalize_additional_field_button_style_for_type(item_type: Any, raw_value: Any) -> str:
+    if item_type == "flag":
+        return _normalize_additional_field_button_style(raw_value)
+    if item_type == "list":
+        clean_value = str(raw_value or "").strip().lower()
+        return clean_value if clean_value in ADDITIONAL_FIELD_LIST_BUTTON_STYLES else ""
+    return ""
 ADDITIONAL_FIELD_DEFAULT_TYPE = "text"
 ADDITIONAL_FIELD_DEFAULT_SIZE = 30
 ADDITIONAL_FIELD_MAX_SIZE = 255
@@ -136,34 +152,6 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "ultima_verificacao_whatsapp", "label": "Última verificação WhatsApp"},
         {"key": "detalhe_verificacao", "label": "Detalhe da verificação"},
     ),
-    "funcionarios": (
-        {"key": "nome", "label": "Nome"},
-        {"key": "telefone", "label": "Telefone"},
-        {"key": "email", "label": "Email"},
-        {"key": "estado", "label": "Estado"},
-    ),
-    "financeiro": (
-        {"key": "nome", "label": "Nome"},
-        {"key": "estado", "label": "Estado"},
-        {"key": "criado_em", "label": "Criado em"},
-    ),
-    "relatorios": (
-        {"key": "nome", "label": "Nome"},
-        {"key": "estado", "label": "Estado"},
-        {"key": "criado_em", "label": "Criado em"},
-    ),
-    "links": (
-        {"key": "sessao", "label": "Sessão"},
-        {"key": "contactos", "label": "Contactos"},
-    ),
-    "contato": (
-        {"key": "email", "label": "Email"},
-        {"key": "telefone", "label": "Telefone"},
-    ),
-    "tutorial": (
-        {"key": "passos", "label": "Passos"},
-        {"key": "ajuda", "label": "Ajuda"},
-    ),
 }
 
 MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
@@ -171,12 +159,6 @@ MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "administrativo": ["entidade", "utilizador", "definicoes"],
     "empresa": ["dados_gerais", "morada"],
     MENU_MEU_PERFIL_KEY: ["nome", "telefone", "email", "data_nascimento"],
-    "funcionarios": ["nome", "telefone", "email"],
-    "financeiro": ["nome", "estado", "criado_em"],
-    "relatorios": ["nome", "estado", "criado_em"],
-    "links": ["sessao", "contactos"],
-    "contato": ["email", "telefone"],
-    "tutorial": ["passos", "ajuda"],
 }
 
 MENU_MEU_PERFIL_FIELD_OPTIONS: tuple[dict[str, str], ...] = tuple(
@@ -336,6 +318,21 @@ def _menu_exists(session: Session, menu_key: str) -> bool:
 
 
 def _resolve_sidebar_menu_settings_entity_id(session: Session) -> int | None:
+    # Menus Default pertencem a entidade owner (1000); sem ela, cai na regra antiga.
+    owner_entity_id = session.execute(
+        text(
+            """
+            SELECT id
+            FROM entities
+            WHERE profile_scope = 'owner' AND is_active IS TRUE
+            ORDER BY id
+            LIMIT 1
+            """
+        )
+    ).scalar_one_or_none()
+    if owner_entity_id is not None:
+        return int(owner_entity_id)
+
     entity_id = session.execute(
         text(
             """
@@ -382,7 +379,7 @@ def _normalize_custom_field_key(raw_key: str) -> str:
 
 
 def _normalize_sentence_case_text(raw_text: Any) -> str:
-    clean_text = _fix_common_mojibake(str(raw_text or ""))
+    clean_text = str(raw_text or "")
     clean_text = " ".join(clean_text.strip().split())
     if not clean_text:
         return ""
@@ -393,7 +390,7 @@ def _normalize_sentence_case_text(raw_text: Any) -> str:
 
 
 def _normalize_menu_label_preserve_case(raw_label: Any) -> str:
-    clean_label = _fix_common_mojibake(str(raw_label or ""))
+    clean_label = str(raw_label or "")
     clean_label = " ".join(clean_label.strip().split())
     return clean_label
 
@@ -473,7 +470,7 @@ def _build_sidebar_section_key_from_label(label: str) -> str:
 
 
 def _normalize_sidebar_section_label(raw_label: Any) -> str:
-    clean_label = _fix_common_mojibake(str(raw_label or ""))
+    clean_label = str(raw_label or "")
     clean_label = " ".join(clean_label.strip().split())
     if not clean_label:
         return ""
@@ -693,33 +690,6 @@ def resolve_menu_sidebar_section_key(
         valid_section_keys,
         ordered_section_keys,
     )
-
-
-PT_PT_QUESTION_MARK_REPLACEMENTS: tuple[tuple[str, str], ...] = (
-    (r"\bconfigura\?\?o\b", "configuração"),
-    (r"\bconfigura\?\?es\b", "configurações"),
-    (r"\bdefini\?\?es\b", "definições"),
-    (r"\binforma\?\?es\b", "informações"),
-    (r"\ba\?\?es\b", "ações"),
-    (r"\bna\?o\b", "não"),
-    (r"\bpa\?s\b", "país"),
-)
-
-
-def _fix_common_mojibake(raw_text: str) -> str:
-    text_value = str(raw_text or "")
-    if not text_value:
-        return ""
-    fixed_text = text_value
-    if "Ã" in text_value or "Â" in text_value or "�" in text_value:
-        try:
-            repaired = text_value.encode("latin1").decode("utf-8")
-            fixed_text = repaired or text_value
-        except UnicodeError:
-            fixed_text = text_value
-    for pattern, replacement in PT_PT_QUESTION_MARK_REPLACEMENTS:
-        fixed_text = re.sub(pattern, replacement, fixed_text, flags=re.IGNORECASE)
-    return fixed_text
 
 
 def _parse_menu_config(raw_menu_config: Any) -> dict[str, Any]:

@@ -1,11 +1,15 @@
 ﻿from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, CheckConstraint, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from appgenesis.models.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from appgenesis.models.modules.entity_module_entitlement import EntityModuleEntitlement
+    from appgenesis.models.modules.sidebar_menu_item import SidebarMenuItem
 
 
 class AppModule(Base, TimestampMixin):

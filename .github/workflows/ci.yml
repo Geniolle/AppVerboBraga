@@ -18,14 +18,12 @@ jobs:
           pip install -r requirements.txt
           pip install pytest==9.1.1 pyflakes==3.4.0
           pip install -e .
-      - name: Lint with pyflakes (informational)
-        # Non-blocking: appgenesis/models/*.py uses SQLAlchemy string-based
-        # relationship() forward refs that pyflakes reports as false-positive
-        # "undefined name", plus pre-existing "imported but unused" noise.
-        # Kept as a visible report, not a merge gate, until that baseline is
-        # cleaned up separately.
-        continue-on-error: true
-        run: python -m pyflakes appgenesis/ web_app.py
+      - name: Lint with pyflakes
+        # Bloqueante desde 2026-11-28 (base a zero). Forward refs dos modelos vivem em
+        # `if TYPE_CHECKING:`; imports de efeito e reexportacoes ficam em __all__.
+        run: python -m pyflakes appgenesis/
+      - name: Check JavaScript syntax (new_user)
+        run: for f in static/js/new_user/*.js; do node --check "$f"; done
       - name: Run tests (excluding Selenium browser tests)
         run: |
           pytest -q \
@@ -37,7 +35,6 @@ jobs:
             --ignore=tests/test_menu_move_diagnostic_browser.py \
             --ignore=tests/test_process_cards_visibility_stage5_browser.py \
             --ignore=tests/test_process_keys_registry_stage1_browser.py \
-            --ignore=tests/test_process_lists_columns_editor.py \
             --ignore=tests/test_process_lists_reusable_create.py \
             --ignore=tests/test_process_menu_config_builder_stage3_browser.py \
             --ignore=tests/test_process_menu_runtime_stage7_browser.py \
@@ -45,6 +42,68 @@ jobs:
             --ignore=tests/test_process_submenu_runtime_stage6_browser.py \
             --ignore=tests/test_configurable_items_pagination_scenarios_v1.py \
             --ignore=tests/test_process_editor_stay_after_save_cancel.py \
-            --ignore=tests/test_geral_menu_no_duplication_v1.py \
-            --ignore=tests/test_process_submenu_runtime_v1.py \
+            --ignore=tests/test_additional_field_process_list_selector_browser.py \
             --ignore=soma_cartao_ocr/test_core.py
+  browser:
+    # Testes Selenium (excluidos do job "test"): app real + Postgres vazio + Chrome headless.
+    # A app cria os menus base no primeiro acesso; o admin entra por ADMIN_LOGIN_EMAIL/PASSWORD.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_igreja
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/app_igreja
+      APP_ENV: development
+      APPGENESIS_ACCESS_FILTER_V1: "1"
+      ADMIN_LOGIN_EMAIL: ci.admin@ci.test
+      ADMIN_LOGIN_PASSWORD: ci-only-not-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest==9.1.1 pytest-timeout==2.3.1 selenium==4.27.1
+          pip install -e .
+      - name: Migrate and seed (owner 1000, Definicoes, Empresa, processo calendario)
+        run: |
+          python init_db.py
+          python bootstrap_admin.py --name "CI Admin" --phone 910000000 --email "$ADMIN_LOGIN_EMAIL" --password "$ADMIN_LOGIN_PASSWORD" --entity "Entidade CI"
+          python scripts/ci_seed_browser.py
+      - name: Start app
+        run: |
+          nohup python -m uvicorn appgenesis.web_app:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8000/health && exit 0; sleep 1; done
+          cat uvicorn.log; exit 1
+      - name: Run browser tests
+        run: |
+          pytest -q -rs --timeout=180 \
+            tests/test_estruturas_menu_client_navigation.py \
+            tests/test_navigation_refresh_home.py \
+            tests/test_navigation_reload_and_loading_overlay.py \
+            tests/test_admin_target_registry_stage2_browser.py \
+            tests/test_menu_move_diagnostic_browser.py \
+            tests/test_process_cards_visibility_stage5_browser.py \
+            tests/test_process_keys_registry_stage1_browser.py \
+            tests/test_process_lists_reusable_create.py \
+            tests/test_process_menu_config_builder_stage3_browser.py \
+            tests/test_process_menu_runtime_stage7_browser.py \
+            tests/test_process_navigation_state_stage4_browser.py \
+            tests/test_process_submenu_runtime_stage6_browser.py \
+            tests/test_configurable_items_pagination_scenarios_v1.py \
+            tests/test_process_editor_stay_after_save_cancel.py \
+            tests/test_additional_field_process_list_selector_browser.py
+      - name: App log
+        if: always()
+        run: tail -n 200 uvicorn.log

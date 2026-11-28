@@ -222,7 +222,7 @@ Sempre que uma funcionalidade permitir criar múltiplos itens configuráveis, co
 6. O submit deve reconstruir os inputs no formato esperado pelo backend atual.
 7. Não criar formulários longos com todos os itens abertos simultaneamente.
 8. A lógica genérica deve ser extraída para um manager reutilizável sempre que houver repetição de comportamento.
-9. O ficheiro `new_user.js` deve apenas inicializar managers sempre que possível, evitando concentrar lógica extensa de layout.
+9. Os ficheiros de `static/js/new_user/` (antigo `new_user.js`, dividido por domínio e carregado por ordem numerada) devem apenas inicializar managers sempre que possível, evitando concentrar lógica extensa de layout.
 10. Cada ajuste relevante em função existente deve criar uma nova função com sufixo sequencial.
 
 Exemplo de versionamento obrigatório:
@@ -287,11 +287,11 @@ E eu também acrescentaria uma pequena seção operacional:
 
 Sempre que alterar `templates/new_user.html` ou assets usados por ele:
 
-1. Atualizar o cache buster dos ficheiros CSS/JS alterados.
+1. Não editar cache busters à mão: os assets usam `?v={{ asset_version }}` (gerado no arranque, `appgenesis/services/static_assets.py`). Um deploy/restart atualiza-os automaticamente.
 2. Validar JavaScript com:
 
 ```bash
-node --check static/js/new_user.js
+for f in static/js/new_user/*.js; do node --check "$f"; done
 node --check static/js/modules/<ficheiro_alterado>.js
 ```
 
@@ -311,7 +311,7 @@ Regras:
 5. Campos antigos que só tenham `list_key` devem continuar compatíveis, assumindo fonte **Manual** por padrão.
 6. A resolução automática deve respeitar entidade ativa, permissões, owner, legado e separação multi-tenant já aplicadas ao contexto atual.
 7. Se a origem automática ficar incompleta ou apontar para processo/aba/campo removido, a UI não pode quebrar; deve apresentar estado controlado e lista vazia quando necessário.
-8. É proibido criar listas automáticas hardcoded para processos específicos como **Perfil de autorização** ou **Objeto de autorização**.
+8. É proibido criar listas automáticas hardcoded para processos específicos como **Perfil de autorização** .
 
 <!-- APPGENESIS_STATIC_GRID_RULE_V1_START -->
 
@@ -571,19 +571,35 @@ Sempre que for criado ou configurado um novo processo dinâmico/listável no App
 
 Apenas os processos **Administrativo** e **Estruturas** (sessoes) podem ter campos hardcoded em `AdminSubprocessConfig.fields`.
 
-Todos os outros subprocessos dinâmicos (ex: Objeto de autorização) **devem** ler os seus campos de conteúdo da configuração do processo:
+Todos os outros subprocessos dinâmicos (ex: Perfil de autorização) **devem** ler os seus campos de conteúdo da configuração do processo:
 
 1. Definir `uses_dynamic_fields=True` em `AdminSubprocessConfig`.
 2. Definir `dynamic_fields_menu_key` com a chave do processo pai (ex: `"perfil_de_autorizacao"`).
-3. Definir `dynamic_fields_section_header_key` com a chave do header configurado (ex: `"custom_objeto_de_autorizacao"`).
+3. Definir `dynamic_fields_section_header_key` com a chave do header configurado (ex: `"custom_perfil"`).
 4. O resolver reutilizável é `resolve_subprocess_section_fields_v1` em `appgenesis/services/process_tabs.py` — filtra `process_visible_field_rows` por `header_key` e retorna os campos configurados.
 5. A função centralizadora de exceção é `is_system_hardcoded_process(menu_key)` em `appgenesis/services/process_tabs.py` — retorna `True` apenas para `{"administrativo", "sessoes"}`.
 6. Os campos técnicos (Sistema, Estado) ficam em `fields=` do config. Os campos de conteúdo vêm de `resolved_dynamic_fields` no estado.
 7. O formulário Jinja2 renderiza `state.resolved_dynamic_fields` (com `name="process_field__<key>"`) antes dos campos técnicos de `state.config.fields`.
 8. O save handler lê `process_field__*` do formulário e passa `dynamic_values` ao repositório.
-9. O repositório armazena os campos dinâmicos nos seus próprios keys, mais o label canónico em `objeto_de_autorizacao`/`custom_objeto_label` para compatibilidade.
+9. O repositório armazena os campos dinâmicos nos seus próprios keys, mais o label canónico do subprocesso para compatibilidade.
 10. É proibido adicionar campos de conteúdo hardcoded num subprocesso dinâmico — os campos devem vir sempre de `Configuração dos campos`.
 <!-- APPGENESIS_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_END -->
+
+## Regra global: edição abre logo abaixo da linha clicada (menus com lista)
+
+Quando o utilizador clica numa linha de uma lista de um processo de menu (Campos adicionais, Perfil de autorização, Funções administrativas, e os restantes subprocessos com edição), o formulário de **edição** abre **por baixo da linha clicada**, nunca no topo da lista.
+
+1. Padrão de referência: Editar processo › **Campos adicionais** (Meus dados). É o comportamento a copiar.
+2. Em `AdminSubprocessConfig`, ativar `row_click_edit=True`. Com a flag ativa:
+   - a `<tr>` recebe `data-row-edit-href` (mesmo destino do botão Editar) e a classe `admin-subprocess-row-clickable-v1`;
+   - a `<table>` recebe `data-admin-inline-edit-param`, `data-admin-inline-tab` e `data-admin-inline-card-id`;
+   - o card do formulário recebe `data-admin-inline-edit-form="1"`.
+3. Módulo reutilizável: `static/js/modules/admin_subprocess_inline_editor_v1.js` (incluído em `templates/new_user.html`). Move o card do formulário para uma `<tr class="admin-subprocess-inline-editor-row">` logo abaixo da linha com o parâmetro de edição na URL.
+4. Segundo clique na mesma linha: sem alterações fecha o editor e repõe `admin_tab` e a âncora da tabela na URL; com alterações não faz nada e não navega.
+5. Cliques em links, botões, campos e `.table-actions` mantêm a ação própria (não abrem nem fecham o editor).
+6. O título interno "Editar ..." do card fica oculto no editor inline (`.admin-subprocess-inline-editor-row [data-admin-inline-edit-form="1"] > h2`).
+7. É proibido voltar a abrir a edição no topo da lista para subprocessos com `row_click_edit=True`.
+8. Editor de Perfil de autorização (`auth_profile_inline_editor_v1.js`) segue a mesma regra e é o exemplo de código a seguir quando um subprocesso precisar de lógica específica.
 
 <!-- APPGENESIS_LIST_FIELD_RESOLUTION_RULE_V1_START -->
 ## Regra de resolução de opções para campos dinâmicos do tipo Lista
@@ -1115,7 +1131,7 @@ Regras obrigatórias:
    `create_toggle_in_active_header=True` em `AdminSubprocessConfig`
    (`appgenesis/admin_subprocesses/registry.py`), por subprocesso. Configs
    atuais com o campo ativo: `sessoes`, `menu`, `perfil_de_autorizacao`,
-   `objeto_de_autorizacao`, `utilizador`. Não ativos (e porquê):
+   `utilizador`. Não ativos (e porquê):
    - `entidade`: o card de criação ainda é HTML legado (`create-entity-card`
      em `templates/new_user.html`), sem `data-admin-subprocess`/
      `admin-subprocess-create-collapse-v1` — o botão inline não encontraria o
@@ -1229,7 +1245,7 @@ mecanismo genérico — sem duplicar endpoint/regra de negócio da ação movida
    no HTML (`templates/new_user.html`) logo após
    `{{ render_admin_subprocess_tables(admin_subprocess_user_state) }}`,
    ocultos (`hidden`) para evitar flash de posição errada. Duas funções
-   idempotentes em `static/js/new_user.js`
+   idempotentes em `static/js/new_user/11_admin_users.js`
    (`relocateUtilizadorInviteLinkButtonV1`/`relocateUtilizadorInviteLinkSlotV1`)
    os movem como filhos diretos de `#admin-users-created-card` (o card ativo
    de Utilizador) e removem o `hidden`: o botão antes de
@@ -1242,7 +1258,7 @@ mecanismo genérico — sem duplicar endpoint/regra de negócio da ação movida
    (`static/css/modules/app_shell/admin_subprocess_inline_create_v1.css`)
    é genérica/reutilizável (forma pill, hover, `focus-visible`) e se soma —
    não substitui — à classe já existente `.entity-create-link-shortcut`
-   (`static/css/new_user.css`, dona de altura/padding/borda). A classe
+   (`static/css/new_user/01_base_layout.css`, dona de altura/padding/borda). A classe
    `.action-btn-secondary` (preenchimento cinza sólido) foi removida deste
    botão especificamente para obter o visual "outline" pedido; o botão
    "Copiar" dentro do slot mantém `.action-btn-secondary` normalmente.
@@ -1344,11 +1360,11 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 
 1. **`process_tabs.py`**: A aba principal do subprocesso deve apontar para o `default_target` do `AdminSubprocessConfig` (ex: `#auth-profile-card`), não para o card da tabela ativa (ex: `#auth-profile-active-card`). O `default_target` é o card que contém o accordion de criação.
 
-2. **`getAdminSubprocessKeyByTargetV1`** em `new_user.js`: Todos os targets nativos do subprocesso (card principal, form-card, active-card, inactive-card) devem estar no `targetMap`, retornando a `key` do `AdminSubprocessConfig` (ex: `"objeto_de_autorizacao"`). Para subprocessos dentro do mesmo menu (como `perfil_de_autorizacao` e `objeto_de_autorizacao`), cada um tem a sua própria chave para que o JS possa distingui-los.
+2. **`getAdminSubprocessKeyByTargetV1`** em `static/js/new_user/07_navigation.js`: Todos os targets nativos do subprocesso (card principal, form-card, active-card, inactive-card) devem estar no `targetMap`, retornando a `key` do `AdminSubprocessConfig` (ex: `"perfil_de_autorizacao"`). Para subprocessos dentro do mesmo menu (como `sessoes` e `menu`), cada um tem a sua própria chave para que o JS possa distingui-los.
 
 3. **`supportsStructuredAdminGroups`** em `applyContentForMenuTarget`: O `menuKey` do subprocesso (o menu pai, ex: `"perfil_de_autorizacao"`) deve estar incluído nesta condição. Subprocessos filhos no mesmo menu partilham o mesmo `menuKey` mas têm `data-admin-subprocess` distintos.
 
-4. **`normalizeSubmenuTargetAlias`** em `new_user.js`: Os targets de tabela (active-card, inactive-card) e de edição (form-card) devem ser alias do `default_target` para que a aba correta fique ativa no submenu quando qualquer um desses cards é visível.
+4. **`normalizeSubmenuTargetAlias`** em `static/js/new_user/07_navigation.js`: Os targets de tabela (active-card, inactive-card) e de edição (form-card) devem ser alias do `default_target` para que a aba correta fique ativa no submenu quando qualquer um desses cards é visível.
 
 5. **`menuConfig`**: Se o subprocesso é nativo (não está em `sidebarMenuSettings`), o `menuConfig` deve ser inicializado explicitamente após `mergeDynamicProcessMenus()` verificando `visibleSidebarMenuKeys` ou a presença dos cards no DOM.
 
@@ -1360,11 +1376,10 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 |---|---|---|---|
 | `sessoes` | `admin-sidebar-sections-card` | `administrativo,sessoes` | `sessoes` (via sidebarMenuSettings) |
 | `perfil_de_autorizacao` | `auth-profile-card` | `perfil_de_autorizacao` | inicializado por APPGENESIS_AUTH_PROFILE_MENUCONFIG_INIT_V1 |
-| `objeto_de_autorizacao` | `auth-objeto-card` | `perfil_de_autorizacao` | partilhado com `perfil_de_autorizacao` (mesma entrada no menuConfig, aba diferente) |
 | `menu` | `menu-subprocess-card` | `administrativo,sessoes` | `sessoes` (via sidebarMenuSettings) |
 | `entidade` | `create-entity-card` | `administrativo` | `administrativo` (via sidebarMenuSettings) |
 
-**Nota:** Quando dois subprocessos partilham o mesmo `menu_scope` (ex: `perfil_de_autorizacao` e `objeto_de_autorizacao`), o macro `admin_subprocess.html` usa a lista de targets do config (`default_target`, `edit_target`, `active_card_id`, `inactive_card_id`) para determinar se o subprocesso está activo. Apenas os cards do subprocesso cujos targets correspondem ao `initial_menu_target` ficam visíveis no servidor. O JavaScript usa o `data-admin-subprocess` (= `config.key`) para o agrupamento correcto.
+**Nota:** Quando dois subprocessos partilham o mesmo `menu_scope` (ex: `sessoes` e `menu`), o macro `admin_subprocess.html` usa a lista de targets do config (`default_target`, `edit_target`, `active_card_id`, `inactive_card_id`) para determinar se o subprocesso está activo. Apenas os cards do subprocesso cujos targets correspondem ao `initial_menu_target` ficam visíveis no servidor. O JavaScript usa o `data-admin-subprocess` (= `config.key`) para o agrupamento correcto.
 
 ### Proibido:
 - Apontar a aba principal para `*-active-card` ou `*-inactive-card` (reservados para as tabelas).
@@ -1506,7 +1521,7 @@ Decisão do projeto (validada pelo utilizador):
 2. Os cabeçalhos configurados chegam ao front-end como `profilePersonalSections` (já existe). A lista de abas e os blocos devem sair daí.
 3. Não acrescentar abas hardcoded em `process_menu_config_builder_v1.js` (ex.: `Dados de morada`, `Dados de Treinamento`). Remover as que existirem quando a configuração estiver completa.
 4. Antes de remover uma aba fixa, garantir que os seus campos existem como campos configuráveis do processo `meu_perfil` (`MENU_MEU_PERFIL_FIELD_OPTIONS` em `appgenesis/services/process_settings/normalizers.py`). Hoje morada (morada, cidade, freguesia, código postal) e treinamento NÃO são campos configuráveis; enquanto não forem, a remoção quebra o acesso a esses dados.
-5. Campos de Dados pessoais devem respeitar a ordem da configuração. Estado atual: Nome, Telefone, Email, Data de nascimento, Género (ver `static/css/new_user.css`, regra `.personal-grid > .field` com `order`).
+5. Campos de Dados pessoais devem respeitar a ordem da configuração. Estado atual: Nome, Telefone, Email, Data de nascimento, Género (ver `static/css/new_user/08_admin_forms_buttons.css`, regra `.personal-grid > .field` com `order`).
 
 ### Fases (ordem obrigatória)
 - Fase 1 (concluída): tornar morada e treinamento campos configuráveis do processo `meu_perfil` (backend `profile_handlers.py` + `services/profile.py` + opções em `normalizers.py`).
@@ -1531,3 +1546,28 @@ Decisão do projeto (validada pelo utilizador):
 6. Fazer push do ramo (`git push -u origin <ramo>`) e abrir um Pull Request para o `master`, com uma descrição do que mudou e porquê.
 7. Esperar que o check `CI / test` fique verde no PR. Se falhar, corrigir no mesmo ramo antes de pedir merge.
 8. O merge para o `master` só é feito depois do CI passar e com aprovação do utilizador.
+
+## 17) Refatoração por etapas (obrigatório)
+
+Sempre que o trabalho for uma refatoração ou correção em várias partes, seguir este processo sem exceção:
+
+1. Ler antes de alterar: `docs/architecture-guidelines.md`, `docs/refactor-roadmap.md` e a secção "Registo de execução" desse roadmap.
+2. Dividir o trabalho em etapas pequenas e reversíveis. Cada etapa deve caber num PR.
+3. Para cada etapa, por esta ordem, sem saltar para a seguinte antes de concluir a anterior:
+   - alterar só o que a etapa cobre;
+   - adicionar ou atualizar testes do que mudou;
+   - correr a suíte CI (comando do workflow, sem testes Selenium) e `pyflakes`/`node --check` nos ficheiros alterados;
+   - validar no dev (página real, logs sem traceback, sem mojibake);
+   - registar o resultado no "Registo de execução" do roadmap (etapa, PR, testes, validação, riscos);
+   - abrir PR para `master`, esperar CI verde, fazer merge e só então avançar.
+4. Deploy em prd só depois do merge, com backup da BD antes (ver `docs/operations/production-deploy.md`).
+5. Não avançar com etapa em aberto, teste vermelho ou validação por fazer. Se uma etapa ficar bloqueada, parar e registar o motivo no roadmap.
+6. Não criar documentos novos para o mesmo assunto; atualizar os existentes.
+7. Mudanças de dados em produção (SQL pontual) devem ser registadas no PR e no roadmap, com contagem antes e depois.
+
+## Regra global: rodapé de paginação "Mais / Menos"
+
+- Toda tabela ou lista paginada (administrativa, lista de processo ou editor de configuração) usa o rodapé "Mais / Menos": seletor 5/10/20/50 à esquerda, "Mais" e `[ visíveis / total ]` no centro, "Menos" à direita.
+- Não criar paginação própria (setas, anterior/seguinte, números de página) nem sobrepor o CSS do rodapé por cartão.
+- Nunca apagar o conteúdo do rodapé (`innerHTML = ""`); depois de redesenhar linhas, chamar `enhanceProcessShellTables(cartão)`.
+- Especificação completa: `docs/specs/rodape-paginacao-mais-menos.md`.

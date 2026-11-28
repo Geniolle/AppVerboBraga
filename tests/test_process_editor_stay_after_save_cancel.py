@@ -8,8 +8,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
-from appgenesis.routes.profile.settings_handlers import (
+from appgenesis.config.settings import settings
+from appgenesis.routes.profile.process_settings.common import (
     _build_settings_editor_stay_redirect_url_v1,
 )
 
@@ -17,7 +17,7 @@ from appgenesis.routes.profile.settings_handlers import (
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EDITOR_RETURN_URL = (
     "/users/new?menu=sessoes&admin_tab=contas&settings_action=edit"
-    "&target=settings-menu-edit-card&settings_edit_key=perfil_de_autorizacao"
+    "&target=settings-menu-edit-card&settings_edit_key=calendario"
     "&settings_tab={settings_tab}#settings-menu-edit-card"
 )
 
@@ -42,7 +42,7 @@ def test_save_redirect_stays_in_current_process_editor_tab(settings_tab: str) ->
     result = _build_settings_editor_stay_redirect_url_v1(
         success_message="ok",
         redirect_menu="sessoes",
-        settings_edit_key="perfil_de_autorizacao",
+        settings_edit_key="calendario",
         settings_tab=settings_tab,
         return_url=EDITOR_RETURN_URL.format(settings_tab=settings_tab),
     )
@@ -54,7 +54,7 @@ def test_save_redirect_stays_in_current_process_editor_tab(settings_tab: str) ->
     assert params["menu"] == "sessoes"
     assert params["admin_tab"] == "contas"
     assert params["settings_action"] == "edit"
-    assert params["settings_edit_key"] == "perfil_de_autorizacao"
+    assert params["settings_edit_key"] == "calendario"
     assert params["settings_tab"] == settings_tab
     assert params["target"] == "settings-menu-edit-card"
     assert params["target"] != "menu-subprocess-card-active"
@@ -76,10 +76,10 @@ def test_cancel_buttons_stay_in_editor_and_list_column_cancel_is_local() -> None
     # de saida resolvidas no template, nao mais o "settings-menu-edit-card" estatico.
     assert html_text.count(
         'data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"'
-    ) == 7
+    ) == 6  # 6 abas com formulario; "Geral" so lista os campos
     assert html_text.count(
         'data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"'
-    ) == 7
+    ) == 6  # 6 abas com formulario; "Geral" so lista os campos
     assert '"[data-process-list-column-editor-cancel]"' in controller_text
 
 
@@ -111,8 +111,8 @@ def _build_driver_v1():
 
 
 def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
-    email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    email = str(settings.ADMIN_LOGIN_EMAIL or "").strip()
+    password = str(settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not email or not password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD nao definidos.")
 
@@ -160,6 +160,7 @@ def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
         driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-items]").send_keys("A, B, C")
         submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
         submit.click()
+        wait.until(EC.staleness_of(submit))  # Guardar recarrega a pagina; ler a tabela so depois
         wait.until(
             lambda drv: "Lista teste stay"
             in drv.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]").text
@@ -174,7 +175,7 @@ def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
         parsed = urlsplit(driver.current_url)
         params = dict(parse_qsl(parsed.query, keep_blank_values=True))
         assert parsed.fragment == "settings-menu-edit-card"
-        assert params["settings_edit_key"] == "perfil_de_autorizacao"
+        assert params["settings_edit_key"] == "calendario"
         assert params["settings_tab"] == "lista"
         assert params["target"] == "settings-menu-edit-card"
 

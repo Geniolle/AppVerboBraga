@@ -1,26 +1,44 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
 from typing import Any
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import (
+    Request,
+    status,
+)
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+)
+from sqlalchemy import select
 
 # APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
-from appgenesis.admin_subprocesses.registry import get_admin_subprocess_config, ENTIDADE_CONFIG, UTILIZADOR_CONFIG
+from appgenesis.admin_subprocesses.registry import (
+    ADMIN_SISTEMA_CONFIG,
+    ENTIDADE_CONFIG,
+    LEGACY_ADMIN_TAB_KEY,
+    UTILIZADOR_CONFIG,
+    get_admin_subprocess_config,
+)
 from appgenesis.admin_subprocesses.repositories.auth_profile_repository import AuthorizationProfileAdminRepository
-from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository import ObjetoAutorizacaoAdminRepository
-from appgenesis.admin_subprocesses.service import build_admin_subprocess_state
+from dataclasses import replace as _dataclass_replace
+
+from appgenesis.admin_subprocesses.service import build_admin_subprocess_state, find_admin_subprocess_row
 from appgenesis.admin_subprocesses.models import AdminSubprocessState
+from appgenesis.services.access_actions import actions_label
+from appgenesis.services.access_filter import access_filter_enabled
 from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_config_for_context_v1,
     build_auth_profile_entity_context_v1,
+    get_entity_profile_scope_v1,
+    lock_visibility_scope_field_v1,
 )
 from appgenesis.services.process_tabs import resolve_process_tabs_v1
+from appgenesis.services.process_settings.normalizers import (
+    MENU_CONFIG_SIDEBAR_SECTION_KEY,
+    _load_menu_config,
+)
 from appgenesis.services.process_settings.list_service import (
     get_process_list_source_menus_v1,
     get_process_list_source_subprocess_map_v1,
@@ -34,9 +52,6 @@ from appgenesis.menu_settings import (
     delete_sidebar_menu_setting,
     get_sidebar_menu_settings,
     resolve_menu_key_alias,
-    set_sidebar_menu_visibility,
-    update_sidebar_menu_label,
-    update_sidebar_menu_process_fields,
 )
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.page import (
@@ -47,46 +62,25 @@ from appgenesis.services.page import (
     get_page_data,
     get_user_edit_data,
 )
-from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.permissions import get_user_entity_permissions, is_entity_admin_v1
 from appgenesis.services.profile import get_user_personal_data
 from appgenesis.services.session import get_current_user, get_session_entity_id
+from appgenesis.services.sidebar_section_ownership import (
+    can_manage_section,
+    filter_sections_for_entity,
+    is_section_visible_to_entity,
+    load_section_creator_map_v1,
+    load_section_owner_map_v1,
+    session_entity_display_v1,
+    with_session_entity_number_v1,
+)
 from appgenesis.web.templates import templates
 from appgenesis.models import (
     Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
     User,
-    UserAccountStatus,
 )
 
 from appgenesis.routes.profile.router import router
-
-# APPGENESIS_DEBUG_SESSOES_FLOW_V1_START
-import logging as _logging_page
-import os as _os_page
-
-_SESSOES_PAGE_LOGGER = _logging_page.getLogger(__name__)
-
-
-def _debug_sessoes_page_enabled_v1(request=None) -> bool:
-    if _os_page.environ.get("APPGENESIS_DEBUG_SESSOES_FLOW") == "1":
-        return True
-    if request is not None:
-        try:
-            if dict(request.query_params).get("debug_sessoes") == "1":
-                return True
-        except Exception:
-            pass
-    return False
-
-
-def _log_sessoes_page_v1(event: str, **payload) -> None:
-    parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
-    _SESSOES_PAGE_LOGGER.info("[SESSOES_FLOW] %s | %s", event, parts)
-
-# APPGENESIS_DEBUG_SESSOES_FLOW_V1_END
 
 
 ESTRUTURAS_MENU_KEY_V1 = "sessoes"
@@ -104,13 +98,11 @@ ESTRUTURAS_SESSOES_TARGETS_V1 = {
     "#admin-sidebar-sections-form-card",
 }
 
-
 def _normalize_card_target_v1(raw_target: str) -> str:
     clean_target = str(raw_target or "").strip()
     if not clean_target:
         return ""
     return clean_target if clean_target.startswith("#") else f"#{clean_target.lstrip('#')}"
-
 
 def _normalize_authorization_profile_target_v1(raw_target: str) -> str:
     clean_target = _normalize_card_target_v1(raw_target).lower()
@@ -123,14 +115,8 @@ def _normalize_authorization_profile_target_v1(raw_target: str) -> str:
         "#auth-profile-active-card": "#auth-profile-card",
         "#auth-profile-inactive-card": "#auth-profile-card",
         "#auth-profile-form-card": "#auth-profile-card",
-        "#auth-objeto": "#auth-objeto-card",
-        "#auth-objeto-card": "#auth-objeto-card",
-        "#auth-objeto-active-card": "#auth-objeto-card",
-        "#auth-objeto-inactive-card": "#auth-objeto-card",
-        "#auth-objeto-form-card": "#auth-objeto-card",
     }
     return target_alias_map.get(clean_target, "")
-
 
 def _normalize_tab_target_for_match_v1(raw_target: str, *, menu_key: str = "") -> str:
     clean_target = _normalize_card_target_v1(raw_target).lower()
@@ -155,7 +141,6 @@ def _normalize_tab_target_for_match_v1(raw_target: str, *, menu_key: str = "") -
         return f"{clean_target[:-10]}-card"
     return clean_target
 
-
 def _targets_match_for_menu_v1(menu_key: str, left_target: str, right_target: str) -> bool:
     return _normalize_tab_target_for_match_v1(
         left_target,
@@ -164,7 +149,6 @@ def _targets_match_for_menu_v1(menu_key: str, left_target: str, right_target: st
         right_target,
         menu_key=menu_key,
     )
-
 
 def _resolve_active_tab_index_v1(
     *,
@@ -190,7 +174,6 @@ def _resolve_active_tab_index_v1(
 
     return 0
 
-
 def _resolve_settings_edit_origin_menu_v1(raw_resolved_menu: str) -> str:
     """Devolve o menu/contexto real com que o pedido chegou, para o editor de processo usar como
     redirect_menu. Deve ser chamado com o menu ANTES de _resolve_estruturas_navigation_context_v1
@@ -203,7 +186,6 @@ def _resolve_settings_edit_origin_menu_v1(raw_resolved_menu: str) -> str:
     if raw_resolved_menu in {"administrativo", ESTRUTURAS_MENU_KEY_V1}:
         return raw_resolved_menu
     return ESTRUTURAS_MENU_KEY_V1
-
 
 def _resolve_estruturas_navigation_context_v1(
     *,
@@ -238,7 +220,6 @@ def _resolve_estruturas_navigation_context_v1(
 
     return clean_menu, clean_admin_tab
 
-
 def _resolve_first_dynamic_section_key(menu_row: dict[str, Any] | None) -> str:
     if not isinstance(menu_row, dict):
         return "__empty__"
@@ -270,7 +251,6 @@ def _resolve_first_dynamic_section_key(menu_row: dict[str, Any] | None) -> str:
         return f"field:{first_field_key}" if first_field_key else "__empty__"
     return section_order[0]
 
-
 def _resolve_initial_menu_target(
     resolved_menu: str,
     resolved_profile_tab: str,
@@ -288,8 +268,6 @@ def _resolve_initial_menu_target(
         if isinstance(raw_row, dict) and str(raw_row.get("key") or "").strip()
     }
 
-    if clean_menu_key == "empresa":
-        return "#empresa-card", ""
     if clean_menu_key == "home":
         return "#home-summary-card", ""
     if clean_menu_key == "perfil":
@@ -301,6 +279,14 @@ def _resolve_initial_menu_target(
             return "#menu-subprocess-card-active", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
+        if resolved_admin_tab == LEGACY_ADMIN_TAB_KEY:
+            return "#system-admins-card", ""
+        if resolved_admin_tab == "perfil_de_autorizacao":
+            return "#auth-profile-card", ""
+        if resolved_admin_tab == "funcoes_administrativas":
+            return "#funcoes-administrativas-card", ""
+        if resolved_admin_tab == "dados_empresa":
+            return "#empresa-card", ""
         return "#recent-entities-card", ""
     if clean_menu_key == ESTRUTURAS_MENU_KEY_V1:
         if settings_edit_key:
@@ -315,12 +301,6 @@ def _resolve_initial_menu_target(
     if clean_menu_key == MENU_MEU_PERFIL_KEY:
         return "#perfil-pessoal-card", ""
     if clean_menu_key == "perfil_de_autorizacao":
-        clean_auth_objeto_edit_key = str(
-            clean_query_edit_params.get("auth_objeto_edit_key") or ""
-        ).strip()
-        if clean_auth_objeto_edit_key:
-            return "#auth-objeto-form-card", ""
-
         clean_auth_profile_edit_key = str(
             clean_query_edit_params.get("auth_profile_edit_key") or ""
         ).strip()
@@ -347,7 +327,6 @@ def _resolve_initial_menu_target(
         return "#dynamic-process-card", _resolve_first_dynamic_section_key(matched_menu_row)
     return "", ""
 
-
 def _find_sidebar_menu_setting_by_key_v1(
     sidebar_menu_settings: list[dict[str, Any]],
     menu_key: str,
@@ -365,7 +344,6 @@ def _find_sidebar_menu_setting_by_key_v1(
 
     return None
 
-
 def _resolve_dynamic_process_section_for_menu_v1(
     sidebar_menu_settings: list[dict[str, Any]],
     menu_key: str,
@@ -382,12 +360,12 @@ def _resolve_dynamic_process_section_for_menu_v1(
 
     return resolved_section
 
-
 def _build_auth_profile_return_url_v1(
     *,
     sidebar_menu_settings: list[dict[str, Any]],
     dynamic_process_section: str = "",
     target: str = "",
+    menu: str = "perfil_de_autorizacao",
 ) -> str:
     clean_target = _normalize_card_target_v1(target)
     if not clean_target or clean_target == "#auth-profile-active-card":
@@ -401,7 +379,7 @@ def _build_auth_profile_return_url_v1(
         )
 
     query_params: dict[str, str] = {
-        "menu": "perfil_de_autorizacao",
+        "menu": menu,
         "target": clean_target,
     }
 
@@ -409,25 +387,6 @@ def _build_auth_profile_return_url_v1(
         query_params["dynamic_process_section"] = clean_dynamic_section
 
     return f"/users/new?{urlencode(query_params)}{clean_target}"
-
-
-def _build_auth_objeto_return_url_v1(
-    *,
-    target: str = "",
-) -> str:
-    clean_target = _normalize_card_target_v1(target)
-    if not clean_target or clean_target == "#auth-objeto-active-card":
-        clean_target = "#auth-objeto-card"
-
-    query_params: dict[str, str] = {
-        "menu": "perfil_de_autorizacao",
-        "target": clean_target,
-    }
-
-    return f"/users/new?{urlencode(query_params)}{clean_target}"
-
-
-# APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
 
 def _normalize_sidebar_section_status_for_page_v22(raw_status: object, raw_is_active: object = None) -> str:
     if raw_is_active is False:
@@ -440,7 +399,6 @@ def _normalize_sidebar_section_status_for_page_v22(raw_status: object, raw_is_ac
 
     return "ativo"
 
-
 def _sidebar_section_is_active_for_page_v22(section: dict[str, Any]) -> bool:
     if not isinstance(section, dict):
         return True
@@ -449,7 +407,6 @@ def _sidebar_section_is_active_for_page_v22(section: dict[str, Any]) -> bool:
         section.get("status"),
         section.get("is_active"),
     ) == "ativo"
-
 
 def _resolve_sidebar_sections_from_page_data_v22(page_data: dict[str, Any]) -> list[dict[str, Any]]:
     raw_sections = page_data.get("sidebar_section_options")
@@ -487,7 +444,6 @@ def _resolve_sidebar_sections_from_page_data_v22(page_data: dict[str, Any]) -> l
 
     return []
 
-
 def _split_sidebar_sections_for_page_v22(
     page_data: dict[str, Any],
     sidebar_section_edit_key: str,
@@ -521,6 +477,24 @@ def _split_sidebar_sections_for_page_v22(
 
 # APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
+def _menu_missing_actions_v1(session: Any, request: Request, resolved_menu: str) -> list[str]:
+    # Acoes que o utilizador NAO tem no menu (exibir/editar/criar/eliminar). Vazio = tudo permitido.
+    from appgenesis.services.access_actions import ALL_ACTIONS
+    from appgenesis.services.access_filter import resolve_menu_actions_v1
+
+    if not resolved_menu:
+        return []
+    current_user = get_current_user(request, session)
+    if current_user is None:
+        return []
+    user = session.get(User, current_user["id"])
+    allowed = resolve_menu_actions_v1(
+        session,
+        entity_id=get_session_entity_id(request),
+        user_system_type=getattr(user, "system_type", ""),
+        menu_key=resolved_menu,
+    )
+    return [action for action in ALL_ACTIONS if action not in allowed]
 
 
 @router.get("/users/new", response_class=HTMLResponse)
@@ -551,12 +525,12 @@ def new_user_page(
     section_key: str = "",
     sidebar_section_edit_key: str = "",
     auth_profile_edit_key: str = "",
-    auth_objeto_edit_key: str = "",
+    auth_profile_copy_key: str = "",
+    functions_edit_key: str = "",
+    functions_copy_key: str = "",
+    departments_edit_key: str = "",
     appgenesis_after_save: str = "",
-    debug_flicker: str | None = None,
 ) -> HTMLResponse:
-    is_debug_flicker = (debug_flicker == "1") or (request.query_params.get("debug_flicker") == "1")
-    _dbg_page = _debug_sessoes_page_enabled_v1(request)
 
     resolved_profile_tab = profile_tab.strip().lower()
     if resolved_profile_tab not in {"pessoal", "morada", "treinamento"}:
@@ -569,19 +543,6 @@ def new_user_page(
     clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_target_from_query = _normalize_card_target_v1(target)
 
-    if _dbg_page and (resolved_menu == ESTRUTURAS_MENU_KEY_V1 or sidebar_section_edit_key):
-        _log_sessoes_page_v1(
-            "page:start",
-            raw_menu=menu,
-            resolved_menu=resolved_menu,
-            raw_admin_tab=admin_tab,
-            target=target,
-            sidebar_section_edit_key=sidebar_section_edit_key,
-            success=success,
-            error=error,
-            appgenesis_after_save=appgenesis_after_save,
-        )
-
     resolved_menu, resolved_admin_tab = _resolve_estruturas_navigation_context_v1(
         resolved_menu=resolved_menu,
         resolved_admin_tab=admin_tab.strip().lower(),
@@ -590,19 +551,11 @@ def new_user_page(
         sidebar_section_edit_key=sidebar_section_edit_key,
     )
 
-    if _dbg_page and (resolved_menu == ESTRUTURAS_MENU_KEY_V1 or sidebar_section_edit_key):
-        _log_sessoes_page_v1(
-            "page:navigation_context",
-            resolved_menu=resolved_menu,
-            resolved_admin_tab=resolved_admin_tab,
-            target=clean_target_from_query,
-            sidebar_section_edit_key=sidebar_section_edit_key,
-        )
     if resolved_menu == ESTRUTURAS_MENU_KEY_V1:
-        if resolved_admin_tab not in {"contas", "sessoes"}:
+        if resolved_admin_tab not in {"contas", "sessoes", "departamentos"}:
             resolved_admin_tab = "contas"
     else:
-        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes"}:
+        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "perfil_de_autorizacao", "funcoes_administrativas", "dados_empresa", "admin_sistema"}:
             resolved_admin_tab = "entidade"
         if resolved_admin_tab == "definicoes":
             resolved_admin_tab = "contas"
@@ -635,6 +588,7 @@ def new_user_page(
         "lista",
         "campos-subsequentes",
         "sessoes-sidebar",
+        "sessao",
     }:
         clean_settings_tab = ""
 
@@ -655,6 +609,10 @@ def new_user_page(
             current_user["login_email"],
             selected_entity_id,
         )
+        # Interface de administracao da entidade: owner ou admin de entidade legado (por funcao).
+        current_user_is_entity_admin = is_entity_admin_v1(
+            session, current_user["id"], current_user["login_email"], selected_entity_id
+        )
         page_data = get_page_data(
             session,
             actor_user_id=current_user["id"],
@@ -673,6 +631,12 @@ def new_user_page(
         # Tambem permite menus nao visiveis se for retorno pos-save, para manter
         # o contexto de edicao.
         is_post_save_return = str(appgenesis_after_save or "").strip() == "1"
+        if access_filter_enabled() and not visible_menu_keys:
+            return HTMLResponse(
+                "<!doctype html><meta charset='utf-8'><title>Sem acesso</title>"
+                "<p>Sem acesso ao sistema. Contacte o administrador para atribuir uma função.</p>",
+                status_code=403,
+            )
         if (
             resolved_menu not in {"perfil", MENU_MEU_PERFIL_KEY}
             and resolved_menu not in visible_menu_keys
@@ -680,6 +644,7 @@ def new_user_page(
         ):
             resolved_menu = "home"
         # APPGENESIS_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
+        menu_missing_actions_v1 = _menu_missing_actions_v1(session, request, resolved_menu)
 
         # APPGENESIS_SESSOES_POST_SAVE_GUARD_V1_START
         # Se é um retorno pós-save de Sessões, limpar sidebar_section_edit_key antes de
@@ -690,12 +655,6 @@ def new_user_page(
             and resolved_menu == ESTRUTURAS_MENU_KEY_V1
             and resolved_admin_tab == "sessoes"
         ):
-            if _dbg_page:
-                _log_sessoes_page_v1(
-                    "page:post_save_guard",
-                    sidebar_section_edit_key_antes=sidebar_section_edit_key,
-                    acao="limpar_edit_key",
-                )
             sidebar_section_edit_key = ""
         # APPGENESIS_SESSOES_POST_SAVE_GUARD_V1_END
 
@@ -755,6 +714,37 @@ def new_user_page(
                     sidebar_section_edit_data_v22,
                 )
         # APPGENESIS_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
+
+        # Sessoes criadas por legado: so a entidade criadora ve; so ela (ou o Owner, nas de sistema) gere.
+        _owner_map_v1 = load_section_owner_map_v1(session)
+        _creator_map_v1 = load_section_creator_map_v1(session)
+        _is_tenant_owner_v1 = bool(page_data.get("current_user_can_manage_tenant_structure"))
+
+        def _with_can_manage_v1(section: dict[str, Any]) -> dict[str, Any]:
+            row = dict(section)
+            row["can_manage"] = can_manage_section(
+                _owner_map_v1, row.get("key"), selected_entity_number, _is_tenant_owner_v1
+            )
+            _creator_number_v1 = _creator_map_v1.get(str(row.get("key") or "").strip().lower())
+            row["entity_number"] = session_entity_display_v1(_creator_number_v1, _is_tenant_owner_v1)
+            return row
+
+        active_sidebar_sections_v22 = [
+            _with_can_manage_v1(section)
+            for section in filter_sections_for_entity(
+                active_sidebar_sections_v22, _owner_map_v1, selected_entity_number
+            )
+        ]
+        inactive_sidebar_sections_v22 = [
+            _with_can_manage_v1(section)
+            for section in filter_sections_for_entity(
+                inactive_sidebar_sections_v22, _owner_map_v1, selected_entity_number
+            )
+        ]
+        if sidebar_section_edit_data_v22 and not is_section_visible_to_entity(
+            _owner_map_v1, sidebar_section_edit_data_v22.get("key"), selected_entity_number
+        ):
+            sidebar_section_edit_data_v22 = None
     settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
@@ -762,6 +752,21 @@ def new_user_page(
             if row_key == clean_settings_edit_key:
                 settings_edit_data = dict(row)
                 break
+
+    if settings_edit_data is not None:
+        # Aba "Sessao": opcoes = secoes ativas da barra lateral; atual = sidebar_section do menu.
+        settings_edit_data["session_options"] = [
+            {"key": str(section.get("key") or ""), "label": str(section.get("label") or section.get("key") or "")}
+            for section in filter_sections_for_entity(
+                _resolve_sidebar_sections_from_page_data_v22(page_data) or [],
+                load_section_owner_map_v1(session),
+                selected_entity_number,
+            )
+            if _sidebar_section_is_active_for_page_v22(section)
+        ]
+        settings_edit_data["session_current_key"] = str(
+            _load_menu_config(session, clean_settings_edit_key).get(MENU_CONFIG_SIDEBAR_SECTION_KEY) or ""
+        )
 
     process_list_source_menus_v1 = get_process_list_source_menus_v1(
         session,
@@ -775,7 +780,6 @@ def new_user_page(
     initial_target_query_edit_params_v1 = {
         "sidebar_section_edit_key": sidebar_section_edit_key,
         "auth_profile_edit_key": auth_profile_edit_key,
-        "auth_objeto_edit_key": auth_objeto_edit_key,
     }
 
     initial_menu_target, initial_dynamic_process_section = _resolve_initial_menu_target(
@@ -803,45 +807,35 @@ def new_user_page(
     if clean_dynamic_section_from_query:
         initial_dynamic_process_section = clean_dynamic_section_from_query
 
-    if _dbg_page and resolved_menu == ESTRUTURAS_MENU_KEY_V1 and resolved_admin_tab == "sessoes":
-        _log_sessoes_page_v1(
-            "page:initial_target_before",
-            initial_menu_target=initial_menu_target,
-            sidebar_section_edit_key=sidebar_section_edit_key,
-            appgenesis_after_save=appgenesis_after_save,
-        )
-
     if resolved_menu == ESTRUTURAS_MENU_KEY_V1 and resolved_admin_tab == "sessoes":
         if str(sidebar_section_edit_key or "").strip():
             initial_menu_target = "#admin-sidebar-sections-form-card"
-            if _dbg_page:
-                _log_sessoes_page_v1(
-                    "page:sessoes_target_decision",
-                    sidebar_section_edit_key=sidebar_section_edit_key,
-                    chosen_initial_menu_target="#admin-sidebar-sections-form-card",
-                    motivo="edit_key_present",
-                )
         else:
             initial_menu_target = "#admin-sidebar-sections-card"
-            if _dbg_page:
-                _log_sessoes_page_v1(
-                    "page:sessoes_target_decision",
-                    sidebar_section_edit_key=sidebar_section_edit_key,
-                    chosen_initial_menu_target="#admin-sidebar-sections-card",
-                    motivo="no_edit_key",
-                )
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
 
     is_post_save_return = str(appgenesis_after_save or "").strip() == "1"
     # APPGENESIS_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
-
     # APPGENESIS_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
 
     if current_user_is_admin:
-        sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")
+        sessoes_subprocess_config_v2 = lock_visibility_scope_field_v1(
+            get_admin_subprocess_config("sessoes"),
+            get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+        )
+        # Nº DA ENTIDADE: na criacao = entidade atual; na edicao = entidade que criou a sessao.
+        _sessao_edit_key_v2 = str(sidebar_section_edit_key or "").strip().lower() if resolved_admin_tab == "sessoes" else ""
+        if _sessao_edit_key_v2:
+            _sessao_entity_number_v2 = load_section_creator_map_v1(session).get(_sessao_edit_key_v2)
+        else:
+            _sessao_entity_number_v2 = selected_entity_number
+        sessoes_subprocess_config_v2 = with_session_entity_number_v1(
+            sessoes_subprocess_config_v2,
+            session_entity_display_v1(_sessao_entity_number_v2, bool(page_data.get("current_user_can_manage_tenant_structure"))),
+        )
 
         if sessoes_subprocess_config_v2 is not None:
             all_sidebar_sections_for_subprocess_v2 = list(active_sidebar_sections_v22 or []) + list(inactive_sidebar_sections_v22 or [])
@@ -858,21 +852,16 @@ def new_user_page(
             )
     # APPGENESIS_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 
-    if _dbg_page and admin_subprocess_state_v2 is not None and resolved_admin_tab == "sessoes":
-        _log_sessoes_page_v1(
-            "page:admin_subprocess_state",
-            is_editing=admin_subprocess_state_v2.is_editing,
-            edit_key=getattr(admin_subprocess_state_v2, "edit_key", None),
-            return_url=getattr(admin_subprocess_state_v2, "return_url", None),
-            active_count=len(active_sidebar_sections_v22 or []),
-            inactive_count=len(inactive_sidebar_sections_v22 or []),
-        )
-
     auth_profile_subprocess_state_v1 = None
 
+    # A aba vive no Administrativo e a navegacao entre menus e client-side: o estado tem de ser
+    # renderizado sempre que o utilizador ve o Administrativo, nao so quando a pagina abre nele.
     auth_profile_menu_visible = (
-        resolved_menu == "perfil_de_autorizacao"
-        or "perfil_de_autorizacao" in visible_menu_keys
+        resolved_menu in {"perfil_de_autorizacao", "administrativo"}
+        or bool({"perfil_de_autorizacao", "administrativo"} & set(visible_menu_keys))
+    )
+    auth_profile_context_menu_v1 = (
+        "perfil_de_autorizacao" if resolved_menu == "perfil_de_autorizacao" else "administrativo"
     )
 
     if auth_profile_menu_visible:
@@ -882,18 +871,16 @@ def new_user_page(
             try:
                 clean_auth_profile_edit_key_v1 = (
                     str(auth_profile_edit_key or "").strip()
-                    if resolved_menu == "perfil_de_autorizacao"
+                    if resolved_menu in {"perfil_de_autorizacao", "administrativo"}
                     else ""
                 )
-                auth_profile_return_target_v1 = (
-                    "#auth-profile-form-card"
-                    if clean_auth_profile_edit_key_v1
-                    else "#auth-profile-card"
-                )
+                # Sucesso (criar ou editar) volta sempre a lista; erros mantem o formulario via profile_handlers.
+                auth_profile_return_target_v1 = "#auth-profile-card"
                 auth_profile_return_url_v1 = _build_auth_profile_return_url_v1(
                     sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
                     dynamic_process_section=clean_dynamic_section_from_query,
                     target=auth_profile_return_target_v1,
+                    menu=auth_profile_context_menu_v1,
                 )
                 auth_profile_entity_context_v1 = build_auth_profile_entity_context_v1(
                     session,
@@ -913,15 +900,64 @@ def new_user_page(
                         ),
                     },
                 )
+                from appgenesis.services.profile import (
+                    resolve_active_menu_options_v1,
+                    resolve_active_session_options_v1,
+                    resolve_active_tab_options_v1,
+                )
+
                 auth_profile_subprocess_config_v1 = build_auth_profile_config_for_context_v1(
                     auth_profile_subprocess_config_v1,
                     auth_profile_entity_context_v1,
+                    session_options=[
+                        (option["value"], option["label"])
+                        for option in resolve_active_session_options_v1(
+                            page_data.get("sidebar_menu_settings") or []
+                        )
+                    ],
+                    menu_options=[
+                        (option["value"], option["label"])
+                        for option in resolve_active_menu_options_v1(
+                            page_data.get("sidebar_menu_settings") or []
+                        )
+                    ],
+                    menu_option_groups=[
+                        (option["value"], option["section"])
+                        for option in resolve_active_menu_options_v1(
+                            page_data.get("sidebar_menu_settings") or []
+                        )
+                    ],
+                    tab_options=[
+                        (option["value"], option["label"])
+                        for option in resolve_active_tab_options_v1(
+                            page_data.get("sidebar_menu_settings") or []
+                        )
+                    ],
+                    tab_option_groups=[
+                        (option["value"], option["menu"])
+                        for option in resolve_active_tab_options_v1(
+                            page_data.get("sidebar_menu_settings") or []
+                        )
+                    ],
+                )
+                # Rotulos legiveis para as colunas de origem do perfil (Definicao, Menu, Cabecalho, Autorizacao).
+                _auth_session_labels_v1 = {o["value"]: o["label"] for o in resolve_active_session_options_v1(page_data.get("sidebar_menu_settings") or [])}
+                _auth_menu_labels_v1 = {o["value"]: o["label"] for o in resolve_active_menu_options_v1(page_data.get("sidebar_menu_settings") or [])}
+                _auth_tab_labels_v1 = {o["value"]: o["label"] for o in resolve_active_tab_options_v1(page_data.get("sidebar_menu_settings") or [])}
+                for _auth_row_v1 in auth_profile_rows_v1:
+                    _auth_row_v1["session_origin_label"] = _auth_session_labels_v1.get(_auth_row_v1.get("session_origin"), _auth_row_v1.get("session_origin") or "")
+                    _auth_row_v1["menu_origin_label"] = _auth_menu_labels_v1.get(_auth_row_v1.get("menu_origin"), _auth_row_v1.get("menu_origin") or "")
+                    _auth_row_v1["tab_origin_label"] = _auth_tab_labels_v1.get(_auth_row_v1.get("tab_origin"), _auth_row_v1.get("tab_origin") or "")
+                    _auth_row_v1["authorization_label"] = actions_label(_auth_row_v1.get("authorization_level"))
+                auth_profile_subprocess_config_v1 = lock_visibility_scope_field_v1(
+                    auth_profile_subprocess_config_v1,
+                    get_entity_profile_scope_v1(session, get_session_entity_id(request)),
                 )
                 auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_profile_subprocess_config_v1,
                     rows=auth_profile_rows_v1,
                     edit_key=clean_auth_profile_edit_key_v1,
-                    menu_key="perfil_de_autorizacao",
+                    menu_key=auth_profile_context_menu_v1,
                     return_url=auth_profile_return_url_v1,
                     success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
                     error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
@@ -930,66 +966,139 @@ def new_user_page(
                     menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
                     active_entity_id=selected_entity_id,
                 )
+                # Copiar: abre o formulario de criacao ja preenchido com os dados do perfil de origem.
+                clean_auth_profile_copy_key_v1 = str(auth_profile_copy_key or "").strip().lower()
+                if clean_auth_profile_copy_key_v1 and not auth_profile_subprocess_state_v1.is_editing:
+                    copy_row_v1 = find_admin_subprocess_row(
+                        auth_profile_rows_v1,
+                        auth_profile_subprocess_config_v1,
+                        clean_auth_profile_copy_key_v1,
+                    )
+                    if copy_row_v1:
+                        auth_profile_subprocess_state_v1 = _dataclass_replace(
+                            auth_profile_subprocess_state_v1,
+                            prefill_values={
+                                key: copy_row_v1.get(key, "")
+                                for key in (
+                                    "session_origin",
+                                    "menu_origin",
+                                    "tab_origin",
+                                    "authorization_level",
+                                    "visibility_scope_mode",
+                                    "status",
+                                )
+                            },
+                        )
             except Exception:
                 auth_profile_subprocess_state_v1 = None
 
-    # APPGENESIS_ADMIN_SUBPROCESS_STATE_OBJETO_V1_START
-    auth_objeto_subprocess_state_v1 = None
-
-    if auth_profile_menu_visible:
-        auth_objeto_subprocess_config_v1 = get_admin_subprocess_config("objeto_de_autorizacao")
-
-        if auth_objeto_subprocess_config_v1 is not None and auth_objeto_subprocess_config_v1.enabled:
+    # Funcoes administrativas: mesma tela do Perfil de autorizacao (lista, criar, editar, copiar, eliminar).
+    funcoes_subprocess_state_v1 = None
+    if resolved_menu == "administrativo" or "administrativo" in visible_menu_keys:
+        funcoes_config_v1 = get_admin_subprocess_config("funcoes_administrativas")
+        if funcoes_config_v1 is not None and funcoes_config_v1.enabled:
             try:
-                clean_auth_objeto_edit_key_v1 = (
-                    str(auth_objeto_edit_key or "").strip()
-                    if resolved_menu == "perfil_de_autorizacao"
-                    else ""
+                from appgenesis.admin_subprocesses.repositories.functions_repository import (
+                    FunctionsAdminRepository,
+                    list_active_profile_options,
                 )
-                auth_objeto_return_target_v1 = (
-                    "#auth-objeto-form-card"
-                    if clean_auth_objeto_edit_key_v1
-                    else "#auth-objeto-card"
-                )
-                auth_objeto_return_url_v1 = _build_auth_objeto_return_url_v1(
-                    target=auth_objeto_return_target_v1,
-                )
-                auth_objeto_repo_v1 = ObjetoAutorizacaoAdminRepository(
-                    auth_objeto_subprocess_config_v1
-                )
-                auth_objeto_rows_v1 = auth_objeto_repo_v1.list_rows(
+                from appgenesis.admin_subprocesses.service import find_admin_subprocess_row as _find_row_v1
+
+                clean_funcoes_edit_key_v1 = str(functions_edit_key or "").strip().lower()
+                funcoes_return_url_v1 = "/users/new?menu=administrativo&admin_tab=funcoes_administrativas&target=funcoes-administrativas-card#funcoes-administrativas-card"
+                funcoes_entity_context_v1 = build_auth_profile_entity_context_v1(
                     session,
-                    context={
-                        "user_id": current_user["id"],
-                        "entity_number": (
-                            str(selected_entity_number)
-                            if selected_entity_number is not None
-                            else ""
-                        ),
-                    },
+                    selected_entity_id=entity_permissions.get("selected_entity_id"),
+                    permissions=entity_permissions,
                 )
-                auth_objeto_subprocess_state_v1 = build_admin_subprocess_state(
-                    config=auth_objeto_subprocess_config_v1,
-                    rows=auth_objeto_rows_v1,
-                    edit_key=clean_auth_objeto_edit_key_v1,
-                    menu_key="perfil_de_autorizacao",
-                    return_url=auth_objeto_return_url_v1,
-                    success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
-                    error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
+                funcoes_rows_v1 = FunctionsAdminRepository(funcoes_config_v1).list_rows(
+                    session, {"entity_id": selected_entity_id}
+                )
+                funcoes_profile_options_v1 = list_active_profile_options(
+                    session,
+                    get_admin_subprocess_config("perfil_de_autorizacao"),
+                    user_id=current_user["id"],
+                    entity_number=funcoes_entity_context_v1.get("selected_entity_number", ""),
+                )
+                funcoes_config_v1 = build_auth_profile_config_for_context_v1(
+                    funcoes_config_v1,
+                    funcoes_entity_context_v1,
+                    authorization_profile_options=funcoes_profile_options_v1,
+                )
+                funcoes_config_v1 = lock_visibility_scope_field_v1(
+                    funcoes_config_v1,
+                    get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+                )
+                funcoes_subprocess_state_v1 = build_admin_subprocess_state(
+                    config=funcoes_config_v1,
+                    rows=funcoes_rows_v1,
+                    edit_key=clean_funcoes_edit_key_v1,
+                    menu_key="administrativo",
+                    return_url=funcoes_return_url_v1,
+                    success=profile_success if resolved_menu == "administrativo" else "",
+                    error=profile_error if resolved_menu == "administrativo" else "",
+                    sidebar_menu_settings=list(page_data.get("sidebar_menu_settings") or []),
+                    visible_sidebar_menu_keys=visible_menu_keys,
+                    menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
+                    active_entity_id=selected_entity_id,
+                )
+                clean_funcoes_copy_key_v1 = str(functions_copy_key or "").strip().lower()
+                if clean_funcoes_copy_key_v1 and not funcoes_subprocess_state_v1.is_editing:
+                    copy_row_funcoes_v1 = _find_row_v1(funcoes_rows_v1, funcoes_config_v1, clean_funcoes_copy_key_v1)
+                    if copy_row_funcoes_v1:
+                        funcoes_subprocess_state_v1 = _dataclass_replace(
+                            funcoes_subprocess_state_v1,
+                            prefill_values={
+                                key: copy_row_funcoes_v1.get(key, "")
+                                for key in ("visibility_scope_mode", "status")
+                            },
+                        )
+            except Exception:
+                funcoes_subprocess_state_v1 = None
+
+    # Departamentos (Sistema > Definições > Departamentos): lista, criar, editar e eliminar.
+    departamentos_subprocess_state_v1 = None
+    if resolved_menu == "sessoes" or "sessoes" in visible_menu_keys:
+        departamentos_config_v1 = get_admin_subprocess_config("departamentos")
+        if departamentos_config_v1 is not None and departamentos_config_v1.enabled:
+            try:
+                from appgenesis.admin_subprocesses.repositories.departments_repository import (
+                    DepartmentsAdminRepository,
+                )
+
+                clean_departments_edit_key_v1 = str(departments_edit_key or "").strip()
+                departamentos_return_url_v1 = (
+                    "/users/new?menu=sessoes&admin_tab=departamentos"
+                    "&target=departamentos-card#departamentos-card"
+                )
+                departamentos_rows_v1 = DepartmentsAdminRepository(departamentos_config_v1).list_rows(
+                    session,
+                    {"entity_id": selected_entity_id},
+                )
+                departamentos_subprocess_state_v1 = build_admin_subprocess_state(
+                    config=departamentos_config_v1,
+                    rows=departamentos_rows_v1,
+                    edit_key=clean_departments_edit_key_v1,
+                    menu_key="sessoes",
+                    return_url=departamentos_return_url_v1,
+                    success=profile_success if resolved_menu == "sessoes" else "",
+                    error=profile_error if resolved_menu == "sessoes" else "",
                     sidebar_menu_settings=list(page_data.get("sidebar_menu_settings") or []),
                     visible_sidebar_menu_keys=visible_menu_keys,
                     menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
                     active_entity_id=selected_entity_id,
                 )
             except Exception:
-                auth_objeto_subprocess_state_v1 = None
-    # APPGENESIS_ADMIN_SUBPROCESS_STATE_OBJETO_V1_END
+                departamentos_subprocess_state_v1 = None
 
     # APPGENESIS_ADMIN_SUBPROCESS_STATE_MENU_V1_START
     admin_subprocess_menu_state_v1 = None
 
     if current_user_is_admin:
-        menu_subprocess_config_v1 = get_admin_subprocess_config("menu")
+        menu_subprocess_config_v1 = lock_visibility_scope_field_v1(
+            get_admin_subprocess_config("menu"),
+            get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+        )
 
         if menu_subprocess_config_v1 is not None and menu_subprocess_config_v1.enabled:
             try:
@@ -1026,12 +1135,22 @@ def new_user_page(
         return result
 
     admin_subprocess_entity_state = None
+    # Utilizador = so sistema local; Administradores do sistema = perfil Legado (so owner).
+    _is_owner_actor_v1 = bool(page_data.get("current_user_can_manage_all_entities"))
     admin_subprocess_user_state = AdminSubprocessState(
         config=UTILIZADOR_CONFIG,
         active_rows=_normalize_user_rows_v1(page_data.get("active_created_users", [])),
         inactive_rows=_normalize_user_rows_v1(page_data.get("inactive_users", [])),
         return_url="/users/new?menu=administrativo&admin_tab=utilizador#create-user-card",
     )
+    admin_subprocess_system_admin_state = None
+    if _is_owner_actor_v1:
+        admin_subprocess_system_admin_state = AdminSubprocessState(
+            config=ADMIN_SISTEMA_CONFIG,
+            active_rows=_normalize_user_rows_v1(page_data.get("system_admin_active_users", [])),
+            inactive_rows=_normalize_user_rows_v1(page_data.get("system_admin_inactive_users", [])),
+            return_url="/users/new?menu=administrativo&admin_tab=admin_sistema#system-admins-card",
+        )
 
     if bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))):
         admin_subprocess_entity_state = AdminSubprocessState(
@@ -1050,6 +1169,12 @@ def new_user_page(
     sidebar_menu_settings = list(page_data.get("sidebar_menu_settings", []))
     
     resolved_tabs_config = resolve_process_tabs_v1(clean_menu_key, sidebar_menu_settings)
+    # Aba Entidade (Administrativo) so para o owner do sistema; restantes perfis nao veem.
+    if clean_menu_key == "administrativo" and not page_data.get("current_user_can_manage_tenant_structure"):
+        resolved_tabs_config = [t for t in resolved_tabs_config if t.key != "entidade"]
+    # Administradores do sistema so para o owner.
+    if clean_menu_key == "administrativo" and not page_data.get("current_user_can_manage_all_entities"):
+        resolved_tabs_config = [t for t in resolved_tabs_config if t.key != LEGACY_ADMIN_TAB_KEY]
     initial_menu_tabs = [t.to_dict() for t in resolved_tabs_config]
     
     if initial_menu_tabs:
@@ -1105,7 +1230,8 @@ def new_user_page(
         "entity_readonly_mode": bool(entity_readonly_mode),
         "user_readonly_mode": bool(user_readonly_mode),
         "current_user": current_user,
-        "current_user_is_admin": current_user_is_admin,
+        "current_user_is_admin": current_user_is_entity_admin,
+        "current_user_is_owner_admin": current_user_is_admin,
         "user_personal_data": user_personal_data,
         "entity_success": entity_success or "",
         "entity_error": entity_error or "",
@@ -1132,36 +1258,32 @@ def new_user_page(
         "appgenesis_after_save": is_post_save_return,
         "sidebar_section_edit_key": str(sidebar_section_edit_key or "").strip().lower(),
         "auth_profile_edit_key": str(auth_profile_edit_key or "").strip().lower(),
-        "auth_objeto_edit_key": str(auth_objeto_edit_key or "").strip().lower(),
         "sidebar_section_edit_data": sidebar_section_edit_data_v22,
         "active_sidebar_sections": active_sidebar_sections_v22,
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
-        "admin_tab": resolved_admin_tab,
+        "admin_tab": (
+            "utilizador"
+            if resolved_admin_tab == "entidade" and not page_data.get("current_user_can_manage_tenant_structure")
+            else resolved_admin_tab
+        ),
         "admin_subprocess_state": admin_subprocess_state_v2,
         "auth_profile_subprocess_state": auth_profile_subprocess_state_v1,
-        "auth_objeto_subprocess_state": auth_objeto_subprocess_state_v1,
+        "funcoes_subprocess_state": funcoes_subprocess_state_v1,
+        "departamentos_subprocess_state": departamentos_subprocess_state_v1,
         "admin_subprocess_menu_state": admin_subprocess_menu_state_v1,
         "admin_subprocess_entity_state": admin_subprocess_entity_state,
         "admin_subprocess_user_state": admin_subprocess_user_state,
+        "admin_subprocess_system_admin_state": admin_subprocess_system_admin_state,
         "current_user_can_manage_tenant_structure": bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
         "current_user_can_manage_all_entities": bool(entity_permissions.get("can_manage_all_entities", False)),
-        "debug_flicker": is_debug_flicker,
+        "menu_missing_actions": menu_missing_actions_v1,
         **page_data,
     }
 
-    # ###################################################################################
-    # TEMPORARY: DEBUG FLICKER VALIDATION
-    # ###################################################################################
-    if is_debug_flicker:
-        print(
-            f"[APPGENESIS FLICKER DEBUG BACKEND]\n"
-            f"- menu resolvido: {resolved_menu}\n"
-            f"- admin_tab resolvido: {resolved_admin_tab}\n"
-            f"- target resolvido: {initial_menu_target}\n"
-            f"- admin_subprocess_state presente: {admin_subprocess_state_v2 is not None}\n"
-            f"- qual subprocesso administrativo montado: {admin_subprocess_state_v2.config.key if admin_subprocess_state_v2 else 'Nenhum'}\n"
-            f"- template renderizando Sessões: {'Sim' if admin_subprocess_state_v2 and admin_subprocess_state_v2.config.key == 'sessoes' else 'Não'}\n"
-            f"- template renderizando Perfil de autorização: {'Sim' if auth_profile_subprocess_state_v1 is not None else 'Não'}"
-        )
-
     return templates.TemplateResponse(request, "new_user.html", context)
+
+# Reexportado: importado deste modulo por outros ficheiros.
+__all__ = [
+    "delete_sidebar_menu_setting",
+    "new_user_page",
+]

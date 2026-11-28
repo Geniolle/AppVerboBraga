@@ -1,66 +1,39 @@
 from __future__ import annotations
 
 import json
-import re
-import unicodedata
 from typing import Any
-from uuid import uuid4
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from appgenesis.admin_subprocesses.registry import get_admin_subprocess_config
 from appgenesis.dynamic_process_layout import (
     resolve_dynamic_process_layout_config,
 )
 from appgenesis.services.process_settings.normalizers import (
-    ADDITIONAL_FIELD_DEFAULT_SIZE,
-    ADDITIONAL_FIELD_DEFAULT_TYPE,
-    ADDITIONAL_FIELD_MAX_SIZE,
-    ADDITIONAL_FIELD_TEXTUAL_TYPES,
-    ADDITIONAL_FIELD_TYPE_KEYS,
+    ADDITIONAL_FIELD_BUTTON_STYLES,
     ADDITIONAL_FIELD_TYPES,
     MENU_CONFIG_DISPLAY_ORDER_KEY,
     MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY,
     MENU_CONFIG_SIDEBAR_SECTION_KEY,
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
-    MENU_LEGACY_KEY_ALIAS,
-    MENU_MEU_PERFIL_FIELD_KEYS,
     MENU_MEU_PERFIL_FIELD_LABELS,
     MENU_MEU_PERFIL_FIELD_OPTIONS,
     MENU_MEU_PERFIL_FIELDS_DEFAULT,
     MENU_MEU_PERFIL_KEY,
-    MENU_MEU_PERFIL_LEGACY_KEY,
-    MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS,
-    MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY,
-    MENU_PROCESS_FIELD_OPTIONS_BY_KEY,
-    MENU_SECTION_BY_SYSTEM_MENU_KEY,
-    MENU_SECTION_DEFAULT_KEY,
     MENU_SECTION_LABELS,
-    MENU_SECTION_OPTIONS,
     MENU_VISIBILITY_SCOPE_ALL,
     MENU_VISIBILITY_SCOPES,
-    SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS,
     SIDEBAR_MENU_DEFAULTS,
     SIDEBAR_MENU_DELETE_PROTECTED_KEYS,
-    SIDEBAR_MENU_KEYS,
     SIDEBAR_MENU_PROTECTED_KEYS,
-    SIDEBAR_SECTION_DEFAULTS,
     SIDEBAR_SECTION_DEFAULTS_BY_KEY,
-    SIDEBAR_SECTION_DELETE_PROTECTED_KEYS,
     _build_admin_subprocess_sidebar_metadata,
-    _build_custom_field_key_from_label,
-    _build_group_scoped_custom_field_key,
     _build_menu_key_from_label,
     _build_sidebar_section_key_from_label,
     _build_sidebar_section_payload,
-    _fix_common_mojibake,
-    _get_additional_field_group_key,
     _is_sidebar_section_delete_protected,
     _load_menu_config,
     _menu_exists,
-    _normalize_additional_field_type,
-    _normalize_custom_field_key,
     _normalize_menu_display_order,
     _normalize_menu_key,
     _normalize_menu_label_preserve_case,
@@ -69,8 +42,6 @@ from appgenesis.services.process_settings.normalizers import (
     _normalize_sidebar_section_key,
     _normalize_sidebar_section_label,
     _normalize_sidebar_section_status_v5,
-    _normalize_sidebar_section_visibility_scopes,
-    _normalize_visibility_scope_mode,
     _parse_menu_config,
     _resolve_default_sidebar_section_key,
     _resolve_legacy_menu_alias,
@@ -78,31 +49,17 @@ from appgenesis.services.process_settings.normalizers import (
     _resolve_visibility_scope_label_from_mode,
     _resolve_visibility_scope_mode_from_scopes,
     _sidebar_menu_defaults_by_key,
-    _sidebar_section_status_label_v5,
     _visibility_scope_mode_to_scopes,
     ensure_sidebar_menu_settings_defaults,
-    get_menu_section_label,
     get_menu_visibility_scope_label,
     get_menu_visibility_scope_mode,
     get_menu_visibility_scopes,
-    get_sidebar_section_visibility_scope_label,
-    get_sidebar_section_visibility_scope_mode,
-    get_sidebar_section_visibility_scopes,
-    normalize_menu_section_key,
     normalize_menu_visibility_scopes,
     normalize_sidebar_sections,
     resolve_menu_key_alias,
     resolve_menu_sidebar_section_key,
 )
 from appgenesis.services.process_settings.additional_field_service import (
-    PT_PT_LABEL_REPLACEMENTS,
-    _get_additional_field_group_key_v1,
-    _normalize_additional_field_label,
-    _normalize_additional_field_list_source_type_v1,
-    _normalize_additional_field_required,
-    _normalize_additional_field_size,
-    _normalize_additional_field_source_key_v1,
-    _normalize_process_list_key_v8,
     _rebuild_menu_process_hierarchy_from_additional_fields_v1,
     get_menu_process_additional_fields,
     move_sidebar_menu_additional_field,
@@ -112,46 +69,29 @@ from appgenesis.services.process_settings.additional_field_service import (
     update_sidebar_menu_additional_fields_v4,
 )
 from appgenesis.services.process_settings.quantity_field_service import (
-    _build_process_quantity_rule_key_v1,
-    _normalize_process_quantity_max_items_v1,
     normalize_menu_process_quantity_fields,
     update_sidebar_menu_process_quantity_fields_v1,
 )
 from appgenesis.services.process_settings.subsequent_field_service import (
-    _build_subsequent_field_key_v3,
-    _normalize_subsequent_field_operator_v3,
     normalize_menu_process_subsequent_fields,
     update_sidebar_menu_subsequent_fields,
 )
 from appgenesis.services.process_settings.list_service import (
-    _build_process_list_key_from_label_v1,
-    _build_process_list_key_from_label_v2,
-    _normalize_process_list_items_csv_v1,
-    _normalize_process_list_items_csv_v2,
-    _normalize_process_list_key_v1,
-    _normalize_process_list_key_v2,
-    _normalize_process_list_key_v3,
     get_menu_process_lists_v1,
     get_menu_process_lists_v2,
     get_process_list_source_menus_v1,
-    normalize_menu_process_lists_v1,
-    normalize_menu_process_lists_v2,
     normalize_menu_process_lists_v3,
     normalize_menu_process_lists_v4,
     normalize_menu_process_lists_v5,
 )
 from appgenesis.services.process_settings.field_service import (
     get_menu_process_default_visible_fields,
-    get_menu_process_default_visible_fields_v4,
     get_menu_process_field_options,
-    get_menu_process_field_types_map,
     get_menu_process_header_options,
     get_menu_process_selectable_field_options,
     get_menu_process_visible_field_header_map,
     get_menu_process_visible_field_rows,
     normalize_menu_process_visible_fields,
-    normalize_menu_process_visible_fields_v4,
-    normalize_meu_perfil_visible_fields,
     update_sidebar_menu_process_fields,
     update_sidebar_menu_process_fields_v4,
 )
@@ -172,6 +112,35 @@ def _normalize_system_menu_label(menu_key: Any, menu_label: Any) -> str:
     return clean_menu_label
 
 
+def _menu_rows_for_entity(session: Session, entity_id: int | None) -> list[Any]:
+    """Linhas de sidebar_menu_settings da entidade; menus 'Default' criados pelo owner aplicam-se a todas."""
+    rows = list(
+        session.execute(
+            text("SELECT * FROM sidebar_menu_settings WHERE entity_id = :entity_id"),
+            {"entity_id": entity_id},
+        ).all()
+    )
+    owner_id = session.execute(
+        text(
+            "SELECT id FROM entities WHERE profile_scope = 'owner' AND is_active IS TRUE "
+            "ORDER BY id LIMIT 1"
+        )
+    ).scalar()
+    if owner_id is None or entity_id is None or int(owner_id) == int(entity_id):
+        return rows
+    default_owner_rows = [
+        row
+        for row in session.execute(
+            text("SELECT * FROM sidebar_menu_settings WHERE entity_id = :entity_id"),
+            {"entity_id": owner_id},
+        ).all()
+        if get_menu_visibility_scope_mode(_parse_menu_config(row.menu_config)) == MENU_VISIBILITY_SCOPE_ALL
+    ]
+    default_keys = {_normalize_menu_key(row.menu_key) for row in default_owner_rows}
+    kept = [row for row in rows if _normalize_menu_key(row.menu_key) not in default_keys]
+    return kept + default_owner_rows
+
+
 def get_sidebar_menu_settings(
     session: Session, active_entity_id: int | None = None
 ) -> list[dict[str, Any]]:
@@ -180,16 +149,7 @@ def get_sidebar_menu_settings(
     resolved_entity_id = active_entity_id
     if resolved_entity_id is None:
         resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
-    rows = session.execute(
-        text(
-            """
-            SELECT menu_key, menu_label, is_active, is_deleted, menu_config
-            FROM sidebar_menu_settings
-            WHERE entity_id = :entity_id
-            """
-        ),
-        {"entity_id": resolved_entity_id},
-    ).all()
+    rows = _menu_rows_for_entity(session, resolved_entity_id)
     db_by_key = {
         _normalize_menu_key(row.menu_key): row
         for row in rows
@@ -301,8 +261,14 @@ def get_sidebar_menu_settings(
                     "include_remaining_fields"
                 ],
                 "process_list_columns": process_layout_config["list_columns"],
+                "process_record_sort_field": process_layout_config.get("sort_field", ""),
+                "process_record_inactive_field_key": process_layout_config.get("inactive_field_key", ""),
+                "process_record_inactive_field_value": process_layout_config.get("inactive_field_value", ""),
                 "additional_field_type_options": [
                     dict(item) for item in ADDITIONAL_FIELD_TYPES
+                ],
+                "additional_field_button_style_options": [
+                    dict(item) for item in ADDITIONAL_FIELD_BUTTON_STYLES
                 ],
                 **_build_admin_subprocess_sidebar_metadata(menu_key),
                 "_fallback_order": default_index,
@@ -411,8 +377,14 @@ def get_sidebar_menu_settings(
                     "include_remaining_fields"
                 ],
                 "process_list_columns": process_layout_config["list_columns"],
+                "process_record_sort_field": process_layout_config.get("sort_field", ""),
+                "process_record_inactive_field_key": process_layout_config.get("inactive_field_key", ""),
+                "process_record_inactive_field_value": process_layout_config.get("inactive_field_value", ""),
                 "additional_field_type_options": [
                     dict(item) for item in ADDITIONAL_FIELD_TYPES
+                ],
+                "additional_field_button_style_options": [
+                    dict(item) for item in ADDITIONAL_FIELD_BUTTON_STYLES
                 ],
                 **_build_admin_subprocess_sidebar_metadata(menu_key),
                 "_fallback_order": fallback_order,
@@ -679,7 +651,7 @@ def update_sidebar_menu_label(
     requested_section_key = _normalize_sidebar_section_key(sidebar_section_key)
     if requested_section_key:
         if requested_section_key not in section_keys_set:
-            return False, "Sessão inválida."
+            return False, "Definição inválida."
         menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = requested_section_key
     elif section_keys:
         current_section_key = _normalize_sidebar_section_key(
@@ -1052,7 +1024,7 @@ def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, st
     clean_section_key = _normalize_sidebar_section_key(section_key)
 
     if not clean_section_key:
-        return False, "Sessão inválida."
+        return False, "Definição inválida."
 
     administrativo_row = session.execute(
         text(
@@ -1067,7 +1039,7 @@ def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, st
     ).scalar_one_or_none()
 
     if administrativo_row is None:
-        return False, "Sessão inválida."
+        return False, "Definição inválida."
 
     current_menu_config = _parse_sidebar_menu_config_v2(administrativo_row)
     current_sections = normalize_sidebar_sections(
@@ -1084,7 +1056,7 @@ def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, st
     )
 
     if target_section is None:
-        return False, "Sessão inválida."
+        return False, "Definição inválida."
 
     if _is_sidebar_section_delete_protected(clean_section_key):
         return False, "Não é permitido eliminar esta sessão."
@@ -1360,16 +1332,7 @@ def get_sidebar_menu_settings_v2(
         session, active_entity_id=resolved_entity_id
     )
 
-    rows = session.execute(
-        text(
-            """
-            SELECT menu_key, menu_config
-            FROM sidebar_menu_settings
-            WHERE entity_id = :entity_id
-            """
-        ),
-        {"entity_id": resolved_entity_id},
-    ).all()
+    rows = _menu_rows_for_entity(session, resolved_entity_id)
 
     config_by_key = {
         _normalize_menu_key(row.menu_key): _parse_menu_config(row.menu_config)
@@ -1406,16 +1369,7 @@ def get_sidebar_menu_settings_v3(
         session, active_entity_id=resolved_entity_id
     )
 
-    rows = session.execute(
-        text(
-            """
-            SELECT menu_key, menu_config
-            FROM sidebar_menu_settings
-            WHERE entity_id = :entity_id
-            """
-        ),
-        {"entity_id": resolved_entity_id},
-    ).all()
+    rows = _menu_rows_for_entity(session, resolved_entity_id)
 
     config_by_key = {
         _normalize_menu_key(row.menu_key): _parse_menu_config(row.menu_config)
@@ -1452,16 +1406,7 @@ def get_sidebar_menu_settings_v4(
         session, active_entity_id=resolved_entity_id
     )
 
-    rows = session.execute(
-        text(
-            """
-            SELECT menu_key, menu_config
-            FROM sidebar_menu_settings
-            WHERE entity_id = :entity_id
-            """
-        ),
-        {"entity_id": resolved_entity_id},
-    ).all()
+    rows = _menu_rows_for_entity(session, resolved_entity_id)
 
     config_by_key = {
         _normalize_menu_key(row.menu_key): _parse_menu_config(row.menu_config)
@@ -1714,3 +1659,41 @@ def update_sidebar_sections_v2(
 
 
 # APPGENESIS_SIDEBAR_SECTIONS_UPDATE_V2_END
+
+# Reexportado: importado deste modulo por outros ficheiros.
+__all__ = [
+    "MENU_MEU_PERFIL_FIELDS_DEFAULT",
+    "MENU_MEU_PERFIL_FIELD_LABELS",
+    "MENU_MEU_PERFIL_FIELD_OPTIONS",
+    "MENU_MEU_PERFIL_KEY",
+    "_rebuild_menu_process_hierarchy_from_additional_fields_v1",
+    "build_sidebar_global_refresh_version_v1",
+    "create_sidebar_menu_setting",
+    "delete_sidebar_menu_setting",
+    "delete_sidebar_section",
+    "get_menu_process_default_visible_fields",
+    "get_sidebar_global_refresh_version_v1",
+    "get_sidebar_menu_settings",
+    "get_sidebar_menu_settings_v2",
+    "get_sidebar_menu_settings_v3",
+    "get_sidebar_menu_settings_v4",
+    "get_visible_sidebar_menu_keys",
+    "move_sidebar_menu_additional_field",
+    "move_sidebar_menu_setting",
+    "normalize_menu_process_additional_fields",
+    "normalize_menu_process_additional_fields_v1",
+    "normalize_menu_process_lists_v3",
+    "normalize_menu_process_lists_v4",
+    "resolve_menu_key_alias",
+    "set_sidebar_menu_visibility",
+    "update_sidebar_menu_additional_fields_v1",
+    "update_sidebar_menu_additional_fields_v4",
+    "update_sidebar_menu_label",
+    "update_sidebar_menu_process_fields",
+    "update_sidebar_menu_process_fields_v4",
+    "update_sidebar_menu_process_lists",
+    "update_sidebar_menu_process_quantity_fields_v1",
+    "update_sidebar_menu_sidebar_sections",
+    "update_sidebar_menu_subsequent_fields",
+    "update_sidebar_sections_v2",
+]

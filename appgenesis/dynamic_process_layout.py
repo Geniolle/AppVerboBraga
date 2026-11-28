@@ -423,10 +423,27 @@ def resolve_dynamic_process_layout_config(
         "empty_active_message": f"Sem {plural_label} ativos.",
         "empty_inactive_message": f"Sem {plural_label} inativos.",
         "state_enabled": bool(state_enabled and layout == PROCESS_LAYOUT_LIST),
-        "status_field_key": "__estado",
+        "status_field_key": (
+            str(list_config.get("status_field_key") or "").strip().lower() or "__estado"
+        ),
         "show_system_column": bool(show_system_column and layout == PROCESS_LAYOUT_LIST),
         "include_remaining_fields": bool(include_remaining_fields and layout == PROCESS_LAYOUT_LIST),
         "list_columns": list_columns if layout == PROCESS_LAYOUT_LIST else [],
+        "sort_field": (
+            str(list_config.get("sort_field") or "").strip().lower()
+            if layout == PROCESS_LAYOUT_LIST
+            else ""
+        ),
+        "inactive_field_key": (
+            str(list_config.get("inactive_field_key") or "").strip().lower()
+            if layout == PROCESS_LAYOUT_LIST
+            else ""
+        ),
+        "inactive_field_value": (
+            str(list_config.get("inactive_field_value") or "").strip()
+            if layout == PROCESS_LAYOUT_LIST
+            else ""
+        ),
     }
 
 

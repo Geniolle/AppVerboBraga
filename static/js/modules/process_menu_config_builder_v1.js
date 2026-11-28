@@ -198,33 +198,6 @@
           { label: "Tipo de acesso", value: "Utilizador" }
         ]
       },
-      links: {
-        title: "Links",
-        description: "Atalhos internos do painel.",
-        items: [{ label: "Sessão atual", target: "#sessao-card" }],
-        details: [
-          { label: "Modulo", value: "Links" },
-          { label: "Status", value: "Ativo" }
-        ]
-      },
-      contato: {
-        title: "Contacto",
-        description: "Informações e opções de contacto.",
-        items: [{ label: "Dados do utilizador ligado", target: "#sessao-card" }],
-        details: [
-          { label: "Email", value: state.currentUserEmail },
-          { label: "Canal", value: "Interno" }
-        ]
-      },
-      tutorial: {
-        title: "Tutorial",
-        description: "Guia rapido de uso desta tela.",
-        items: [{ label: "Passo 1: atualizar perfil", target: "#perfil-pessoal-card" }],
-        details: [
-          { label: "Modo", value: "Guiado" },
-          { label: "Dificuldade", value: "Basico" }
-        ]
-      }
     };
 
     if (!state.currentUserIsAdmin) {
@@ -263,49 +236,8 @@
           { label: "Status", value: "Ativo" }
         ]
       },
-      funcionarios: {
-        title: "Funcionarios",
-        description: "Gestao de funcionarios e acessos.",
-        items: [
-          { label: "Criar registo de funcionario", target: "#create-user-card" },
-          { label: "Ver registos recentes", target: "#recent-users-card" }
-        ],
-        details: [
-          { label: "Modulo", value: "Funcionarios" },
-          { label: "Status", value: "Ativo" }
-        ]
-      },
-      financeiro: {
-        title: "Financeiro",
-        description: "Acesso a opções de conta e estado.",
-        items: [
-          { label: "Estado da conta", target: "#create-user-card" },
-          { label: "Histórico de criação", target: "#recent-users-card" }
-        ],
-        details: [
-          { label: "Modulo", value: "Financeiro" },
-          { label: "Status", value: "Ativo" }
-        ]
-      },
-      relatorios: {
-        title: "Relatorios",
-        description: "Relatorios e historico de utilizadores.",
-        items: [
-          { label: "Últimos criados", target: "#recent-users-card" },
-          { label: "Voltar ao formulario", target: "#create-user-card" }
-        ],
-        details: [
-          { label: "Modulo", value: "Relatorios" },
-          { label: "Status", value: "Ativo" }
-        ]
-      }
     });
 
-    baseMenuConfig.links.items.push({ label: "Criar utilizador", target: "#create-user-card" });
-    baseMenuConfig.tutorial.items = [
-      { label: "Passo 1: criar utilizador", target: "#create-user-card" },
-      { label: "Passo 2: validar em historico", target: "#recent-users-card" }
-    ];
 
     return baseMenuConfig;
   }
@@ -315,19 +247,26 @@
     let baseItems = null;
 
     if (cleanMenuKey === "administrativo") {
+      const canManageTenant = Boolean(
+        window.__APPGENESIS_BOOTSTRAP__ && window.__APPGENESIS_BOOTSTRAP__.currentUserCanManageTenantStructure
+      );
       baseItems = [
-        { label: "Entidade", target: "#recent-entities-card" },
-        { label: "Utilizador", target: "#create-user-card" }
+        ...(canManageTenant ? [{ label: "Entidade", target: "#recent-entities-card" }] : []),
+        { label: "Dados da empresa", target: "#empresa-card" },
+        { label: "Utilizador", target: "#create-user-card" },
+        ...(canManageTenant ? [{ label: "Administradores do sistema", target: "#system-admins-card" }] : []),
+        { label: "Perfil de autorização", target: "#auth-profile-card" },
+        { label: "Funções Administrativas", target: "#funcoes-administrativas-card" }
       ];
     } else if (cleanMenuKey === state.ESTRUTURAS_MENU_KEY_V1) {
       baseItems = [
         { label: "Sessões", target: "#admin-sidebar-sections-card" },
-        { label: "Menu", target: "#menu-subprocess-card-active" }
+        { label: "Menu", target: "#menu-subprocess-card-active" },
+        { label: "Departamentos", target: "#departamentos-card" }
       ];
     } else if (cleanMenuKey === "perfil_de_autorizacao") {
       baseItems = [
         { label: "Perfis", target: "#auth-profile-card" },
-        { label: "Objeto de autorização", target: "#auth-objeto-card" }
       ];
     }
 
@@ -394,12 +333,25 @@
       const nativeSubprocessSetting = state.getSidebarAdminSubprocessSetting(menuKey);
 
       if (menuKey === state.EMPRESA_MENU_KEY_V1) {
+        // Nomes das abas vem da configuracao do menu (Campos adicionais -> cabecalhos), nunca fixos.
+        const empresaHeaderLabels = new Map(
+          (Array.isArray(setting.process_header_options) ? setting.process_header_options : [])
+            .map((option) => [String(option.key || ""), String(option.label || "").trim()])
+        );
+        const empresaHeaderKeys = [...new Set(
+          (Array.isArray(setting.process_visible_field_rows) ? setting.process_visible_field_rows : [])
+            .map((row) => String(row.header_key || "").trim())
+            .filter(Boolean)
+        )];
+        const empresaItems = empresaHeaderKeys
+          .filter((headerKey) => empresaHeaderLabels.get(headerKey))
+          .map((headerKey) => ({ label: empresaHeaderLabels.get(headerKey), target: "#empresa-card" }));
         menuConfig[state.EMPRESA_MENU_KEY_V1] = {
           ...(existingConfig || {}),
           title: cleanMenuLabel,
           singleView: true,
           toggleOnMenuClick: true,
-          items: [{ label: "Dados institucionais", target: "#empresa-card" }]
+          items: empresaItems
         };
         return;
       }
@@ -524,9 +476,7 @@
       !(
         state.visibleSidebarMenuKeys.has("perfil_de_autorizacao") ||
         (documentRef && documentRef.getElementById("auth-profile-card")) ||
-        (documentRef && documentRef.getElementById("auth-profile-active-card")) ||
-        (documentRef && documentRef.getElementById("auth-objeto-card")) ||
-        (documentRef && documentRef.getElementById("auth-objeto-active-card"))
+        (documentRef && documentRef.getElementById("auth-profile-active-card"))
       )
     ) {
       return;
@@ -537,7 +487,6 @@
       singleView: true,
       items: [
         { label: "Perfis", target: "#auth-profile-card" },
-        { label: "Objeto de autorização", target: "#auth-objeto-card" }
       ]
     };
   }

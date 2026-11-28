@@ -182,4 +182,49 @@ input.action-btn-cancel,
   border-top: 1px solid var(--appgenesis-create-card-border-v4) !important;
 }
 
+/* APPGENESIS_FIELD_LABEL_TOP_LEFT_V3_START
+   Regra global: o nome do campo fica em cima do proprio campo, alinhado a esquerda.
+   Labels que contem um controlo (checkbox/radio) ficam de fora. */
+.field > label:not(:has(input, select, textarea)),
+.admin-subprocess-field-v1 > label:not(:has(input, select, textarea)) {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+.field > label:has(+ input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])),
+.field > label:has(+ select),
+.field > label:has(+ textarea),
+.admin-subprocess-field-v1 > label:has(+ input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])),
+.admin-subprocess-field-v1 > label:has(+ select),
+.admin-subprocess-field-v1 > label:has(+ textarea) {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+/* APPGENESIS_FIELD_LABEL_TOP_LEFT_V3_END */
+
 /* APPGENESIS_CREATE_CARD_STANDARD_V4_END */
+
+/* Regra global: cabecalhos de tabela com a mesma fonte do sistema, preto e negrito (todos os cabecalhos, atuais e futuros). */
+table thead th,
+table thead th * {
+  font-family: inherit !important;
+  color: #000 !important;
+  font-weight: 700 !important;
+}
+
+/* Regra global: campo nao editavel fica com fundo cinzento. */
+input:disabled:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+select:disabled,
+textarea:disabled,
+input[readonly]:not([type="hidden"]),
+textarea[readonly],
+.readonly-field {
+  background-color: #eceef2 !important;
+  color: #5b6472 !important;
+  cursor: not-allowed;
+}

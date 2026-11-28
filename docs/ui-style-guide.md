@@ -6,7 +6,7 @@ Este guia define o padrao visual minimo para campos e botoes no AppGenesis.
 
 - Tokens globais: `static/css/ui-standards.css`
 - Implementacao por pagina:
-  - `static/css/new_user.css`
+  - `static/css/new_user/*.css` (antigo `new_user.css`, por componente; a ordem numerada é a cascata)
   - `static/css/login.css`
   - `static/css/user_invite_accept.css`
 
@@ -58,3 +58,8 @@ Quando criar nova tela:
 1. Reutilizar os tokens de `ui-standards.css`.
 2. Evitar valores hardcoded para tamanho de campo e botao.
 3. Se precisar de variacao, criar classe derivada mantendo os tokens base.
+
+## Paginacao de tabelas e listas (regra global)
+
+Toda tabela ou lista paginada usa o rodape "Mais / Menos" do controlador partilhado.
+Especificacao completa (medidas, regras e como ligar): `docs/specs/rodape-paginacao-mais-menos.md`.

@@ -52,7 +52,7 @@ def test_process_editor_cancel_buttons_reuse_editor_exit_url() -> None:
     # A aba Geral nao possui formulario proprio (apenas mostra campos disponiveis).
     # O editor de colunas da listagem foi consolidado dentro do manager de Listas e nao tem
     # mais botao Cancelar proprio.
-    assert matches == 5
+    assert matches == 6
 
     for hardcoded_menu in ("menu=calendario", "menu=administrativo\"", "menu=sessoes\""):
         assert hardcoded_menu not in html_text
@@ -63,7 +63,7 @@ def test_process_editor_cancel_return_target_is_the_origin_list() -> None:
 
     assert html_text.count(
         'data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"'
-    ) == 5
+    ) == 6
 
 
 ####################################################################################
@@ -78,6 +78,7 @@ PROCESS_EDITOR_FORM_ACTIONS = [
     "/settings/menu/process-lists",
     "/settings/menu/process-subsequent-fields",
     "/settings/menu/process-additional-fields",
+    "/settings/menu/session",
 ]
 
 

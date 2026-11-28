@@ -39,15 +39,29 @@
     "#recent-entities-card",
     "#inactive-entities-card",
     "#create-user-card",
-    "#edit-user-card",
     "#admin-users-created-card",
     "#inactive-users-card",
+    "#system-admins-card",
+    "#admin-system-admins-card",
+    "#inactive-system-admins-card",
     "#admin-account-create-card",
     "#admin-account-status-card",
     "#admin-sidebar-sections-card",
     "#admin-sidebar-sections-form-card",
     "#settings-card",
-    "#settings-menu-edit-card"
+    "#settings-menu-edit-card",
+    "#auth-profile-card",
+    "#funcoes-administrativas-card",
+    "#funcoes-administrativas-form-card",
+    "#funcoes-administrativas-active-card",
+    "#funcoes-administrativas-inactive-card",
+    "#departamentos-card",
+    "#departamentos-form-card",
+    "#departamentos-active-card",
+    "#departamentos-inactive-card",
+    "#auth-profile-form-card",
+    "#auth-profile-active-card",
+    "#auth-profile-inactive-card"
   ]);
 
   const ESTRUTURAS_NATIVE_TARGETS_V1 = new Set([
@@ -57,6 +71,10 @@
     "#menu-subprocess-card-active",
     "#menu-subprocess-card-inactive",
     "#admin-sidebar-sections-card",
+    "#departamentos-card",
+    "#departamentos-form-card",
+    "#departamentos-active-card",
+    "#departamentos-inactive-card",
     "#admin-sidebar-sections-card-active",
     "#admin-sidebar-sections-card-inactive",
     "#admin-sidebar-sections-form-card",
@@ -72,11 +90,6 @@
     "#auth-profile-active-card": "#auth-profile-card",
     "#auth-profile-inactive-card": "#auth-profile-card",
     "#auth-profile-form-card": "#auth-profile-card",
-    "#auth-objeto": "#auth-objeto-card",
-    "#auth-objeto-card": "#auth-objeto-card",
-    "#auth-objeto-active-card": "#auth-objeto-card",
-    "#auth-objeto-inactive-card": "#auth-objeto-card",
-    "#auth-objeto-form-card": "#auth-objeto-card"
   });
 
   const AUTH_PROFILE_NATIVE_TARGETS_V1 = new Set(
@@ -197,6 +210,9 @@
       "#edit-user-card": "utilizador",
       "#admin-users-created-card": "utilizador",
       "#inactive-users-card": "utilizador",
+      "#system-admins-card": "admin_sistema",
+      "#admin-system-admins-card": "admin_sistema",
+      "#inactive-system-admins-card": "admin_sistema",
       "#admin-sidebar-sections-card": "sessoes",
       "#admin-sidebar-sections-form-card": "sessoes",
       "#admin-sidebar-sections-card-active": "sessoes",
@@ -212,10 +228,14 @@
       "#auth-profile-form-card": "perfil_de_autorizacao",
       "#auth-profile-active-card": "perfil_de_autorizacao",
       "#auth-profile-inactive-card": "perfil_de_autorizacao",
-      "#auth-objeto-card": "objeto_de_autorizacao",
-      "#auth-objeto-form-card": "objeto_de_autorizacao",
-      "#auth-objeto-active-card": "objeto_de_autorizacao",
-      "#auth-objeto-inactive-card": "objeto_de_autorizacao"
+      "#funcoes-administrativas-card": "funcoes_administrativas",
+      "#funcoes-administrativas-form-card": "funcoes_administrativas",
+      "#funcoes-administrativas-active-card": "funcoes_administrativas",
+      "#funcoes-administrativas-inactive-card": "funcoes_administrativas",
+      "#departamentos-card": "departamentos",
+      "#departamentos-form-card": "departamentos",
+      "#departamentos-active-card": "departamentos",
+      "#departamentos-inactive-card": "departamentos",
     };
     return targetMap[cleanTarget] || "";
   }

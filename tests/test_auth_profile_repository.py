@@ -52,7 +52,7 @@ def test_auth_profile_repository_saves_menu_key_and_current_label(monkeypatch) -
     member = SimpleNamespace(profile_custom_fields=None)
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -127,7 +127,7 @@ def test_auth_profile_repository_ignores_legacy_row_without_entity_number_for_du
     )
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -192,7 +192,7 @@ def test_auth_profile_repository_save_row_allows_same_generated_key_across_diffe
     )
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -272,7 +272,7 @@ def test_auth_profile_repository_delete_row_removes_only_selected_profile(monkey
     )
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -336,7 +336,7 @@ def test_auth_profile_repository_delete_row_removes_storage_when_last_profile_is
     )
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -395,7 +395,7 @@ def test_auth_profile_repository_delete_row_returns_safe_error_for_unknown_key(m
     )
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -431,7 +431,7 @@ def test_auth_profile_repository_save_row_ignores_forged_entity_scope_payload(mo
     member = SimpleNamespace(profile_custom_fields=None)
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -534,7 +534,7 @@ def test_auth_profile_repository_filters_rows_by_active_entity_context(monkeypat
     )
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -566,7 +566,7 @@ def test_auth_profile_repository_save_row_ignores_client_supplied_entity_number(
     member = SimpleNamespace(profile_custom_fields=None)
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -638,7 +638,7 @@ def test_auth_profile_repository_save_row_strips_legacy_entity_scope_keys_on_edi
     )
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
 
-    def fake_load_record_bundle(self, session, context=None):
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
         return member, existing_profile_fields, existing_records, "owner", "Owner"
@@ -682,3 +682,63 @@ def test_auth_profile_config_exposes_delete_action() -> None:
     assert AUTHORIZATION_PROFILE_CONFIG.action_form_key_field == "auth_profile_key"
     delete_action = next(action for action in AUTHORIZATION_PROFILE_CONFIG.actions if action.key == "delete")
     assert delete_action.visible_when == ("inativo",)
+
+
+def test_auth_profile_repository_blocks_second_active_profile_for_same_operation(monkeypatch) -> None:
+    # Opcao A: mesma sessao + menu + cabecalho ja coberto por um perfil ativo -> bloqueia.
+    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
+    member = SimpleNamespace(
+        profile_custom_fields=serialize_member_profile_fields(
+            {
+                records_storage_key: serialize_menu_process_records(
+                    [
+                        {
+                            "record_id": "existing-1",
+                            "created_at": "",
+                            "section_key": AUTH_PROFILE_SECTION_KEY,
+                            "values": {
+                                "custom_perfil": "Perfil A",
+                                "custom_nome_do_perfil": "Perfil A",
+                                "__estado": "ativo",
+                                "__numero_entidade": "1001",
+                                "__sessao_origem": "sistema",
+                                "__menu_origem": "administrativo",
+                                "__cabecalho_origem": "administrativo:todos",
+                                "__autorizacao": "exibir",
+                            },
+                        }
+                    ]
+                )
+            }
+        )
+    )
+    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
+
+    def fake_load_record_bundle(self, session, context=None, menu_settings=None):
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
+        return member, existing_profile_fields, existing_records, "owner", "Owner"
+
+    monkeypatch.setattr(AuthorizationProfileAdminRepository, "_load_record_bundle", fake_load_record_bundle)
+    monkeypatch.setattr(
+        auth_profile_module,
+        "get_sidebar_menu_settings",
+        lambda session: _build_auth_profile_sidebar_settings(),
+    )
+
+    save_ok, save_reason, _saved_key = repo.save_row(
+        object(),
+        {
+            "dynamic_values": {"custom_perfil_2": "Perfil B"},
+            "visibility_scope_mode": "owner",
+            "status": "ativo",
+            "session_origin": "sistema",
+            "menu_origin": "administrativo",
+            "tab_origin": "administrativo:todos",
+            "authorization_level": "editar",
+        },
+        context={"entity_number": "1001"},
+    )
+
+    assert save_ok is False
+    assert save_reason == "duplicate_operation"

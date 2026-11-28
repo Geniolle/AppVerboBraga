@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
-from typing import Any
+from datetime import date
 
-from fastapi import APIRouter, File, Form, Query, Request, UploadFile, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-
-from appgenesis.core import (
-    BASE_DIR,
-    ENTITY_PROFILE_SCOPE_LEGADO,
-    ENTITY_PROFILE_SCOPE_OWNER,
+from fastapi import (
+    File,
+    Form,
+    Request,
+    UploadFile,
+    status,
 )
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+)
+from sqlalchemy.exc import IntegrityError
+
+from appgenesis.config.settings import settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.entities import (
@@ -36,15 +38,7 @@ from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.profile import get_user_personal_data
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.web.templates import templates
-from appgenesis.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    User,
-    UserAccountStatus,
-)
+from appgenesis.models import Entity
 
 from appgenesis.routes.entities.router import router
 
@@ -63,7 +57,7 @@ def create_entity(
     postal_code: str = Form(...),
     country: str = Form(...),
     phone: str = Form(...),
-    entity_profile_scope: str = Form(ENTITY_PROFILE_SCOPE_LEGADO),
+    entity_profile_scope: str = Form(settings.ENTITY_PROFILE_SCOPE_LEGADO),
     entity_logo_file: UploadFile | None = File(default=None),
     description: str | None = Form(default=None),
     return_menu: str = Form(""),
@@ -153,6 +147,7 @@ def create_entity(
                 "entity_edit_data": get_entity_edit_defaults(),
                 "current_user": current_user,
                 "current_user_is_admin": current_user_is_admin,
+                "current_user_is_owner_admin": current_user_is_admin,
                 "user_personal_data": user_personal_data,
                 "entity_success": "",
                 "entity_error": (
@@ -184,6 +179,7 @@ def create_entity(
                 "entity_edit_data": get_entity_edit_defaults(),
                 "current_user": current_user,
                 "current_user_is_admin": current_user_is_admin,
+                "current_user_is_owner_admin": current_user_is_admin,
                 "user_personal_data": user_personal_data,
                 "entity_success": "",
                 "entity_error": "Já existe uma entidade com este nome.",
@@ -202,7 +198,7 @@ def create_entity(
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
-        if clean_profile_scope == ENTITY_PROFILE_SCOPE_OWNER:
+        if clean_profile_scope == settings.ENTITY_PROFILE_SCOPE_OWNER:
             existing_owner_id = get_existing_owner_entity_id_v1(session)
             if existing_owner_id is not None:
                 context = {
@@ -214,6 +210,7 @@ def create_entity(
                     "entity_edit_data": get_entity_edit_defaults(),
                     "current_user": current_user,
                     "current_user_is_admin": current_user_is_admin,
+                "current_user_is_owner_admin": current_user_is_admin,
                     "user_personal_data": user_personal_data,
                     "entity_success": "",
                     "entity_error": "Já existe uma entidade com perfil Owner. Apenas uma é permitida.",
@@ -243,6 +240,7 @@ def create_entity(
                 "entity_edit_data": get_entity_edit_defaults(),
                 "current_user": current_user,
                 "current_user_is_admin": current_user_is_admin,
+                "current_user_is_owner_admin": current_user_is_admin,
                 "user_personal_data": user_personal_data,
                 "entity_success": "",
                 "entity_error": logo_error,
@@ -276,7 +274,7 @@ def create_entity(
         except IntegrityError:
             session.rollback()
             if stored_logo_url.startswith("/static/entities/"):
-                local_logo_path = BASE_DIR / stored_logo_url.lstrip("/")
+                local_logo_path = settings.BASE_DIR / stored_logo_url.lstrip("/")
                 local_logo_path.unlink(missing_ok=True)
             context = {
                 "request": request,
@@ -287,6 +285,7 @@ def create_entity(
                 "entity_edit_data": get_entity_edit_defaults(),
                 "current_user": current_user,
                 "current_user_is_admin": current_user_is_admin,
+                "current_user_is_owner_admin": current_user_is_admin,
                 "user_personal_data": user_personal_data,
                 "entity_success": "",
                 "entity_error": "Não foi possível criar a entidade. Tente novamente.",

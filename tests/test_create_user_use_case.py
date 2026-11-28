@@ -111,7 +111,7 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
             invite_delivery="link",
         )
 
-        with patch.object(create_user_module, "is_admin_user", return_value=True), patch.object(
+        with patch.object(create_user_module, "is_entity_admin_v1", return_value=True), patch.object(
             create_user_module,
             "get_user_entity_permissions",
             return_value={
@@ -126,6 +126,10 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
             create_user_module,
             "_resolve_entity_from_user_email_v2",
             return_value=(entity, ""),
+        ), patch.object(
+            create_user_module,
+            "get_actor_primary_entity_v1",
+            return_value={"id": entity.id, "name": entity.name, "entity_number": entity.entity_number},
         ), patch.object(
             create_user_module,
             "build_user_invite_link",
@@ -188,7 +192,7 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
             invite_delivery="link",
         )
 
-        with patch.object(create_user_module, "is_admin_user", return_value=True), patch.object(
+        with patch.object(create_user_module, "is_entity_admin_v1", return_value=True), patch.object(
             create_user_module,
             "get_user_entity_permissions",
             return_value={
@@ -203,6 +207,10 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
             create_user_module,
             "_resolve_entity_from_user_email_v2",
             return_value=(entity, ""),
+        ), patch.object(
+            create_user_module,
+            "get_actor_primary_entity_v1",
+            return_value={"id": entity.id, "name": entity.name, "entity_number": entity.entity_number},
         ), patch.object(
             create_user_module,
             "build_user_invite_link",
@@ -236,3 +244,49 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
         assert stored_user.member_id == member.id
         assert stored_user.login_email == "carlos.base@example.com"
         assert stored_user.account_status == UserAccountStatus.PENDING.value
+
+
+def test_entity_admin_cannot_create_admin_profile() -> None:
+    """Admin de entidade legado (nao owner) so cria membros: pedir 'owner' e recusado."""
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        entity = Entity(entity_number=1001, name="Igreja Legado", is_active=True, profile_scope="legado")
+        session.add(entity)
+        session.commit()
+
+        payload = normalize_create_user_input(
+            full_name="Tentativa Admin",
+            primary_phone="913000000",
+            email="tentativa@example.com",
+            invite_delivery="link",
+            system_profile="owner",
+        )
+        with patch.object(create_user_module, "is_entity_admin_v1", return_value=True), patch.object(
+            create_user_module,
+            "get_user_entity_permissions",
+            return_value={
+                "can_manage_all_entities": False,
+                "can_manage_tenant_structure": False,
+                "allowed_entity_ids": {entity.id},
+                "allowed_data_entity_ids": {entity.id},
+                "selected_entity_id": entity.id,
+            },
+        ), patch.object(create_user_module, "get_page_data", return_value={}), patch.object(
+            create_user_module, "get_user_personal_data", return_value={}
+        ), patch.object(create_user_module, "get_next_entity_number", return_value=1), patch.object(
+            create_user_module,
+            "get_actor_primary_entity_v1",
+            return_value={"id": entity.id, "name": entity.name, "entity_number": entity.entity_number},
+        ):
+            outcome = execute_create_user(
+                session=session,
+                request=_build_request(),
+                actor_user={"id": 4, "login_email": "admin@legado.test", "full_name": "Admin Legado"},
+                selected_entity_id=entity.id,
+                payload=payload,
+            )
+
+        assert outcome.kind == "template"
+        assert "Só o owner cria utilizadores com perfil Admin ou Super User." in str(outcome.template_context)
+        assert session.scalar(select(func.count()).select_from(User)) == 0

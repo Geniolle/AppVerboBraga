@@ -16,7 +16,7 @@ from typing import Any
 
 from sqlalchemy import text
 
-from appgenesis.core import SessionLocal
+from appgenesis.db.session import SessionLocal
 
 
 ####################################################################################

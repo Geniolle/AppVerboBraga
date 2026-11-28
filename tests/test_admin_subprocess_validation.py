@@ -17,7 +17,6 @@ _NATIVE_REPOSITORY_BACKED_KEYS = {
     "entidade",
     "sessoes",
     "perfil_de_autorizacao",
-    "objeto_de_autorizacao",
     "menu",
 }
 
@@ -66,5 +65,6 @@ def test_full_registry_validation_only_flags_utilizador() -> None:
 
     flagged_keys = {issue.subprocess_key for issue in issues}
 
-    assert flagged_keys == {"utilizador"}
+    # admin_sistema reutiliza o config de utilizador (mesmo estado legado, sem repository_class).
+    assert flagged_keys == {"utilizador", "admin_sistema"}
     assert len(list_admin_subprocess_configs()) >= len(_NATIVE_REPOSITORY_BACKED_KEYS) + 2

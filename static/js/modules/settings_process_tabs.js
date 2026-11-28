@@ -17,23 +17,6 @@
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  function repairText(value) {
-    return String(value || "")
-      .replaceAll("Atualize as configuraÃ§Ãµes deste processo.", "Atualize as configurações deste processo.")
-      .replaceAll("ConfiguraÃ§Ã£o dos campos", "Configuração dos campos")
-      .replaceAll("ConfiguraÃ§Ãµes", "Configurações")
-      .replaceAll("ConfiguraÃ§Ã£o", "Configuração")
-      .replaceAll("configuraÃ§Ãµes", "configurações")
-      .replaceAll("configuraÃ§Ã£o", "configuração")
-      .replaceAll("CabeÃ§alho", "Cabeçalho")
-      .replaceAll("cabeÃ§alho", "cabeçalho")
-      .replaceAll("Sem cabeÃ§alho", "Sem cabeçalho")
-      .replaceAll("DefiniÃ§Ãµes", "Definições")
-      .replaceAll("sÃ³", "só")
-      .replaceAll("AÃ‡Ã•ES", "AÇÕES")
-      .replaceAll("pÃ¡gina", "página");
-  }
-
   function normalizeSettingsTab(value) {
     const cleanValue = String(value || "")
       .trim()
@@ -140,23 +123,6 @@
   // (3) CORRIGIR TEXTOS VISIVEIS
   //###################################################################################
 
-  function repairTextNodes(root) {
-    const walker = document.createTreeWalker(root || document.body, NodeFilter.SHOW_TEXT);
-    const nodes = [];
-
-    while (walker.nextNode()) {
-      nodes.push(walker.currentNode);
-    }
-
-    nodes.forEach(function (node) {
-      const originalValue = node.nodeValue || "";
-      const repairedValue = repairText(originalValue);
-
-      if (originalValue !== repairedValue) {
-        node.nodeValue = repairedValue;
-      }
-    });
-  }
 
   //###################################################################################
   // (4) NORMALIZAR LINKS DAS ABAS
@@ -248,7 +214,6 @@
   //###################################################################################
 
   function run() {
-    repairTextNodes(document.body);
     normalizeTabLinks();
     normalizeVisibleTabLabels();
     activateProcessEditTab(getRequestedSettingsTab());

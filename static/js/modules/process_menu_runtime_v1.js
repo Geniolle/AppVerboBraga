@@ -288,7 +288,12 @@
       normalizedHash = "#admin-account-status-card";
     }
 
-    if (state.normalizeAuthorizationProfileTarget(normalizedHash)) {
+    // Com menu=administrativo na URL (ex.: retorno apos gravar perfil), o hash #auth-profile-*
+    // pertence ao Administrativo; nao o desviar para o menu Perfil de autorizacao.
+    const urlMenuKey = state.normalizeMenuKey(
+      new URLSearchParams(state.windowRef.location.search || "").get("menu") || ""
+    );
+    if (urlMenuKey !== "administrativo" && state.normalizeAuthorizationProfileTarget(normalizedHash)) {
       activateMenuTarget("perfil_de_autorizacao", normalizedHash);
       return;
     }
@@ -297,10 +302,23 @@
       "#create-user-card": "administrativo",
       "#admin-users-created-card": "administrativo",
       "#inactive-users-card": "administrativo",
+      "#system-admins-card": "administrativo",
       "#create-entity-card": "administrativo",
       "#edit-entity-card": "administrativo",
       "#recent-entities-card": "administrativo",
       "#inactive-entities-card": "administrativo",
+      "#auth-profile-card": "administrativo",
+      "#funcoes-administrativas-card": "administrativo",
+      "#funcoes-administrativas-form-card": "administrativo",
+      "#funcoes-administrativas-active-card": "administrativo",
+      "#funcoes-administrativas-inactive-card": "administrativo",
+      "#departamentos-card": "sessoes",
+      "#departamentos-form-card": "sessoes",
+      "#departamentos-active-card": "sessoes",
+      "#departamentos-inactive-card": "sessoes",
+      "#auth-profile-form-card": "administrativo",
+      "#auth-profile-active-card": "administrativo",
+      "#auth-profile-inactive-card": "administrativo",
       "#admin-account-status-card": state.ESTRUTURAS_MENU_KEY_V1,
       "#admin-sidebar-sections-card": state.ESTRUTURAS_MENU_KEY_V1,
       "#admin-sidebar-sections-form-card": state.ESTRUTURAS_MENU_KEY_V1,
@@ -354,6 +372,22 @@
       handleHashNavigation(windowRef.location.hash || "");
     });
   }
+
+  // Quando o editor inline fecha, o alvo guardado do menu deixa de apontar para o formulario de edicao;
+  // senao o menu reabre o formulario ao voltar a navegar.
+  global.document.addEventListener("appgenesis:inline-editor-closed", (event) => {
+    const detail = (event && event.detail) || {};
+    if (!detail.formId || !detail.cardId) {
+      return;
+    }
+    const formTarget = "#" + detail.formId;
+    const listTarget = "#" + detail.cardId;
+    Object.keys(state.selectedTargetByMenu || {}).forEach((menuKey) => {
+      if (state.selectedTargetByMenu[menuKey] === formTarget) {
+        state.selectedTargetByMenu[menuKey] = listTarget;
+      }
+    });
+  });
 
   global.AppGenesisProcessMenuRuntimeV1 = Object.freeze({
     configure,

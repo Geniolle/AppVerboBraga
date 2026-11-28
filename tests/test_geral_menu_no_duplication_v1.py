@@ -195,15 +195,16 @@ def test_new_user_html_has_no_form_targeting_the_create_route() -> None:
 
 ####################################################################################
 # (6) CONTAGEM DE MARCADORES NO TEMPLATE: cada rota de Geral com formulario visivel
-# tem exatamente as ocorrencias esperadas -- edit=1, move=2 (subir/descer),
-# delete=1, create=0 (documentado como ausente, nao "deveria ser 1").
+# tem exatamente as ocorrencias esperadas -- move=2 (subir/descer), delete=1;
+# edit=0 e create=0 (a rota /settings/menu/edit ja nao existe; a edicao e feita
+# no card settings-menu-edit-card).
 ####################################################################################
 
 def test_new_user_html_form_action_occurrence_counts_for_geral_routes() -> None:
     template_path = PROJECT_ROOT / "templates" / "new_user.html"
     template_text = template_path.read_text(encoding="utf-8")
 
-    assert template_text.count('action="/settings/menu/edit"') == 1
+    assert template_text.count('action="/settings/menu/edit"') == 0
     assert template_text.count('action="/settings/menu/move"') == 2
     assert template_text.count('action="/settings/menu/delete"') == 1
     assert template_text.count('action="/settings/menu/create"') == 0

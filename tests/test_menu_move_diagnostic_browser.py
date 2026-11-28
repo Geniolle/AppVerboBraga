@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import time
-from urllib.parse import urljoin
 
 import httpx
 import pytest
@@ -12,7 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.config.settings import settings as app_settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.menu_settings import get_sidebar_menu_settings
 
@@ -46,8 +45,8 @@ def _build_driver_v1():
 
 
 def _require_admin_credentials_v1() -> tuple[str, str]:
-    admin_email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    admin_password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    admin_email = str(app_settings.ADMIN_LOGIN_EMAIL or "").strip()
+    admin_password = str(app_settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not admin_email or not admin_password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD não definidos.")
     return admin_email, admin_password
@@ -64,8 +63,8 @@ def _login_admin_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
     wait.until(EC.url_contains("/users/new"))
 
 
-def _open_target_page_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
-    driver.get(TARGET_URL)
+def _open_target_page_v1(driver: webdriver.Chrome, wait: WebDriverWait, url: str = TARGET_URL) -> None:
+    driver.get(url)
     wait.until(
         lambda drv: drv.execute_script(
             """
@@ -445,12 +444,15 @@ def test_menu_flow_keeps_inline_error_visible_v1() -> None:
 
     try:
         _login_admin_v1(driver, wait)
-        driver.get(
+        # Abre uma so vez o URL com "error=": antes o helper voltava a navegar para TARGET_URL
+        # (sem o erro) e o teste nunca via o alerta.
+        _open_target_page_v1(
+            driver,
+            wait,
             f"{BASE_URL}/users/new?menu=sessoes&admin_tab=contas"
             "&target=menu-subprocess-card-active&error=Erro%20de%20teste"
-            "#menu-subprocess-card-active"
+            "#menu-subprocess-card-active",
         )
-        _open_target_page_v1(driver, wait)
 
         inline_errors = [
             str(el.text or "").strip()

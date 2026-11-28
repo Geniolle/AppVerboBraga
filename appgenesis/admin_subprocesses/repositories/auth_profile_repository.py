@@ -8,6 +8,13 @@ from uuid import uuid4
 
 from sqlalchemy import select
 
+from appgenesis.admin_subprocesses.repositories.auth_profile_entity_store import (
+    EntityAuthProfileStore,
+    load_entity_auth_profile_store_v1,
+    resolve_entity_id_for_auth_profiles_v1,
+    save_entity_auth_profile_store_v1,
+)
+from appgenesis.services.access_actions import normalize_actions, serialize_actions
 from appgenesis.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
 from appgenesis.menu_settings import (
     get_menu_visibility_scope_label,
@@ -32,6 +39,10 @@ AUTH_PROFILE_SECTION_KEY = "custom_perfil_header"
 AUTH_PROFILE_DYNAMIC_SECTION_KEY = "custom_perfil"
 AUTH_PROFILE_LABEL_VALUE_KEYS = ("custom_perfil", "custom_nome_do_perfil")
 AUTH_PROFILE_SCOPE_MODE_KEY = "__scope_mode"
+AUTH_PROFILE_SESSION_ORIGIN_KEY = "__sessao_origem"
+AUTH_PROFILE_MENU_ORIGIN_KEY = "__menu_origem"
+AUTH_PROFILE_TAB_ORIGIN_KEY = "__cabecalho_origem"
+AUTH_PROFILE_AUTHORIZATION_LEVEL_KEY = "__autorizacao"
 AUTH_PROFILE_SCOPE_LABEL_KEY = "__scope_label"
 AUTH_PROFILE_STATUS_KEY = "__estado"
 AUTH_PROFILE_TECHNICAL_KEY = "__key"
@@ -96,11 +107,12 @@ def _normalize_menu_key(raw_value: Any) -> str:
 
 def _build_sidebar_menu_lookup(
     session: Any,
+    menu_settings: list[dict[str, Any]] | None = None,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
     menu_meta_by_key: dict[str, dict[str, Any]] = {}
     menu_key_by_label_lookup: dict[str, str] = {}
 
-    for raw_row in get_sidebar_menu_settings(session):
+    for raw_row in menu_settings if menu_settings is not None else get_sidebar_menu_settings(session):
         if not isinstance(raw_row, dict):
             continue
 
@@ -122,8 +134,11 @@ def _build_sidebar_menu_lookup(
     return menu_meta_by_key, menu_key_by_label_lookup
 
 
-def _resolve_auth_profile_field_keys(session: Any) -> list[str]:
-    for raw_row in get_sidebar_menu_settings(session):
+def _resolve_auth_profile_field_keys(
+    session: Any,
+    menu_settings: list[dict[str, Any]] | None = None,
+) -> list[str]:
+    for raw_row in menu_settings if menu_settings is not None else get_sidebar_menu_settings(session):
         if not isinstance(raw_row, dict):
             continue
         if _normalize_menu_key(raw_row.get("key")) != AUTH_PROFILE_MENU_KEY:
@@ -298,8 +313,9 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
     def _resolve_menu_scope_defaults(
         self,
         session: Any,
+        menu_settings: list[dict[str, Any]] | None = None,
     ) -> tuple[str, str]:
-        for row in get_sidebar_menu_settings(session):
+        for row in menu_settings if menu_settings is not None else get_sidebar_menu_settings(session):
             if str(row.get("key") or "").strip().lower() != AUTH_PROFILE_MENU_KEY:
                 continue
             menu_config = row.get("menu_config") if isinstance(row.get("menu_config"), dict) else {}
@@ -319,15 +335,18 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         self,
         session: Any,
         context: dict[str, Any] | None = None,
-    ) -> tuple[Member | None, dict[str, str], list[dict[str, Any]], str, str]:
-        member = self._resolve_member(session, context)
-        if member is None:
+        menu_settings: list[dict[str, Any]] | None = None,
+    ) -> tuple[Any, dict[str, str], list[dict[str, Any]], str, str]:
+        # Perfis por entidade (nao por membro): ver auth_profile_entity_store.py.
+        entity_id = resolve_entity_id_for_auth_profiles_v1(session, context)
+        if entity_id is None:
             return None, {}, [], "owner", "Owner"
+        member = load_entity_auth_profile_store_v1(session, entity_id)
 
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
-        default_scope_mode, default_scope_label = self._resolve_menu_scope_defaults(session)
+        default_scope_mode, default_scope_label = self._resolve_menu_scope_defaults(session, menu_settings)
 
         if not existing_records:
             fallback_label = str(
@@ -430,6 +449,10 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                     "menu_key": stored_menu_key,
                     "entity_number": entity_number,
                     "visibility_scope_mode": scope_mode,
+                    "session_origin": str(values.get(AUTH_PROFILE_SESSION_ORIGIN_KEY) or "").strip(),
+                    "menu_origin": str(values.get(AUTH_PROFILE_MENU_ORIGIN_KEY) or "").strip(),
+                    "tab_origin": str(values.get(AUTH_PROFILE_TAB_ORIGIN_KEY) or "").strip(),
+                    "authorization_level": serialize_actions(normalize_actions(values.get(AUTH_PROFILE_AUTHORIZATION_LEVEL_KEY))),
                     "visibility_scope_label": scope_label or _scope_label(scope_mode),
                     "status": status_value,
                     "status_label": _status_label(status_value),
@@ -442,15 +465,17 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         return rows
 
     def list_rows(self, session: Any, context: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        # Menus lidos uma vez (corre em cada pedido via filtro de acesso; cada leitura e cara).
+        menu_settings = get_sidebar_menu_settings(session)
         (
             _member,
             _existing_profile_fields,
             existing_records,
             default_scope_mode,
             default_scope_label,
-        ) = self._load_record_bundle(session, context)
-        menu_meta_by_key, menu_key_by_label_lookup = _build_sidebar_menu_lookup(session)
-        profile_field_keys = _resolve_auth_profile_field_keys(session)
+        ) = self._load_record_bundle(session, context, menu_settings)
+        menu_meta_by_key, menu_key_by_label_lookup = _build_sidebar_menu_lookup(session, menu_settings)
+        profile_field_keys = _resolve_auth_profile_field_keys(session, menu_settings)
         rows = self._build_rows(
             existing_records,
             default_scope_mode=default_scope_mode,
@@ -569,6 +594,27 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                 return False, "duplicate_key", ""
             target_index = None
 
+        # Opcao A: uma operacao (sessao + menu + cabecalho) so pode ter um perfil ativo na entidade.
+        # Para mudar o nivel, altera-se o perfil existente.
+        if status_value == "ativo":
+            operation_key = (
+                str(payload.get("session_origin") or "").strip().lower(),
+                str(payload.get("menu_origin") or "").strip().lower(),
+                str(payload.get("tab_origin") or "").strip().lower(),
+            )
+            for index, row in enumerate(existing_rows):
+                if index == target_index or str(row.get("status") or "") != "ativo":
+                    continue
+                if not _row_matches_entity_context_v1(row, context=entity_scoped_context):
+                    continue
+                row_operation_key = (
+                    str(row.get("session_origin") or "").strip().lower(),
+                    str(row.get("menu_origin") or "").strip().lower(),
+                    str(row.get("tab_origin") or "").strip().lower(),
+                )
+                if row_operation_key == operation_key:
+                    return False, "duplicate_operation", ""
+
         if target_index is None:
             target_record = {
                 "record_id": uuid4().hex,
@@ -602,6 +648,26 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         target_values.pop(AUTH_PROFILE_LEGACY_ENTITY_SCOPE_MODE_KEY, None)
         target_values.pop(AUTH_PROFILE_LEGACY_ENTITY_SCOPE_LABEL_KEY, None)
         target_values[AUTH_PROFILE_SCOPE_MODE_KEY] = scope_mode
+        session_origin = str(payload.get("session_origin") or "").strip().lower()
+        if session_origin:
+            target_values[AUTH_PROFILE_SESSION_ORIGIN_KEY] = session_origin
+        else:
+            target_values.pop(AUTH_PROFILE_SESSION_ORIGIN_KEY, None)
+        menu_origin = str(payload.get("menu_origin") or "").strip().lower()
+        if menu_origin:
+            target_values[AUTH_PROFILE_MENU_ORIGIN_KEY] = menu_origin
+        else:
+            target_values.pop(AUTH_PROFILE_MENU_ORIGIN_KEY, None)
+        tab_origin = str(payload.get("tab_origin") or "").strip().lower()
+        if tab_origin:
+            target_values[AUTH_PROFILE_TAB_ORIGIN_KEY] = tab_origin
+        else:
+            target_values.pop(AUTH_PROFILE_TAB_ORIGIN_KEY, None)
+        authorization_level = str(payload.get("authorization_level") or "").strip().lower()
+        if authorization_level:
+            target_values[AUTH_PROFILE_AUTHORIZATION_LEVEL_KEY] = authorization_level
+        else:
+            target_values.pop(AUTH_PROFILE_AUTHORIZATION_LEVEL_KEY, None)
         target_values[AUTH_PROFILE_SCOPE_LABEL_KEY] = scope_label
         target_values[AUTH_PROFILE_STATUS_KEY] = status_value
         # O numero da entidade vem sempre do contexto do servidor (nunca do payload
@@ -626,6 +692,8 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
 
         existing_profile_fields["process__perfil_de_autorizacao__custom_perfil"] = label
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
+        if isinstance(member, EntityAuthProfileStore):
+            save_entity_auth_profile_store_v1(session, member)
         return True, "saved", generated_key
 
     def delete_row(
@@ -729,4 +797,6 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         )
 
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
+        if isinstance(member, EntityAuthProfileStore):
+            save_entity_auth_profile_store_v1(session, member)
         return True, "deleted"

@@ -67,48 +67,23 @@
   width: 100%;
 }
 
-.admin-subprocess-grid-objeto-autorizacao-v1 {
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-}
-
-.admin-subprocess-grid-objeto-autorizacao-v1 > .admin-subprocess-field-v1 {
-  order: 20;
-}
-
-.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_nome_do_perfil"] {
-  order: 1;
-}
-
-.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_processo"] {
-  order: 2;
-}
-
-.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_subprocesso"] {
-  order: 3;
-}
-
-.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_autorizacao"] {
-  order: 4;
-}
-
-.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
-  order: 5;
-}
-
-.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="status"] {
-  order: 6;
-}
-
 .admin-subprocess-grid-auth-profile-v1 {
-  grid-template-columns: repeat(2, minmax(200px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
+
+/* Nome de perfil ocupa 3 colunas; Sessao da origem e Menu de origem ocupam 1 cada (linha 1).
+   Cabecalho, Autorizacao, Sistema, Estado e Entidade ocupam 1 coluna cada (linha 2). */
+.admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="label"] {
+  grid-column: span 3;
+}
+
 
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
-  order: 1;
+  order: 2;
 }
 
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="status"] {
-  order: 2;
+  order: 1;
 }
 
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="entity_number"] {
@@ -369,12 +344,6 @@ table[data-appgenesis-sortable-table="1"] td:last-child {
 @media (max-width: 1100px) {
   .admin-subprocess-grid-v1 {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 1280px) {
-  .admin-subprocess-grid-objeto-autorizacao-v1 {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
   }
 }
 
@@ -703,3 +672,180 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 }
 
 /* APPGENESIS_ADMIN_SUBPROCESSES_V1_END */
+
+/* Editor do Perfil de autorizacao aberto logo abaixo da linha clicada (auth_profile_inline_editor_v1.js). */
+.auth-profile-inline-editor-row > td {
+  padding: 12px 16px;
+  white-space: normal;
+}
+
+.auth-profile-inline-editor-row #auth-profile-form-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* Editor inline: o titulo "Editar perfil" ocupava uma linha inteira sem conteudo. */
+.auth-profile-inline-editor-row #auth-profile-form-card > h2 {
+  display: none;
+}
+
+.auth-profile-inline-editor-row .admin-subprocess-grid-auth-profile-v1 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 720px) {
+  .admin-subprocess-grid-auth-profile-v1,
+  .auth-profile-inline-editor-row .admin-subprocess-grid-auth-profile-v1 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key] {
+    grid-column: auto;
+  }
+
+  form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Funcoes: Nome da funcao ocupa o espaco livre; Estado, Sistema e Entidade ocupam so o conteudo, na mesma linha. */
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: end;
+}
+
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="label"] {
+  grid-column: auto;
+}
+
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="status"] select,
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] select,
+.admin-subprocess-row-clickable-v1 {
+  cursor: pointer;
+}
+
+/* Perfil de autorizacao (Funcoes): varias linhas de select; cada linha tem "-", o campo tem "+". */
+.admin-profile-multi-rows-v1 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-profile-multi-row-v1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-profile-multi-row-v1 select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="authorization_profiles"] {
+  grid-column: 1 / -1;
+  order: 4;
+}
+
+.admin-profile-multi-add-v1 {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+/* Editor inline: abre logo abaixo da linha clicada (mesmo padrao de Campos adicionais e Perfil de autorizacao). */
+.admin-subprocess-inline-editor-row > td {
+  padding: 12px 16px;
+  white-space: normal;
+}
+
+.admin-subprocess-inline-editor-row [data-admin-inline-edit-form="1"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.admin-subprocess-inline-editor-row [data-admin-inline-edit-form="1"] > h2 {
+  display: none;
+}
+
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="entity_number"] input {
+  width: 130px;
+  min-width: 130px;
+}
+
+/* Sessoes: NOME, Nº DA ENTIDADE, SISTEMA e ESTADO com a mesma largura; AÇÕES fica estreita. */
+.admin-sessoes-table-v1 {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.admin-sessoes-table-v1 th.admin-col-main-v1,
+.admin-sessoes-table-v1 td.admin-col-main-v1 {
+  width: 23%;
+  min-width: 0;
+  max-width: none;
+}
+
+.admin-sessoes-table-v1 th.admin-col-number-v1,
+.admin-sessoes-table-v1 td.admin-col-number-v1 {
+  width: 23%;
+  min-width: 0;
+  max-width: none;
+}
+
+.admin-sessoes-table-v1 th.admin-col-system-v1,
+.admin-sessoes-table-v1 td.admin-col-system-v1 {
+  width: 23%;
+  min-width: 0;
+  max-width: none;
+}
+
+.admin-sessoes-table-v1 th.admin-col-status-v1,
+.admin-sessoes-table-v1 td.admin-col-status-v1 {
+  width: 23%;
+  min-width: 0;
+  max-width: none;
+}
+
+.admin-sessoes-table-v1 th.admin-col-actions-v1,
+.admin-sessoes-table-v1 td.admin-col-actions-v1 {
+  width: 8%;
+}
+
+/* Sessoes: cabecalho (incl. botao de ordenar) centrado como as celulas de Nº, SISTEMA e ESTADO. */
+.admin-sessoes-table-v1 th.admin-col-number-v1,
+.admin-sessoes-table-v1 th.admin-col-system-v1,
+.admin-sessoes-table-v1 th.admin-col-status-v1 {
+  text-align: center;
+}
+
+.admin-sessoes-table-v1 th.admin-col-system-v1 > .admin-subprocess-sort-button-v1 {
+  justify-content: center;
+  width: 100%;
+}
+
+/* Sessoes: NOME, SISTEMA, ESTADO e Nº DA ENTIDADE numa unica linha (4 colunas). */
+.admin-subprocess-grid-v1.admin-sessoes-form-grid-v1 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .admin-subprocess-grid-v1.admin-sessoes-form-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-subprocess-grid-v1.admin-sessoes-form-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Gatilho oculto do formulario Administradores do sistema: o + do cabecalho chama o summary via JS. */
+#system-admins-create-collapse > summary.system-admins-inline-create-trigger {
+  display: none !important;
+}
