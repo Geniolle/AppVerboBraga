@@ -97,8 +97,9 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
     ("url", "expected_sidebar_menu", "expected_visible_card", "expected_submenu"),
     [
         ("/users/new", "home", "home-summary-card", None),
-        ("/users/new?menu=administrativo", "administrativo", "create-entity-card", "Entidade"),
-        ("/users/new?menu=configuracao", "administrativo", "create-entity-card", "Entidade"),
+        # Administrativo abre na lista de entidades (o formulario de criacao so abre com "+").
+        ("/users/new?menu=administrativo", "administrativo", "recent-entities-card", "Entidade"),
+        ("/users/new?menu=configuracao", "administrativo", "recent-entities-card", "Entidade"),
         ("/users/new?menu=documentos", "meu_perfil", "perfil-pessoal-card", None),
         (
             "/users/new?menu=sessoes&admin_tab=contas&target=menu-subprocess-card-active#menu-subprocess-card-active",
