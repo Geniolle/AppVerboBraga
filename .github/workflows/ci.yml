@@ -21,7 +21,7 @@ jobs:
       - name: Lint with pyflakes
         # Bloqueante desde 2026-11-28 (base a zero). Forward refs dos modelos vivem em
         # `if TYPE_CHECKING:`; imports de efeito e reexportacoes ficam em __all__.
-        run: python -m pyflakes appgenesis/ web_app.py
+        run: python -m pyflakes appgenesis/
       - name: Check JavaScript syntax (new_user)
         run: for f in static/js/new_user/*.js; do node --check "$f"; done
       - name: Run tests (excluding Selenium browser tests)
@@ -82,7 +82,7 @@ jobs:
           python scripts/ci_seed_browser.py
       - name: Start app
         run: |
-          nohup python -m uvicorn web_app:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          nohup python -m uvicorn appgenesis.web_app:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:8000/health && exit 0; sleep 1; done
           cat uvicorn.log; exit 1
       - name: Run browser tests
