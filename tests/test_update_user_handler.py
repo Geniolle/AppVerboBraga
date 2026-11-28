@@ -90,7 +90,7 @@ def test_update_user_persists_explicit_active_entity_and_deduplicates_same_entit
         return_value=source_entity_id,
     ), patch.object(
         update_user_module,
-        "is_admin_user",
+        "is_entity_admin_v1",
         return_value=True,
     ), patch.object(
         update_user_module,
@@ -186,7 +186,7 @@ def test_update_user_rejects_entity_outside_allowed_scope() -> None:
         return_value=allowed_entity_id,
     ), patch.object(
         update_user_module,
-        "is_admin_user",
+        "is_entity_admin_v1",
         return_value=True,
     ), patch.object(
         update_user_module,

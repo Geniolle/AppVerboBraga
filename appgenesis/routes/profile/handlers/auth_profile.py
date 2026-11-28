@@ -26,7 +26,7 @@ from appgenesis.services.auth_profile_entity_scope import (
 )
 from appgenesis.services.page import (
     build_users_new_url,
-    get_page_data,
+    resolve_visible_menu_keys_v1,
 )
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import (
@@ -177,17 +177,9 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             selected_entity_id,
         )
         resolved_selected_entity_id = entity_permissions.get("selected_entity_id")
-        page_data = get_page_data(
-            session,
-            actor_user_id=current_user["id"],
-            actor_login_email=current_user["login_email"],
-            selected_entity_id=resolved_selected_entity_id,
+        visible_menu_keys = resolve_visible_menu_keys_v1(
+            session, current_user["id"], current_user["login_email"], resolved_selected_entity_id
         )
-        visible_menu_keys = {
-            str(raw_key or "").strip().lower()
-            for raw_key in page_data.get("visible_sidebar_menu_keys", [])
-            if str(raw_key or "").strip()
-        }
         # Perfil de autorizacao pode ser gerido pelo menu proprio ou pela aba do Administrativo.
         if not ({AUTH_PROFILE_MENU_KEY, "administrativo"} & visible_menu_keys):
             return RedirectResponse(
@@ -398,17 +390,9 @@ async def delete_authorization_profile_subprocess(request: Request) -> RedirectR
             )
 
         selected_entity_id = get_session_entity_id(request)
-        page_data = get_page_data(
-            session,
-            actor_user_id=current_user["id"],
-            actor_login_email=current_user["login_email"],
-            selected_entity_id=selected_entity_id,
+        visible_menu_keys = resolve_visible_menu_keys_v1(
+            session, current_user["id"], current_user["login_email"], selected_entity_id
         )
-        visible_menu_keys = {
-            str(raw_key or "").strip().lower()
-            for raw_key in page_data.get("visible_sidebar_menu_keys", [])
-            if str(raw_key or "").strip()
-        }
         # Perfil de autorizacao pode ser gerido pelo menu proprio ou pela aba do Administrativo.
         if not ({AUTH_PROFILE_MENU_KEY, "administrativo"} & visible_menu_keys):
             return RedirectResponse(

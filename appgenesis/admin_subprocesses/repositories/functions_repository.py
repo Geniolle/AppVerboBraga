@@ -173,6 +173,10 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
         system_profile = str(payload.get("system_profile") or "").strip().lower()
         if system_profile not in ALLOWED_USER_SYSTEM_TYPES:
             return False, "system_profile_required", ""
+        # Admin de entidade (nao owner) so gere funcoes de membros: nao pode dar-se mais acesso.
+        member_profiles_only = bool((context or {}).get("member_profiles_only"))
+        if member_profiles_only and system_profile != "default":
+            return False, "admin_profile_owner_only", ""
 
         profile_keys = normalize_profile_keys(payload.get("authorization_profiles"))
         if not profile_keys:
@@ -200,6 +204,8 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
             target = next((item for item in items if str(item.get("key") or "").lower() == clean_edit_key), None)
             if target is None:
                 return False, "not_found", ""
+            if member_profiles_only and normalize_user_system_type_v1(target.get("system_profile")) != "default":
+                return False, "admin_profile_owner_only", ""
             target.update(
                 {
                     "label": label,
@@ -246,6 +252,10 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
         target = next((item for item in items if str(item.get("key") or "").lower() == clean_key), None)
         if target is None:
             return False, "not_found"
+        if (context or {}).get("member_profiles_only") and normalize_user_system_type_v1(
+            target.get("system_profile")
+        ) != "default":
+            return False, "admin_profile_owner_only"
         if _normalize_status(target.get("status")) == "ativo":
             return False, "active_function"
         items = [item for item in items if str(item.get("key") or "").lower() != clean_key]

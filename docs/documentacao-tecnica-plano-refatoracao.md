@@ -384,6 +384,8 @@ Cada etapa cabe num PR. Ordem obrigatória. Não avançar com teste vermelho, va
 
 ### Etapa 7 — Acesso de admin legado
 
+- **Concluída em 2026-11-28.** Admin de entidade = owner, ou `system_type='legado'` com o filtro por função ligado e uma função ativa que dê o menu Administrativo na entidade da sessão (`services/permissions.is_entity_admin_v1`). Pode: criar/editar/desativar/reenviar convite a membros (`default`) da própria entidade; gerir funções de perfil `default`; gerir perfis de autorização da entidade. Não pode: criar ou atribuir Admin/Super User/Legado; editar/apagar outros administradores; criar/editar/apagar funções de perfil não-`default`; mexer em estrutura partilhada (menus, sessões, entidades). Membros (`default`) nunca são admin, mesmo com o menu.
+
 - Implementar §9.3: perfis/funções para `legado` em Administrativo, via `access_filter.py`, sem alterar `is_admin_user`.
 - Critério: admin legado vê Administrativo apenas com função configurada; owner inalterado; teste de ambos.
 

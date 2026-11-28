@@ -21,7 +21,6 @@ from appgenesis.models import (
 from appgenesis.services.auth import (
     build_user_invite_link,
     build_user_invite_token,
-    is_admin_user,
     send_user_invite_email,
 )
 from appgenesis.services.user_entity_scope import (
@@ -36,7 +35,7 @@ from appgenesis.services.page import (
     get_page_data,
     get_user_edit_defaults,
 )
-from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.permissions import get_user_entity_permissions, is_entity_admin_v1
 from appgenesis.services.profile import get_user_personal_data
 from appgenesis.services.user_system import normalize_user_system_type_v1
 
@@ -274,6 +273,7 @@ def _build_error_context(
         "user_readonly_mode": False,
         "current_user": current_user,
         "current_user_is_admin": current_user_is_admin,
+        "current_user_is_owner_admin": bool(can_manage_all_entities),
         "current_user_can_manage_tenant_structure": bool(can_manage_all_entities),
         "current_user_can_manage_all_entities": bool(can_manage_all_entities),
         "user_personal_data": user_personal_data,
@@ -309,12 +309,11 @@ def execute_create_user(
     selected_entity_id: int | None,
     payload: CreateUserInput,
 ) -> CreateUserOutcome:
-    current_user_is_admin = bool(
-        is_admin_user(
-            session,
-            int(actor_user["id"]),
-            str(actor_user["login_email"]),
-        )
+    current_user_is_admin = is_entity_admin_v1(
+        session,
+        int(actor_user["id"]),
+        str(actor_user["login_email"]),
+        selected_entity_id,
     )
     entity_permissions = get_user_entity_permissions(
         session,
@@ -400,6 +399,10 @@ def execute_create_user(
             if selected_entity is None:
                 errors.append("Entidade do utilizador logado está inativa ou não foi encontrada.")
 
+    # Admin de entidade (nao owner) so cria membros ('default').
+    if not entity_permissions.get("can_manage_all_entities") and payload.clean_system_type not in ("default", "legado"):
+        errors.append("Só o owner cria utilizadores com perfil Admin ou Super User.")
+
     if payload.clean_system_type == "legado":
         if not entity_permissions.get("can_manage_all_entities"):
             errors.append("Apenas o owner pode criar administradores do sistema.")
@@ -441,6 +444,7 @@ def execute_create_user(
                     str(existing_user_row.system_type or "") in users_repo.SYSTEM_ADMIN_TYPES
                     or payload.clean_system_type in users_repo.SYSTEM_ADMIN_TYPES
                 ),
+                target_system_type=str(existing_user_row.system_type or ""),
             )
             if not can_manage_existing_user:
                 errors.append("Sem permissão para gerir utilizador com este email.")

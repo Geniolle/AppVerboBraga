@@ -642,6 +642,9 @@
               </summary>
               <div class="entity-create-body appgenesis-process-action-panel-v1">
                 <div class="admin-subsection">
+                  {% if errors %}
+                  <div class="alert error" role="alert">{% for error_message in errors %}<p>{{ error_message }}</p>{% endfor %}</div>
+                  {% endif %}
                   <form id="create-user-form" method="post" action="/users/new">
                     <input type="hidden" name="return_menu" value="administrativo">
                     <input type="hidden" name="return_admin_tab" value="utilizador">
@@ -663,8 +666,10 @@
                         <label for="create_user_system_profile">Perfil no Sistema</label>
                         <select id="create_user_system_profile" name="system_profile">
                           <option value="default" {% if not form_data.system_profile or form_data.system_profile == "default" %}selected{% endif %}>User</option>
+                          {% if current_user_can_manage_tenant_structure %}
                           <option value="owner" {% if form_data.system_profile == "owner" %}selected{% endif %}>Admin</option>
                           <option value="super_user" {% if form_data.system_profile == "super_user" %}selected{% endif %}>Super User</option>
+                          {% endif %}
                         </select>
                       </div>
                       <div class="field">
@@ -742,8 +747,10 @@
                   {% else %}
                   <select id="edit_user_system_profile" name="system_profile" {% if user_readonly_mode %}disabled{% endif %}>
                     <option value="default" {% if user_edit_data.system_type == "default" %}selected{% endif %}>User</option>
+                    {% if current_user_can_manage_tenant_structure %}
                     <option value="owner" {% if user_edit_data.system_type == "owner" %}selected{% endif %}>Admin</option>
                     <option value="super_user" {% if user_edit_data.system_type == "super_user" %}selected{% endif %}>Super User</option>
+                    {% endif %}
                   </select>
                   {% endif %}
                 </div>
@@ -818,11 +825,11 @@
           </div>
         </section>
         {% endif %}
-        {% if admin_subprocess_user_state is not none %}
+        {% if admin_subprocess_user_state is defined and admin_subprocess_user_state is not none %}
           {{ render_admin_subprocess_tables(admin_subprocess_user_state) }}
         {% endif %}
 
-        {% if current_user_can_manage_all_entities and admin_subprocess_system_admin_state is not none %}
+        {% if current_user_can_manage_all_entities and admin_subprocess_system_admin_state is defined and admin_subprocess_system_admin_state is not none %}
           {% set system_admin_create_html %}
           <div id="system-admins-card" class="system-admins-create-wrap" data-admin-subprocess="admin_sistema" data-admin-subprocess-role="form">
                       <div class="entity-create-toolbar appgenesis-process-action-toolbar-v1">
@@ -924,7 +931,7 @@
           <div class="appgenesis-process-action-toolbar-v1">
           <details class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1">
             <summary class="appgenesis-process-action-toggle-v1">
-              <span>{{ admin_subprocess_entity_state.config.create_title }}</span>
+              <span>{{ admin_subprocess_entity_state.config.create_title if admin_subprocess_entity_state is defined and admin_subprocess_entity_state else "Criar entidade" }}</span>
             </summary>
             <div class="entity-create-body appgenesis-process-action-panel-v1">
               <form method="post" action="/entities/new" enctype="multipart/form-data">
@@ -1180,7 +1187,7 @@
         </section>
         {% endif %}
 
-        {% if current_user_can_manage_tenant_structure and admin_subprocess_entity_state is not none %}
+        {% if current_user_can_manage_tenant_structure and admin_subprocess_entity_state is defined and admin_subprocess_entity_state is not none %}
           {{ render_admin_subprocess_tables(admin_subprocess_entity_state) }}
         {% elif current_user_can_manage_tenant_structure %}
           <section id="recent-entities-card" class="card" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#recent-entities-card' %}style="display: none;"{% endif %}>
@@ -2297,7 +2304,7 @@
         {# Blocos manuais de Menu (admin-account-create-card, admin-account-status-card, inactive-menu-settings-card) removidos — substituídos pelo macro render_admin_subprocess_state(admin_subprocess_menu_state) #}
 
         <!-- APPGENESIS_MENU_SUBPROCESS_TABLES_V1_START -->
-        {% if admin_subprocess_menu_state is not none %}
+        {% if admin_subprocess_menu_state is defined and admin_subprocess_menu_state is not none %}
           {{ render_admin_subprocess_tables(admin_subprocess_menu_state) }}
         {% endif %}
         <!-- APPGENESIS_MENU_SUBPROCESS_TABLES_V1_END -->
@@ -2494,7 +2501,7 @@
     {
       "currentUserName": {{ current_user.full_name|tojson }},
       "currentUserEmail": {{ current_user.login_email|tojson }},
-      "currentUserIsAdmin": {{ current_user_is_admin|tojson }},
+      "currentUserIsAdmin": {{ (current_user_is_owner_admin|default(false))|tojson }},
       "currentUserCanManageTenantStructure": {{ current_user_can_manage_tenant_structure|tojson }},
       "dashboardData": {{ dashboard_data|tojson }},
       "currentUserPhone": {{ user_personal_data.primary_phone|tojson }},

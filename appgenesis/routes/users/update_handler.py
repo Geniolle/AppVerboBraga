@@ -12,7 +12,7 @@ from appgenesis.config.settings import settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.navigation_context import build_post_save_return_url_v1, build_return_url_v1
-from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.permissions import get_user_entity_permissions, is_entity_admin_v1
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.services.user_member import member_status_for_user_account_status
 from appgenesis.services.user_system import is_owner_system_v1, normalize_user_system_type_v1
@@ -106,7 +106,7 @@ def update_user(
             )
         selected_entity_id = get_session_entity_id(request)
 
-        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+        if not is_entity_admin_v1(session, current_user["id"], current_user["login_email"], selected_entity_id):
             return RedirectResponse(
                 url=build_return_url_v1(
                     return_menu=return_menu,
@@ -150,6 +150,7 @@ def update_user(
             int(user.member_id),
             entity_permissions,
             system_admin_target=str(user.system_type or "") in users_repo.SYSTEM_ADMIN_TYPES,
+            target_system_type=str(user.system_type or ""),
         ):
             return RedirectResponse(
                 url=build_return_url_v1(
@@ -186,6 +187,11 @@ def update_user(
             errors.append("Email é obrigatório.")
         if clean_account_status not in settings.ALLOWED_ACCOUNT_STATUS:
             errors.append("Estado de conta inválido.")
+        # Admin de entidade (nao owner) nao atribui perfis de administrador.
+        if not entity_permissions.get(
+            "can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False)
+        ) and clean_system_type != "default":
+            errors.append("Só o owner atribui o perfil Admin, Super User ou Legado.")
 
         # Entidade so pode ser alterada pelo owner; legado mantem a entidade atual.
         can_manage_tenant_structure = bool(
