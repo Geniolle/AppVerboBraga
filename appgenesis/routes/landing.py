@@ -107,8 +107,8 @@ DEPARTAMENTOS = [
         ],
         "acoes": [],
         "fotos": [
-            {"url": "/static/img/verbo-shop/1.jpg", "alt": "Estante da Verbo Shop com livros, bonés e a promoção"},
             {"url": "/static/img/verbo-shop/2.jpg", "alt": "Vista lateral das estantes da Verbo Shop"},
+            {"url": "/static/img/verbo-shop/1.jpg", "alt": "Estante da Verbo Shop com livros, bonés e a promoção"},
             {"url": "/static/img/verbo-shop/3.jpg", "alt": "Estantes em arco com livros na Verbo Shop"},
         ],
         "livros": [
