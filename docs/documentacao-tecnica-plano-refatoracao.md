@@ -290,6 +290,14 @@ Estas decisões valem para o plano. Se o agente encontrar outro caminho melhor, 
 - Efeito: como `is_admin_user` só reconhece `owner`, esta conta deixa de entrar no menu Administrativo até haver função configurada (etapa 7).
 - Reversão: `UPDATE users SET system_type='owner' WHERE id=4;` ou restaurar o backup.
 
+### 9.1c Função `LEGADO` na 1001 (2026-11-28, incidente)
+
+- Incidente: com `APPGENESIS_ACCESS_FILTER_V1=1` em produção, cada utilizador só vê os menus dados por uma função da sua entidade. A única função da 1001 (`user`) era para `default`. Depois de §9.1 (93 utilizadores `default` → `legado`) e de §9.1b, os 94 `legado` da 1001 recebiam 403 "Sem acesso ao sistema".
+- Correção: criada na 1001 a função `legado` (rótulo `LEGADO`, perfil `legado`, ativa) com os mesmos perfis da função `user`: `home`, `meu_perfil`, `agenda_user`. Feita pelo `FunctionsAdminRepository` dentro do container (mesma validação da UI). Backup: `appgenesis-prod-pre-funcao-legado-20261128-080236.sql.gz`.
+- Verificação: `resolve_allowed_menu_keys_v1` para `legado` → `agenda`, `home`, `meu_perfil`; `get_page_data` do utilizador 4 e de outro `legado` ativo com os mesmos menus.
+- Regra: antes de mudar `system_type` em produção, confirmar que a entidade tem uma função ativa para o perfil de destino (o filtro está ligado).
+- Reversão: remover a função `legado` em Funções administrativas da 1001, ou restaurar o backup.
+
 ### 9.2 Interpretação do pedido "todos os admins na aba Administradores do sistema"
 
 - Admin = `system_type IN ('legado','owner')`. Motivo: `owner` aparece com o rótulo "Admin" na coluna PERFIL NO SISTEMA; `legado` é o perfil dos administradores de sistemas legados.
