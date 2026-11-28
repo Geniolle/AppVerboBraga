@@ -9,11 +9,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.core import (
-    BASE_DIR,
-    ENTITY_PROFILE_SCOPE_LEGADO,
-    ENTITY_PROFILE_SCOPE_OWNER,
-)
+from appgenesis.config.settings import settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.entities import (
@@ -61,7 +57,7 @@ def update_entity(
     phone: str = Form(...),
     description: str | None = Form(default=None),
     entity_status: str = Form("active"),
-    entity_profile_scope: str = Form(ENTITY_PROFILE_SCOPE_LEGADO),
+    entity_profile_scope: str = Form(settings.ENTITY_PROFILE_SCOPE_LEGADO),
     remove_logo: str | None = Form(default=None),
     entity_logo_file: UploadFile | None = File(default=None),
     return_menu: str = Form(""),
@@ -106,7 +102,7 @@ def update_entity(
     if clean_status not in {"active", "inactive"}:
         clean_status = "active"
     if invalid_profile_scope:
-        clean_profile_scope = ENTITY_PROFILE_SCOPE_LEGADO
+        clean_profile_scope = settings.ENTITY_PROFILE_SCOPE_LEGADO
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -218,7 +214,7 @@ def update_entity(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        if clean_profile_scope == ENTITY_PROFILE_SCOPE_OWNER:
+        if clean_profile_scope == settings.ENTITY_PROFILE_SCOPE_OWNER:
             if not entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False)):
                 return RedirectResponse(
                     url=build_return_url_v1(
@@ -254,7 +250,7 @@ def update_entity(
         # (1) IMPEDIR OWNER INATIVA
         # ###################################################################################
         if (
-            (entity.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
+            (entity.profile_scope or settings.ENTITY_PROFILE_SCOPE_LEGADO) == settings.ENTITY_PROFILE_SCOPE_OWNER
             and clean_status != "active"
         ):
             return RedirectResponse(
@@ -309,7 +305,7 @@ def update_entity(
         except IntegrityError:
             session.rollback()
             if stored_logo_url.startswith("/static/entities/"):
-                (BASE_DIR / stored_logo_url.lstrip("/")).unlink(missing_ok=True)
+                (settings.BASE_DIR / stored_logo_url.lstrip("/")).unlink(missing_ok=True)
             return RedirectResponse(
                 url=build_return_url_v1(
                     return_menu=return_menu,
@@ -324,7 +320,7 @@ def update_entity(
             )
 
     if delete_old_logo_after_commit:
-        (BASE_DIR / delete_old_logo_after_commit.lstrip("/")).unlink(missing_ok=True)
+        (settings.BASE_DIR / delete_old_logo_after_commit.lstrip("/")).unlink(missing_ok=True)
 
     return RedirectResponse(
         url=build_post_save_return_url_v1(

@@ -7,7 +7,7 @@ from appgenesis.menu_settings import (
     resolve_menu_key_alias,
     update_sidebar_menu_process_quantity_fields_v1,
 )
-from appgenesis.core import SessionLocal
+from appgenesis.db.session import SessionLocal
 
 from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,

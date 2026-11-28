@@ -10,7 +10,7 @@ from appgenesis.menu_settings import (
     update_sidebar_menu_process_fields,
 )
 from appgenesis.services.process_settings.field_service import update_sidebar_menu_session_v1
-from appgenesis.core import SessionLocal
+from appgenesis.db.session import SessionLocal
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.permissions import get_user_entity_permissions

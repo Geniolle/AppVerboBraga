@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.config.settings import settings
 from appgenesis.routes.profile.settings_handlers import (
     _build_settings_editor_stay_redirect_url_v1,
 )
@@ -111,8 +111,8 @@ def _build_driver_v1():
 
 
 def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
-    email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    email = str(settings.ADMIN_LOGIN_EMAIL or "").strip()
+    password = str(settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not email or not password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD nao definidos.")
 

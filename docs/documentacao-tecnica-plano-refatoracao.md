@@ -66,7 +66,7 @@ Dev local sem Docker (usado em 2026-11-27): Postgres em container `appgenesis-db
 | `integrations/` | `oauth.py` | |
 | `modules/` | `core/`, `treasury/` (vazios) | módulos pagos ainda não implementados |
 | `config/`, `db/`, `i18n/`, `schemas/` | settings, bootstrap de schema, textos, validação de formulários | |
-| `core.py` | hub de re-export (181 linhas) | compat layer |
+| `core.py` | removido em 2026-11-28 (etapa 2) | usar a origem do símbolo |
 | `menu_settings.py` | 1720 linhas, 63 KB | ver §6 |
 | `dynamic_process_layout.py` | 16 KB | layout de processos dinâmicos |
 
@@ -325,6 +325,7 @@ Cada etapa cabe num PR. Ordem obrigatória. Não avançar com teste vermelho, va
 
 ### Etapa 2 — Eliminar `core.py` por consumidor
 
+- **Concluída em 2026-11-28 (`core.py` removido; `templates` vive em `appgenesis/web/templates.py`; constantes lidas como `settings.NOME`).**
 - Não há `import *`. Há 53 importadores explícitos (25 `appgenesis/`, 16 `tests/`, 12 `scripts/`). Trocar cada import pela origem do símbolo (`config`, `db`, `web/templates`, …), um grupo por PR; depois remover `core.py` se não sobrar importador.
 - Critério: `grep -rn "appgenesis.core" appgenesis tests` vazio; app sobe; suíte verde.
 

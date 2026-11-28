@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from appgenesis.core import templates
+from appgenesis.web.templates import templates
 
 router = APIRouter()
 

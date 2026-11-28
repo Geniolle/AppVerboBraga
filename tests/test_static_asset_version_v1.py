@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from appgenesis.core import templates
+from appgenesis.web.templates import templates
 from appgenesis.services.static_assets import ASSET_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]

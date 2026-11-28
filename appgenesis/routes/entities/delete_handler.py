@@ -9,7 +9,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.core import BASE_DIR
+from appgenesis.config.settings import settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.navigation_context import build_post_save_return_url_v1, build_return_url_v1
@@ -167,7 +167,7 @@ def delete_entity(
             )
 
     if logo_url_to_remove.startswith("/static/entities/"):
-        (BASE_DIR / logo_url_to_remove.lstrip("/")).unlink(missing_ok=True)
+        (settings.BASE_DIR / logo_url_to_remove.lstrip("/")).unlink(missing_ok=True)
 
     return RedirectResponse(
         url=build_post_save_return_url_v1(

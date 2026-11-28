@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.config.settings import settings
 
 
 ####################################################################################
@@ -33,8 +33,8 @@ def _build_driver_v1():
 
 
 def _login_owner_v1(driver, wait) -> None:
-    email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    email = str(settings.ADMIN_LOGIN_EMAIL or "").strip()
+    password = str(settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not email or not password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD nao definidos.")
     driver.get("http://127.0.0.1:8000/login")

@@ -13,12 +13,7 @@ from appgenesis.services.access_filter import (
     resolve_allowed_menu_keys_v1,
 )
 from appgenesis.services.profile import PERSONAL_GENDER_OPTIONS
-from appgenesis.core import (
-    ENTITY_NUMBER_MAX,
-    ENTITY_NUMBER_MIN,
-    ENTITY_PROFILE_SCOPE_LEGADO,
-    ENTITY_PROFILE_SCOPE_OWNER,
-)
+from appgenesis.config.settings import settings
 from appgenesis.models import Department, Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
 from appgenesis.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
@@ -462,10 +457,10 @@ def _serialize_entity_row_v1(row: Any) -> dict[str, Any]:
         "postal_code": row.postal_code or "",
         "country": row.country or "",
         "description": row.description or "",
-        "profile_scope": (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO),
+        "profile_scope": (row.profile_scope or settings.ENTITY_PROFILE_SCOPE_LEGADO),
         "profile_scope_label": (
             "Gestora do tenant"
-            if (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
+            if (row.profile_scope or settings.ENTITY_PROFILE_SCOPE_LEGADO) == settings.ENTITY_PROFILE_SCOPE_OWNER
             else "Entidade operacional"
         ),
         "logo_url": row.logo_url or "",
@@ -1282,7 +1277,7 @@ def get_entity_form_defaults() -> dict[str, str]:
         "country": "",
         "phone": "",
         "description": "",
-        "profile_scope": ENTITY_PROFILE_SCOPE_LEGADO,
+        "profile_scope": settings.ENTITY_PROFILE_SCOPE_LEGADO,
         "created_at": date.today().strftime("%d/%m/%Y"),
     }
 
@@ -1303,7 +1298,7 @@ def get_entity_edit_defaults() -> dict[str, str]:
         "country": "",
         "phone": "",
         "description": "",
-        "profile_scope": ENTITY_PROFILE_SCOPE_LEGADO,
+        "profile_scope": settings.ENTITY_PROFILE_SCOPE_LEGADO,
         "created_at": "",
         "logo_url": "",
         "status": "active",
@@ -1341,7 +1336,7 @@ def get_entity_edit_data(
         "country": entity.country or "",
         "phone": entity.phone or "",
         "description": entity.description or "",
-        "profile_scope": entity.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO,
+        "profile_scope": entity.profile_scope or settings.ENTITY_PROFILE_SCOPE_LEGADO,
         "created_at": entity.created_at.strftime("%d/%m/%Y") if entity.created_at else "",
         "logo_url": entity.logo_url or "",
         "status": "active" if entity.is_active else "inactive",
@@ -1431,16 +1426,16 @@ def get_next_entity_number(session: Session) -> int:
         select(Entity.entity_number)
        .where(
             Entity.entity_number.is_not(None),
-            Entity.entity_number >= ENTITY_NUMBER_MIN,
-            Entity.entity_number <= ENTITY_NUMBER_MAX,
+            Entity.entity_number >= settings.ENTITY_NUMBER_MIN,
+            Entity.entity_number <= settings.ENTITY_NUMBER_MAX,
         )
        .order_by(Entity.entity_number.asc())
     ).all()
     used_set = {int(number) for number in used_numbers if isinstance(number, int)}
-    for candidate in range(ENTITY_NUMBER_MIN, ENTITY_NUMBER_MAX + 1):
+    for candidate in range(settings.ENTITY_NUMBER_MIN, settings.ENTITY_NUMBER_MAX + 1):
         if candidate not in used_set:
             return candidate
-    return ENTITY_NUMBER_MAX
+    return settings.ENTITY_NUMBER_MAX
 
 def build_users_new_url(**query_params: str) -> str:
     clean_query_params = {

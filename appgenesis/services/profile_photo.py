@@ -5,12 +5,7 @@ from pathlib import Path
 
 from fastapi import UploadFile
 
-from appgenesis.core import (
-    ALLOWED_PROFILE_PHOTO_EXTENSIONS,
-    MAX_PROFILE_PHOTO_SIZE_BYTES,
-    PROFILE_PHOTO_CONTENT_TYPE_EXTENSION,
-    PROFILE_PHOTOS_DIR,
-)
+from appgenesis.config.settings import settings
 
 PROFILE_PHOTO_URL_PREFIX = "/static/profile_photos/"
 
@@ -22,14 +17,14 @@ def save_profile_photo_upload(photo_file: UploadFile | None) -> tuple[str, str]:
 
     content_type = (photo_file.content_type or "").strip().lower()
     file_ext = Path(photo_file.filename).suffix.lower()
-    if file_ext not in ALLOWED_PROFILE_PHOTO_EXTENSIONS:
-        file_ext = PROFILE_PHOTO_CONTENT_TYPE_EXTENSION.get(content_type, "")
+    if file_ext not in settings.ALLOWED_PROFILE_PHOTO_EXTENSIONS:
+        file_ext = settings.PROFILE_PHOTO_CONTENT_TYPE_EXTENSION.get(content_type, "")
 
-    if file_ext not in ALLOWED_PROFILE_PHOTO_EXTENSIONS:
+    if file_ext not in settings.ALLOWED_PROFILE_PHOTO_EXTENSIONS:
         return "", "Formato de foto inválido. Use PNG, JPG ou WEBP."
 
     stored_name = f"profile_{secrets.token_hex(10)}{file_ext}"
-    destination = PROFILE_PHOTOS_DIR / stored_name
+    destination = settings.PROFILE_PHOTOS_DIR / stored_name
     total_size = 0
 
     try:
@@ -39,7 +34,7 @@ def save_profile_photo_upload(photo_file: UploadFile | None) -> tuple[str, str]:
                 if not chunk:
                     break
                 total_size += len(chunk)
-                if total_size > MAX_PROFILE_PHOTO_SIZE_BYTES:
+                if total_size > settings.MAX_PROFILE_PHOTO_SIZE_BYTES:
                     file_handle.close()
                     destination.unlink(missing_ok=True)
                     return "", "Foto demasiado grande. Limite máximo: 5MB."
@@ -60,8 +55,8 @@ def delete_profile_photo_file(photo_url: str | None) -> None:
     if not file_name or file_name != Path(clean_url[len(PROFILE_PHOTO_URL_PREFIX):]).name:
         return
 
-    target = (PROFILE_PHOTOS_DIR / file_name).resolve()
-    if PROFILE_PHOTOS_DIR.resolve() not in target.parents:
+    target = (settings.PROFILE_PHOTOS_DIR / file_name).resolve()
+    if settings.PROFILE_PHOTOS_DIR.resolve() not in target.parents:
         return
     target.unlink(missing_ok=True)
 

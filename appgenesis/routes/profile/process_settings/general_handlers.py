@@ -21,7 +21,7 @@ from appgenesis.menu_settings import (
     set_sidebar_menu_visibility,
     update_sidebar_menu_label,
 )
-from appgenesis.core import SessionLocal
+from appgenesis.db.session import SessionLocal
 from appgenesis.services.session import get_session_entity_id
 from appgenesis.repositories.entity_repository import get_entity_by_id
 

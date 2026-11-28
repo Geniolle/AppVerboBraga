@@ -18,7 +18,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # (2) IMPORTS DO PROJETO
 ####################################################################################
 
-from appgenesis.core import SessionLocal
+from appgenesis.db.session import SessionLocal
 from appgenesis.menu_settings import get_sidebar_menu_settings
 
 
