@@ -459,29 +459,25 @@ def test_process_editor_cancel_returns_to_origin_list_on_multiple_tabs() -> None
 
         # (b) Reabrir e cancelar numa segunda aba ("Configuração dos campos"), provando que
         # a saida do editor e generica e nao depende da aba especifica.
+        # O Cancelar desta aba esta no formulario que so abre com "+ Configurar campo".
         _open_process_editor_from_list_v1(driver, wait)
+        _activate_editor_tab_v1(driver, wait, "campos-config")
         driver.find_element(
-            By.CSS_SELECTOR, "[data-process-edit-tab='campos-config']"
+            By.CSS_SELECTOR, ".process-edit-pane.active [data-configurable-create-trigger]"
         ).click()
-        wait.until(
-            lambda drv: (
-                "campos-config"
-                in (
-                    drv.find_element(
-                        By.CSS_SELECTOR, ".process-edit-pane.active"
-                    ).get_attribute("data-process-edit-pane")
-                )
-            )
-        )
-        driver.find_element(
+        cancel_button = driver.find_element(
             By.CSS_SELECTOR, ".process-edit-pane.active .action-btn-cancel"
-        ).click()
+        )
+        wait.until(EC.visibility_of(cancel_button))
+        cancel_button.click()
         _assert_editor_closed_and_list_visible_v1(driver, wait)
     finally:
         driver.quit()
 
 
-def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> None:
+def test_process_editor_save_stays_in_editor_tab_with_success_toast() -> None:
+    # Guardar no editor mantem o processo, o card e a aba (ver
+    # test_process_editor_stay_after_save_cancel.py); so Cancelar volta a lista.
     driver = _build_driver_v1()
     wait = WebDriverWait(driver, 30)
 
@@ -495,12 +491,17 @@ def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> 
         # carregados no formulario, cobrindo "Guardar" sem alterar dados criticos. ("Geral" so
         # lista os campos e nao tem formulario.)
         _activate_editor_tab_v1(driver, wait, "sessao")
-        driver.find_element(
+        submit_button = driver.find_element(
             By.CSS_SELECTOR, ".process-edit-pane.active .action-btn[type='submit']"
-        ).click()
+        )
+        submit_button.click()
+        wait.until(EC.staleness_of(submit_button))
 
-        wait.until(lambda drv: "settings_edit_key" not in _current_href_v1(drv))
-        _assert_editor_closed_and_list_visible_v1(driver, wait)
+        wait.until(lambda drv: "settings_tab=sessao" in _current_href_v1(drv))
+        assert "settings_edit_key" in _current_href_v1(driver)
+        wait.until(lambda drv: _card_state(drv, "settings-menu-edit-card").get("computedDisplay") == "block")
+        active_pane = driver.find_element(By.CSS_SELECTOR, ".process-edit-pane.active")
+        assert "sessao" in active_pane.get_attribute("data-process-edit-pane")
         # No subprocesso "Sessoes > Menu" o alerta inline ".alert.ok" e' deliberadamente
         # suprimido (ver _suppress_inline_success_feedback em macros/admin_subprocess.html) --
         # o feedback de sucesso desse fluxo e' promovido a um toast global lido do query
