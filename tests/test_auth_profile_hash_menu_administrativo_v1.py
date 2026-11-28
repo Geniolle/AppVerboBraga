@@ -1,4 +1,5 @@
 from pathlib import Path
+from new_user_js_source import read_new_user_js
 
 RUNTIME_JS = Path(__file__).resolve().parents[1] / "static" / "js" / "modules" / "process_menu_runtime_v1.js"
 
@@ -65,7 +66,7 @@ def test_auth_profile_return_target_is_list_after_save():
 
 
 def test_auth_profile_row_click_opens_edit():
-    source = (RUNTIME_JS.parents[1] / "new_user.js").read_text(encoding="utf-8")
+    source = read_new_user_js()
 
     # Clicar em qualquer linha de tabela executa a acao Editar (regra global de linhas clicaveis).
     assert 'event.target.closest("table tbody tr")' in source

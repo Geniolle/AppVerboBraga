@@ -1,4 +1,5 @@
 from pathlib import Path
+from new_user_js_source import read_new_user_js
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -9,8 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ####################################################################################
 
 def test_post_save_context_prioritizes_current_url_menu_over_form_fields() -> None:
-    script_path = PROJECT_ROOT / "static" / "js" / "new_user.js"
-    script_text = script_path.read_text(encoding="utf-8")
+    script_text = read_new_user_js()
 
     function_start = script_text.index("function currentMenuFromUrlOrBootstrapPostSaveV3")
     function_end = script_text.index("\n  }\n", function_start)

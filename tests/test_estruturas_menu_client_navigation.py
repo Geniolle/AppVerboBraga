@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from appgenesis.config.settings import settings
+from new_user_js_source import read_new_user_js
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -251,9 +252,7 @@ def test_top_menu_active_scopes_sticky_label_to_administrativo() -> None:
 
 
 def test_new_user_js_exposes_active_menu_key_signal() -> None:
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(
-        encoding="utf-8"
-    )
+    js_text = read_new_user_js()
 
     assert "window.__appgenesisGetActiveMenuKeyV1 = function () {" in js_text
     assert "return activeMenuKey;" in js_text
@@ -498,9 +497,7 @@ def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> 
 def test_new_user_js_exposes_activate_subprocess_cards_alias_and_source_tracking() -> (
     None
 ):
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(
-        encoding="utf-8"
-    )
+    js_text = read_new_user_js()
     module_text = (
         PROJECT_ROOT / "static" / "js" / "modules" / "process_cards_visibility_v1.js"
     ).read_text(encoding="utf-8")
