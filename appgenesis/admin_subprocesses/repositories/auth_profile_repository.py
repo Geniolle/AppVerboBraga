@@ -107,11 +107,12 @@ def _normalize_menu_key(raw_value: Any) -> str:
 
 def _build_sidebar_menu_lookup(
     session: Any,
+    menu_settings: list[dict[str, Any]] | None = None,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
     menu_meta_by_key: dict[str, dict[str, Any]] = {}
     menu_key_by_label_lookup: dict[str, str] = {}
 
-    for raw_row in get_sidebar_menu_settings(session):
+    for raw_row in menu_settings if menu_settings is not None else get_sidebar_menu_settings(session):
         if not isinstance(raw_row, dict):
             continue
 
@@ -133,8 +134,11 @@ def _build_sidebar_menu_lookup(
     return menu_meta_by_key, menu_key_by_label_lookup
 
 
-def _resolve_auth_profile_field_keys(session: Any) -> list[str]:
-    for raw_row in get_sidebar_menu_settings(session):
+def _resolve_auth_profile_field_keys(
+    session: Any,
+    menu_settings: list[dict[str, Any]] | None = None,
+) -> list[str]:
+    for raw_row in menu_settings if menu_settings is not None else get_sidebar_menu_settings(session):
         if not isinstance(raw_row, dict):
             continue
         if _normalize_menu_key(raw_row.get("key")) != AUTH_PROFILE_MENU_KEY:
@@ -309,8 +313,9 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
     def _resolve_menu_scope_defaults(
         self,
         session: Any,
+        menu_settings: list[dict[str, Any]] | None = None,
     ) -> tuple[str, str]:
-        for row in get_sidebar_menu_settings(session):
+        for row in menu_settings if menu_settings is not None else get_sidebar_menu_settings(session):
             if str(row.get("key") or "").strip().lower() != AUTH_PROFILE_MENU_KEY:
                 continue
             menu_config = row.get("menu_config") if isinstance(row.get("menu_config"), dict) else {}
@@ -330,6 +335,7 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         self,
         session: Any,
         context: dict[str, Any] | None = None,
+        menu_settings: list[dict[str, Any]] | None = None,
     ) -> tuple[Any, dict[str, str], list[dict[str, Any]], str, str]:
         # Perfis por entidade (nao por membro): ver auth_profile_entity_store.py.
         entity_id = resolve_entity_id_for_auth_profiles_v1(session, context)
@@ -340,7 +346,7 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
         existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
-        default_scope_mode, default_scope_label = self._resolve_menu_scope_defaults(session)
+        default_scope_mode, default_scope_label = self._resolve_menu_scope_defaults(session, menu_settings)
 
         if not existing_records:
             fallback_label = str(
@@ -459,15 +465,17 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         return rows
 
     def list_rows(self, session: Any, context: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        # Menus lidos uma vez (corre em cada pedido via filtro de acesso; cada leitura e cara).
+        menu_settings = get_sidebar_menu_settings(session)
         (
             _member,
             _existing_profile_fields,
             existing_records,
             default_scope_mode,
             default_scope_label,
-        ) = self._load_record_bundle(session, context)
-        menu_meta_by_key, menu_key_by_label_lookup = _build_sidebar_menu_lookup(session)
-        profile_field_keys = _resolve_auth_profile_field_keys(session)
+        ) = self._load_record_bundle(session, context, menu_settings)
+        menu_meta_by_key, menu_key_by_label_lookup = _build_sidebar_menu_lookup(session, menu_settings)
+        profile_field_keys = _resolve_auth_profile_field_keys(session, menu_settings)
         rows = self._build_rows(
             existing_records,
             default_scope_mode=default_scope_mode,
