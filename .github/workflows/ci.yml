@@ -75,18 +75,11 @@ jobs:
           pip install -r requirements.txt
           pip install pytest==9.1.1 pytest-timeout==2.3.1 selenium==4.27.1
           pip install -e .
-      - name: Migrate and create admin
+      - name: Migrate and seed (admin owner + menu Definicoes)
         run: |
           python init_db.py
           python bootstrap_admin.py --name "CI Admin" --phone 910000000 --email "$ADMIN_LOGIN_EMAIL" --password "$ADMIN_LOGIN_PASSWORD" --entity "Entidade CI"
-          # Como em producao, o admin e owner: com o filtro por funcao ligado, nao-owner sem funcao leva 403.
-          python - <<'PY'
-          import os
-          from sqlalchemy import create_engine, text
-          with create_engine(os.environ['DATABASE_URL']).begin() as conn:
-              sql = text("UPDATE users SET system_type = 'owner' WHERE login_email = :email")
-              assert conn.execute(sql, {'email': os.environ['ADMIN_LOGIN_EMAIL']}).rowcount == 1
-          PY
+          python scripts/ci_seed_browser.py
       - name: Start app
         run: |
           nohup python -m uvicorn web_app:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
