@@ -401,10 +401,20 @@ def _open_process_editor_from_list_v1(
 
 
 def _activate_editor_tab_v1(driver: webdriver.Chrome, wait: WebDriverWait, tab: str) -> None:
-    driver.find_element(By.CSS_SELECTOR, f"[data-process-edit-tab='{tab}']").click()
+    # O editor pode ainda estar a acabar de carregar (reload apos "Editar"); um clique feito
+    # antes perde-se. Volta a clicar ate a aba ficar ativa.
     wait.until(
-        lambda drv: tab
-        in (drv.find_element(By.CSS_SELECTOR, ".process-edit-pane.active").get_attribute("data-process-edit-pane"))
+        lambda drv: drv.execute_script(
+            """
+            const tab = arguments[0];
+            const active = document.querySelector(".process-edit-pane.active");
+            if (active && (active.getAttribute("data-process-edit-pane") || "").includes(tab)) return true;
+            const link = document.querySelector(`[data-process-edit-tab='${tab}']`);
+            if (link) link.click();
+            return false;
+            """,
+            tab,
+        )
     )
 
 
