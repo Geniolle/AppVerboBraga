@@ -400,6 +400,8 @@ Cada etapa cabe num PR. Ordem obrigatória. Não avançar com teste vermelho, va
 
 ### Etapa 8 — Testes fora do CI e pyflakes bloqueante (roadmap 6)
 
+- **Concluída em 2026-11-28.** pyflakes bloqueante (registo 13). Job `browser` no CI (`.github/workflows/ci.yml`): Postgres 16 vazio + `init_db.py` + `bootstrap_admin.py` + `scripts/ci_seed_browser.py` (admin owner e menu Definições/`sessoes`, iguais a produção, sem dados pessoais), app real em `127.0.0.1:8000` com `APPGENESIS_ACCESS_FILTER_V1=1`, Chrome headless, `pytest-timeout` 180 s e `timeout-minutes: 30`. Corre os testes Selenium que o job `test` ignora. Quarentena (`--deselect`, comentada no workflow): 15 testes que precisam de processos dinâmicos ou do editor de processos com listas configuradas; voltam quando o seed os cobrir. Para ver localmente o que falha: correr o mesmo pytest sem os `--deselect`.
+
 - Separar testes Selenium em job próprio; pyflakes bloqueante no CI.
 - Critério: CI verde com pyflakes; Selenium rodando em job opcional.
 

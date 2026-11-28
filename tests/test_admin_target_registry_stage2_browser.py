@@ -101,12 +101,8 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
             "menu-subprocess-card-active",
             "Menu",
         ),
-        (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-profile-active-card#auth-profile-active-card",
-            "perfil_de_autorizacao",
-            "auth-profile-active-card",
-            "Perfis",
-        ),
+        # Perfil de autorizacao deixou de ser menu proprio: e uma aba de Administrativo.
+        ("/users/new?menu=administrativo&admin_tab=perfil_de_autorizacao", "administrativo", "auth-profile-active-card", None),  # a aba pode ficar no menu "Mais"
     ],
 )
 def test_stage2_admin_target_registry_browser_routes_keep_runtime_behavior(

@@ -90,12 +90,9 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
             "sessoes",
             "menu-subprocess-card-active",
         ),
-        ("/users/new?menu=sessoes&admin_tab=sessoes", "sessoes", "admin-sidebar-sections-card"),
-        (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-profile-card#auth-profile-card",
-            "perfil_de_autorizacao",
-            "auth-profile-card",
-        ),
+        ("/users/new?menu=sessoes&admin_tab=sessoes", "sessoes", "admin-sidebar-sections-card-active"),
+        # Perfil de autorizacao deixou de ser menu proprio: e uma aba de Administrativo.
+        ("/users/new?menu=administrativo&admin_tab=perfil_de_autorizacao", "administrativo", "auth-profile-active-card"),
     ],
 )
 def test_stage4_process_navigation_state_routes_keep_runtime_behavior(
