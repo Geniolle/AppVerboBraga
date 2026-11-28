@@ -41,6 +41,7 @@ _FUNCTIONS_ERROR_MESSAGES = {
     "profile_not_found": "Perfil de autorização inválido ou inativo.",
     "menu_not_found": "Menu Administrativo não configurado para esta entidade.",
     "profile_all_exclusive": "\"Todos os perfis\" não pode ser combinado com outros perfis.",
+    "admin_profile_owner_only": "Só o owner gere funções de perfis de administrador.",
 }
 
 
@@ -69,6 +70,9 @@ def _functions_actor_allowed(request: Request, session: Session) -> tuple[dict[s
         session,
         selected_entity_id=entity_permissions.get("selected_entity_id"),
         permissions=entity_permissions,
+    )
+    entity_context["member_profiles_only"] = not entity_permissions.get(
+        "can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False)
     )
     return current_user, entity_context
 
@@ -117,6 +121,7 @@ async def save_authorization_function(request: Request) -> RedirectResponse:
                 "entity_id": get_session_entity_id(request),
                 "entity_number": entity_number,
                 "allowed_profile_keys": allowed_profile_keys,
+                "member_profiles_only": entity_context.get("member_profiles_only", True),
             },
             edit_key=edit_key,
         )
@@ -140,11 +145,18 @@ async def delete_authorization_function(request: Request) -> RedirectResponse:
     return_url = str(submitted_form.get("functions_return_url") or "").strip()
 
     with SessionLocal() as session:
-        current_user, _entity_context = _functions_actor_allowed(request, session)
+        current_user, entity_context = _functions_actor_allowed(request, session)
         if current_user is None:
             return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=status.HTTP_302_FOUND)
         repo = FunctionsAdminRepository(get_admin_subprocess_config("funcoes_administrativas"))
-        ok, reason = repo.delete_row(session, key, context={"entity_id": get_session_entity_id(request)})
+        ok, reason = repo.delete_row(
+            session,
+            key,
+            context={
+                "entity_id": get_session_entity_id(request),
+                "member_profiles_only": entity_context.get("member_profiles_only", True),
+            },
+        )
         if not ok:
             return _functions_redirect(
                 return_url,

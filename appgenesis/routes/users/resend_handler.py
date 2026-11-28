@@ -12,11 +12,10 @@ from appgenesis.routes.users.router import router
 from appgenesis.services.auth import (
     build_user_invite_link,
     build_user_invite_token,
-    is_admin_user,
     send_user_invite_email,
 )
 from appgenesis.services.navigation_context import build_return_url_v1
-from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.permissions import get_user_entity_permissions, is_entity_admin_v1
 from appgenesis.services.session import get_current_user, get_session_entity_id
 
 
@@ -82,7 +81,7 @@ def _prepare_user_invite_payload(
 
         selected_entity_id = get_session_entity_id(request)
 
-        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+        if not is_entity_admin_v1(session, current_user["id"], current_user["login_email"], selected_entity_id):
             return None, _redirect_admin_users(
                 error="Apenas administradores podem gerar convites.",
                 return_menu=return_menu,
@@ -119,6 +118,7 @@ def _prepare_user_invite_payload(
             int(user_row.member_id),
             entity_permissions,
             system_admin_target=str(user_row.system_type or "") in users_repo.SYSTEM_ADMIN_TYPES,
+            target_system_type=str(user_row.system_type or ""),
         ):
             return None, _redirect_admin_users(
                 error="Sem permissão para gerar convite deste utilizador.",

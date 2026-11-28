@@ -62,7 +62,7 @@ from appgenesis.services.page import (
     get_page_data,
     get_user_edit_data,
 )
-from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.permissions import get_user_entity_permissions, is_entity_admin_v1
 from appgenesis.services.profile import get_user_personal_data
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.services.sidebar_section_ownership import (
@@ -608,6 +608,10 @@ def new_user_page(
             current_user["id"],
             current_user["login_email"],
             selected_entity_id,
+        )
+        # Interface de administracao da entidade: owner ou admin de entidade legado (por funcao).
+        current_user_is_entity_admin = is_entity_admin_v1(
+            session, current_user["id"], current_user["login_email"], selected_entity_id
         )
         page_data = get_page_data(
             session,
@@ -1226,7 +1230,8 @@ def new_user_page(
         "entity_readonly_mode": bool(entity_readonly_mode),
         "user_readonly_mode": bool(user_readonly_mode),
         "current_user": current_user,
-        "current_user_is_admin": current_user_is_admin,
+        "current_user_is_admin": current_user_is_entity_admin,
+        "current_user_is_owner_admin": current_user_is_admin,
         "user_personal_data": user_personal_data,
         "entity_success": entity_success or "",
         "entity_error": entity_error or "",

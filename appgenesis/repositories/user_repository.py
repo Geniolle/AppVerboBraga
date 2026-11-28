@@ -165,13 +165,15 @@ def member_is_within_permissions(
     member_id: int,
     permissions: dict[str, Any],
     system_admin_target: bool = False,
+    target_system_type: str = "",
 ) -> bool:
     """O ator pode gerir este membro?
 
     - Owner (gestao do tenant): administradores do sistema (`system_admin_target`) de qualquer
       entidade, e os membros das entidades onde ele proprio tem dados (`allowed_data_entity_ids`).
       Nao gere utilizadores comuns das entidades legado.
-    - Outros: so membros com vinculo ativo nas entidades do seu escopo.
+    - Outros (admin de entidade): so membros ('default', ou sem utilizador) com vinculo ativo
+      nas entidades do seu escopo. Nunca outros administradores.
     """
     if permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities")):
         if system_admin_target:
@@ -179,6 +181,8 @@ def member_is_within_permissions(
         return member_has_active_link_in(
             session, member_id, sorted(set(permissions.get("allowed_data_entity_ids") or set()))
         )
+    if str(target_system_type or "").strip().lower() not in ("", "default"):
+        return False
     return member_has_active_link_in(
         session, member_id, sorted(set(permissions.get("allowed_entity_ids") or set()))
     )
