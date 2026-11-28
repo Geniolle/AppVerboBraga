@@ -30,7 +30,7 @@ Perfis de utilizador (`users.system_type`, rótulos em `appgenesis/services/user
 - Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Jinja2, Postgres 16 (produção, `psycopg`), SQLite apenas para alguns testes unitários.
 - Frontend: Jinja2 + JavaScript vanilla (módulos em `static/js/modules/`) + CSS em `static/css/`.
 - Docker-first (`AGENTS.md` §2): `docker-compose.yml` (dev: `db` + `web`) e `docker-compose.prod.yml` (produção).
-- Entrada: `web_app.py` → `appgenesis/app.py`. Sessão via `SessionMiddleware` (cookie assinado com `APP_SECRET_KEY`); `https_only` só em produção.
+- Entrada: `appgenesis/web_app.py` (`uvicorn appgenesis.web_app:app`) → `appgenesis/app.py`. Sessão via `SessionMiddleware` (cookie assinado com `APP_SECRET_KEY`); `https_only` só em produção.
 - Migrations: `migrations/versions/`, cadeia linear. Head atual: `entmenudata01` (revisão anterior `procrec01`). `init_db.py` aplica `alembic upgrade head`.
 - CI: `.github/workflows/ci.yml`, check `CI / test`. Testes Selenium estão excluídos do comando de CI (ver §8).
 
@@ -43,7 +43,7 @@ docker compose exec web python -m alembic check
 python -m pytest -q -p no:warnings tests --continue-on-collection-errors
 ```
 
-Dev local sem Docker (usado em 2026-11-27): Postgres em container `appgenesis-db` (`docker compose -p appgenesis_local up -d db`), `DATABASE_URL` apontando para `localhost:5432/app_igreja` na própria linha de comando, `uvicorn web_app:app --host 127.0.0.1 --port 8000`. Não usar o `.env` de desenvolvimento sem confirmar o banco de destino (aponta para um banco remoto).
+Dev local sem Docker (usado em 2026-11-27): Postgres em container `appgenesis-db` (`docker compose -p appgenesis_local up -d db`), `DATABASE_URL` apontando para `localhost:5432/app_igreja` na própria linha de comando, `uvicorn appgenesis.web_app:app --host 127.0.0.1 --port 8000`. Não usar o `.env` de desenvolvimento sem confirmar o banco de destino (aponta para um banco remoto).
 
 ---
 

@@ -2,7 +2,7 @@ import ast
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCAN_ROOTS = [REPO_ROOT / "appgenesis", REPO_ROOT / "web_app.py"]
+SCAN_ROOTS = [REPO_ROOT / "appgenesis"]
 
 
 def _iter_python_files():
@@ -28,6 +28,6 @@ def test_no_wildcard_imports_in_appgenesis_package():
             offenders[str(path.relative_to(REPO_ROOT))] = lines
 
     assert not offenders, (
-        "Wildcard imports ('from X import *') are not allowed in appgenesis/ or "
-        f"web_app.py — import explicit names instead. Found: {offenders}"
+        "Wildcard imports ('from X import *') are not allowed in appgenesis/ — "
+        f"import explicit names instead. Found: {offenders}"
     )
