@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import unicodedata
+from functools import lru_cache
 from typing import Any
 from uuid import uuid4
 
@@ -59,7 +60,12 @@ def _normalize_sentence_case_label_keep_acronyms(raw_label: str) -> str:
 
 
 def _normalize_additional_field_label(raw_label: Any) -> str:
-    clean_label = str(raw_label or "")
+    return _normalize_additional_field_label_cached(str(raw_label or ""))
+
+
+# Funcao pura (texto + constantes do modulo); chamada dezenas de milhares de vezes por pedido.
+@lru_cache(maxsize=8192)
+def _normalize_additional_field_label_cached(clean_label: str) -> str:
     clean_label = " ".join(clean_label.strip().split())
     if not clean_label:
         return ""
@@ -577,7 +583,12 @@ def move_sidebar_menu_additional_field(
 
 
 def _normalize_process_list_key_v8(raw_key: Any) -> str:
-    clean_value = str(raw_key or "").strip().lower()
+    return _normalize_process_list_key_v8_cached(str(raw_key or ""))
+
+
+@lru_cache(maxsize=8192)
+def _normalize_process_list_key_v8_cached(raw_key: str) -> str:
+    clean_value = raw_key.strip().lower()
     clean_value = (
         unicodedata.normalize("NFKD", clean_value)
         .encode("ascii", "ignore")
