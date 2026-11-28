@@ -133,9 +133,10 @@ def test_stage5_process_cards_visibility_click_flow_keeps_runtime_behavior() -> 
         _click_submenu_v1(driver, "Menu")
         wait.until(lambda drv: _card_is_visible_v1(drv, "menu-subprocess-card-active"))
 
-        _click_menu_v1(driver, "perfil_de_autorizacao")
-        wait.until(lambda drv: "perfil_de_autorizacao" in _active_sidebar_menu_keys_v1(drv))
-        _click_submenu_v1(driver, "Perfis")
+        # Perfil de autorizacao deixou de ser menu proprio: e uma aba de Administrativo.
+        _click_menu_v1(driver, "administrativo")
+        wait.until(lambda drv: "administrativo" in _active_sidebar_menu_keys_v1(drv))
+        _click_submenu_v1(driver, "Perfil de autorização")
         wait.until(lambda drv: _card_is_visible_v1(drv, "auth-profile-active-card"))
 
         candidate_menu_keys = driver.execute_script(
