@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from appgenesis.repositories import user_repository as users_repo
 from appgenesis.models import (
     Entity,
     Member,
@@ -165,42 +166,6 @@ def _resolve_entity_from_user_email_v2(
 
 _resolve_entity_from_user_email = _resolve_entity_from_user_email_v2
 
-def _get_primary_entity_for_member(session: Session, member_id: int) -> tuple[int | None, str]:
-    entity_row = session.execute(
-        select(Entity.id, Entity.name)
-        .join(MemberEntity, MemberEntity.entity_id == Entity.id)
-        .where(
-            MemberEntity.member_id == member_id,
-            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-        )
-        .order_by(MemberEntity.id.asc())
-        .limit(1)
-    ).one_or_none()
-    if entity_row is None:
-        return None, "-"
-    return int(entity_row.id), str(entity_row.name or "-")
-
-
-def _member_is_within_permissions(
-    session: Session,
-    member_id: int,
-    permissions: dict[str, Any],
-) -> bool:
-    if permissions.get("can_manage_all_entities"):
-        return True
-    allowed_entity_ids = sorted(set(permissions.get("allowed_entity_ids") or set()))
-    if not allowed_entity_ids:
-        return False
-    scoped_link_id = session.scalar(
-        select(MemberEntity.id)
-        .where(
-            MemberEntity.member_id == member_id,
-            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-            MemberEntity.entity_id.in_(allowed_entity_ids),
-        )
-        .limit(1)
-    )
-    return scoped_link_id is not None
 
 
 @dataclass(frozen=True)
@@ -458,20 +423,24 @@ def execute_create_user(
             select(Member).where(func.lower(Member.email) == payload.clean_email)
         ).scalar_one_or_none()
         existing_user_row = session.execute(
-            select(User.id, User.account_status, User.login_email, User.member_id).where(
-                func.lower(User.login_email) == payload.clean_email
-            )
+            select(
+                User.id, User.account_status, User.login_email, User.member_id, User.system_type
+            ).where(func.lower(User.login_email) == payload.clean_email)
         ).one_or_none()
 
         if existing_user_row is not None:
-            existing_user_entity_id, existing_user_entity_name = _get_primary_entity_for_member(
+            existing_user_entity_id, existing_user_entity_name = users_repo.get_primary_entity_for_member(
                 session,
                 int(existing_user_row.member_id),
             )
-            can_manage_existing_user = _member_is_within_permissions(
+            can_manage_existing_user = users_repo.member_is_within_permissions(
                 session,
                 int(existing_user_row.member_id),
                 entity_permissions,
+                system_admin_target=(
+                    str(existing_user_row.system_type or "") in users_repo.SYSTEM_ADMIN_TYPES
+                    or payload.clean_system_type in users_repo.SYSTEM_ADMIN_TYPES
+                ),
             )
             if not can_manage_existing_user:
                 errors.append("Sem permissão para gerir utilizador com este email.")
@@ -538,16 +507,17 @@ def execute_create_user(
             errors.append("Já existe um utilizador com este email de login.")
 
         if existing_member is not None and existing_user_row is None:
-            existing_member_entity_id, _ = _get_primary_entity_for_member(
+            existing_member_entity_id, _ = users_repo.get_primary_entity_for_member(
                 session,
                 int(existing_member.id),
             )
             if (
                 existing_member_entity_id is not None
-                and not _member_is_within_permissions(
+                and not users_repo.member_is_within_permissions(
                     session,
                     int(existing_member.id),
                     entity_permissions,
+                    system_admin_target=payload.clean_system_type in users_repo.SYSTEM_ADMIN_TYPES,
                 )
             ):
                 errors.append("Sem permissão para utilizar este email noutra entidade.")

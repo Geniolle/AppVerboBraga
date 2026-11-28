@@ -100,8 +100,8 @@ def test_update_user_persists_explicit_active_entity_and_deduplicates_same_entit
             "allowed_entity_ids": {source_entity_id, target_entity_id},
         },
     ), patch.object(
-        update_user_module,
-        "_member_is_within_permissions",
+        update_user_module.users_repo,
+        "member_is_within_permissions",
         return_value=True,
     ), patch.object(
         update_user_module,
@@ -196,8 +196,8 @@ def test_update_user_rejects_entity_outside_allowed_scope() -> None:
             "allowed_entity_ids": {allowed_entity_id},
         },
     ), patch.object(
-        update_user_module,
-        "_member_is_within_permissions",
+        update_user_module.users_repo,
+        "member_is_within_permissions",
         return_value=True,
     ), patch.object(
         update_user_module,
