@@ -5,6 +5,7 @@ from appgenesis.routes.profile.page_handler import (
     _resolve_active_tab_index_v1,
     _resolve_initial_menu_target,
 )
+from new_user_js_source import read_new_user_js
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -67,9 +68,7 @@ def test_resolve_active_tab_index_auth_profile_form_stays_on_profile_tab() -> No
 
 
 def test_new_user_js_exposes_authorization_profile_target_normalization() -> None:
-    script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(
-        encoding="utf-8"
-    )
+    script_text = read_new_user_js()
     registry_text = (
         PROJECT_ROOT / "static" / "js" / "modules" / "admin_target_registry_v1.js"
     ).read_text(encoding="utf-8")

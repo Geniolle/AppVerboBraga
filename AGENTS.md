@@ -222,7 +222,7 @@ Sempre que uma funcionalidade permitir criar múltiplos itens configuráveis, co
 6. O submit deve reconstruir os inputs no formato esperado pelo backend atual.
 7. Não criar formulários longos com todos os itens abertos simultaneamente.
 8. A lógica genérica deve ser extraída para um manager reutilizável sempre que houver repetição de comportamento.
-9. O ficheiro `new_user.js` deve apenas inicializar managers sempre que possível, evitando concentrar lógica extensa de layout.
+9. Os ficheiros de `static/js/new_user/` (antigo `new_user.js`, dividido por domínio e carregado por ordem numerada) devem apenas inicializar managers sempre que possível, evitando concentrar lógica extensa de layout.
 10. Cada ajuste relevante em função existente deve criar uma nova função com sufixo sequencial.
 
 Exemplo de versionamento obrigatório:
@@ -291,7 +291,7 @@ Sempre que alterar `templates/new_user.html` ou assets usados por ele:
 2. Validar JavaScript com:
 
 ```bash
-node --check static/js/new_user.js
+for f in static/js/new_user/*.js; do node --check "$f"; done
 node --check static/js/modules/<ficheiro_alterado>.js
 ```
 
@@ -1245,7 +1245,7 @@ mecanismo genérico — sem duplicar endpoint/regra de negócio da ação movida
    no HTML (`templates/new_user.html`) logo após
    `{{ render_admin_subprocess_tables(admin_subprocess_user_state) }}`,
    ocultos (`hidden`) para evitar flash de posição errada. Duas funções
-   idempotentes em `static/js/new_user.js`
+   idempotentes em `static/js/new_user/11_admin_users.js`
    (`relocateUtilizadorInviteLinkButtonV1`/`relocateUtilizadorInviteLinkSlotV1`)
    os movem como filhos diretos de `#admin-users-created-card` (o card ativo
    de Utilizador) e removem o `hidden`: o botão antes de
@@ -1360,11 +1360,11 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 
 1. **`process_tabs.py`**: A aba principal do subprocesso deve apontar para o `default_target` do `AdminSubprocessConfig` (ex: `#auth-profile-card`), não para o card da tabela ativa (ex: `#auth-profile-active-card`). O `default_target` é o card que contém o accordion de criação.
 
-2. **`getAdminSubprocessKeyByTargetV1`** em `new_user.js`: Todos os targets nativos do subprocesso (card principal, form-card, active-card, inactive-card) devem estar no `targetMap`, retornando a `key` do `AdminSubprocessConfig` (ex: `"perfil_de_autorizacao"`). Para subprocessos dentro do mesmo menu (como `sessoes` e `menu`), cada um tem a sua própria chave para que o JS possa distingui-los.
+2. **`getAdminSubprocessKeyByTargetV1`** em `static/js/new_user/07_navigation.js`: Todos os targets nativos do subprocesso (card principal, form-card, active-card, inactive-card) devem estar no `targetMap`, retornando a `key` do `AdminSubprocessConfig` (ex: `"perfil_de_autorizacao"`). Para subprocessos dentro do mesmo menu (como `sessoes` e `menu`), cada um tem a sua própria chave para que o JS possa distingui-los.
 
 3. **`supportsStructuredAdminGroups`** em `applyContentForMenuTarget`: O `menuKey` do subprocesso (o menu pai, ex: `"perfil_de_autorizacao"`) deve estar incluído nesta condição. Subprocessos filhos no mesmo menu partilham o mesmo `menuKey` mas têm `data-admin-subprocess` distintos.
 
-4. **`normalizeSubmenuTargetAlias`** em `new_user.js`: Os targets de tabela (active-card, inactive-card) e de edição (form-card) devem ser alias do `default_target` para que a aba correta fique ativa no submenu quando qualquer um desses cards é visível.
+4. **`normalizeSubmenuTargetAlias`** em `static/js/new_user/07_navigation.js`: Os targets de tabela (active-card, inactive-card) e de edição (form-card) devem ser alias do `default_target` para que a aba correta fique ativa no submenu quando qualquer um desses cards é visível.
 
 5. **`menuConfig`**: Se o subprocesso é nativo (não está em `sidebarMenuSettings`), o `menuConfig` deve ser inicializado explicitamente após `mergeDynamicProcessMenus()` verificando `visibleSidebarMenuKeys` ou a presença dos cards no DOM.
 

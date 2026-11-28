@@ -1,4 +1,5 @@
 from pathlib import Path
+from new_user_js_source import read_new_user_js
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -6,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 def test_dynamic_process_has_no_separate_action_card() -> None:
     html_text = (PROJECT_ROOT / "templates" / "new_user.html").read_text(encoding="utf-8")
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+    js_text = read_new_user_js()
 
     assert 'id="dynamic-process-action-card"' not in html_text
     assert "dynamicProcessActionCardEl" not in js_text

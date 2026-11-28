@@ -377,6 +377,8 @@ Cada etapa cabe num PR. Ordem obrigatória. Não avançar com teste vermelho, va
 
 ### Etapa 5 — Frontend por domínio (roadmap 5b, 5c)
 
+- **5b concluída em 2026-11-28.** `static/js/new_user.js` passou a `static/js/new_user/01_state.js` … `16_ui_feedback.js`, scripts clássicos com o mesmo escopo global, carregados pela ordem numerada em `templates/new_user.html`. Regras para mexer neles: (1) código que corre no load só pode ler nomes declarados no mesmo ficheiro ou num anterior (funções de ficheiros posteriores ainda não existem); (2) `10_runtime_wiring.js` liga os runtimes externos e por isso vem depois dos ficheiros de funções; (3) ficheiro novo = número novo e `<script>` no template (o teste `test_new_user_js_parts_v1.py` falha se faltar). Testes que procuram texto usam `tests/new_user_js_source.read_new_user_js()`.
+
 - `static/js/new_user.js` em módulos por feature (uma fatia por PR, com `node --check` e teste).
 - **5c concluída em 2026-11-28.** `static/css/new_user.css` passou a `static/css/new_user/01_base_layout.css` … `11_process_lists_agenda.css`, no mesmo ponto do template e pela mesma ordem (cascata igual). Regra nova vai para o ficheiro do componente; nunca reordenar os `<link>`. Atenção: `11_process_lists_agenda.css` mantém uma `}` a mais (pré-existente) que anula a regra seguinte `.dynamic-process-list-title-group-v1`.
 - `static/css/new_user.css` por componente, preservando a ordem de cascata (regra §"Regra que venceu a cascata" em `AGENT_HANDOFF.md`).
