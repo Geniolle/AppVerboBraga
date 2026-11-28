@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from appgenesis.config.settings import settings
-from appgenesis.routes.profile.settings_handlers import (
+from appgenesis.routes.profile.process_settings.common import (
     _build_settings_editor_stay_redirect_url_v1,
 )
 

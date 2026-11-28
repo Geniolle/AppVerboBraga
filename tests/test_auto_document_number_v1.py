@@ -1,4 +1,4 @@
-from appgenesis.routes.profile.profile_handlers import _apply_auto_document_number_v1
+from appgenesis.routes.profile.handlers.process_data import _apply_auto_document_number_v1
 
 
 RULE = {"auto_document_number": {"prefix": "R", "date_field": "custom_data"}}

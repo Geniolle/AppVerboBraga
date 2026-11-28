@@ -12,7 +12,7 @@ ROOT = Path.cwd()
 MEMBER_MODEL_PATH = ROOT / "appgenesis" / "models" / "member.py"
 PROFILE_SERVICE_PATH = ROOT / "appgenesis" / "services" / "profile.py"
 PAGE_SERVICE_PATH = ROOT / "appgenesis" / "services" / "page.py"
-PROFILE_HANDLERS_PATH = ROOT / "appgenesis" / "routes" / "profile" / "profile_handlers.py"
+PROFILE_HANDLERS_PATH = ROOT / "appgenesis" / "routes" / "profile" / "handlers" / "personal.py"
 MENU_SETTINGS_PATH = ROOT / "appgenesis" / "menu_settings.py"
 NEW_USER_TEMPLATE_PATH = ROOT / "templates" / "new_user.html"
 MIGRATIONS_DIR = ROOT / "migrations" / "versions"
@@ -207,7 +207,7 @@ if "        member.country = clean_country or None\n" not in profile_handlers:
         raise SystemExit("ERRO: nao foi possivel gravar member.country em update_personal_profile.")
 
 write_file(PROFILE_HANDLERS_PATH, profile_handlers)
-print("OK: appgenesis/routes/profile/profile_handlers.py atualizado.")
+print("OK: appgenesis/routes/profile/handlers/personal.py atualizado.")
 
 
 # ###################################################################################

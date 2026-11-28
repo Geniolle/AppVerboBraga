@@ -2,7 +2,7 @@ from urllib.parse import parse_qsl, urlsplit
 from pathlib import Path
 
 from appgenesis.routes.profile.page_handler import _targets_match_for_menu_v1
-from appgenesis.routes.profile.settings_handlers import (
+from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _sanitize_users_new_settings_return_url_v1,
 )
