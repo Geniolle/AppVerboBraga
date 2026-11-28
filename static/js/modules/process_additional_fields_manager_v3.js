@@ -356,7 +356,15 @@
     }
 
     const manualCsvText = item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "");
-    return manualCsvText ? `Manual: ${manualCsvText}` : "Manual: -";
+    if (manualCsvText) {
+      return `Manual: ${manualCsvText}`;
+    }
+    const listKey = normalizeListKey_v3(item.manualListKey || item.listKey);
+    const listOption = listKey ? findProcessListOption_v3(root, listKey) : null;
+    if (listOption) {
+      return `Lista: ${listOption.textContent.trim()}`;
+    }
+    return listKey ? `Lista indisponível (${listKey})` : "Manual: -";
   }
 
   function refreshAutomaticSourceOptions_v3(root, selectedValues) {
@@ -435,6 +443,15 @@
     }
   }
 
+  // Lista da aba Listas escolhida no editor; vazio = opções escritas manualmente.
+  function findProcessListOption_v3(root, listKey) {
+    const select = getEditorRoot_v3(root).querySelector("[data-additional-field-editor-list-key]");
+    if (!select) {
+      return null;
+    }
+    return Array.from(select.options || []).find((option) => option.value === listKey && !option.dataset.appgenesisInjectedOption) || null;
+  }
+
   function resetListSourceFields_v3(root, options) {
     const editor = getEditorRoot_v3(root);
     const safeOptions = options && typeof options === "object" ? options : {};
@@ -448,6 +465,7 @@
 
     if (resetManual) {
       setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", "");
+      setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
     }
 
     if (resetAutomatic) {
@@ -591,6 +609,7 @@
     setInputValue_v3(editor, "[data-additional-field-editor-required]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", "manual");
     setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", "");
+    setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", "");
@@ -622,7 +641,17 @@
     setInputValue_v3(editor, "[data-additional-field-editor-size]", item.size || "");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", item.isRequired ? "1" : "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", item.listSourceType || "manual");
-    setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "") || "");
+    const loadedManualCsv = item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "") || "";
+    setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", loadedManualCsv);
+    // Opções escritas à mão têm prioridade no backend; sem elas, o campo usa a lista da aba Listas.
+    const loadedListKey = item.fieldType === "list" && !loadedManualCsv
+      ? normalizeListKey_v3(item.manualListKey || item.listKey)
+      : "";
+    const listKeySelect = editor.querySelector("[data-additional-field-editor-list-key]");
+    if (listKeySelect) {
+      ensureSelectOption_v3(listKeySelect, loadedListKey, `Lista indisponível (${loadedListKey})`);
+      listKeySelect.value = loadedListKey;
+    }
     setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", item.automaticSourceProcessKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", item.automaticSourceSectionKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", item.automaticSourceFieldKey || "");
@@ -662,7 +691,10 @@
     const manualItemsRaw = toSafeString_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-manual-items]")
     ).trim();
-    const manualListItemsParsed = manualItemsRaw
+    const selectedListKey = fieldType === "list" && listSourceType === "manual"
+      ? normalizeListKey_v3(getInputValue_v3(editor, "[data-additional-field-editor-list-key]"))
+      : "";
+    const manualListItemsParsed = manualItemsRaw && !selectedListKey
       ? manualItemsRaw.split(",").map(function(s) { return s.trim(); }).filter(Boolean)
       : [];
     const manualListItemsCsv = manualListItemsParsed.join(", ");
@@ -688,8 +720,8 @@
         : normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-required]")),
       size: normalizeSize_v3(getInputValue_v3(editor, "[data-additional-field-editor-size]"), fieldType),
       listSourceType: fieldType === "list" ? listSourceType : "manual",
-      manualListKey: "",
-      listKey: "",
+      manualListKey: selectedListKey,
+      listKey: selectedListKey,
       manualListItemsCsv: fieldType === "list" && listSourceType === "manual" ? manualListItemsCsv : "",
       manualListItems: fieldType === "list" && listSourceType === "manual" ? manualListItemsParsed : [],
       automaticSourceProcessKey: fieldType === "list" ? automaticSourceProcessKey : "",
@@ -820,8 +852,8 @@
       return { valid: false, message: "Informe a chave do campo." };
     }
 
-    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "manual" && !item.manualListItemsCsv) {
-      return { valid: false, message: "Informe pelo menos uma opção da lista manual." };
+    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "manual" && !item.manualListItemsCsv && !item.manualListKey) {
+      return { valid: false, message: "Selecione o Nome da Lista ou informe pelo menos uma opção da lista manual." };
     }
 
     if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "automatic") {
@@ -928,8 +960,15 @@
       buttonStyleWrap.style.display = selectedType === "flag" ? "" : "none";
     }
 
+    const listKeyWrap = editor.querySelector("[data-additional-field-list-key-wrap]");
+    const hasSelectedListKey = Boolean(getInputValue_v3(editor, "[data-additional-field-editor-list-key]"));
+
+    if (listKeyWrap) {
+      listKeyWrap.style.display = isListField && listSourceType === "manual" ? "" : "none";
+    }
+
     if (manualListWrap) {
-      manualListWrap.style.display = isListField && listSourceType === "manual" ? "" : "none";
+      manualListWrap.style.display = isListField && listSourceType === "manual" && !hasSelectedListKey ? "" : "none";
     }
 
     const isSourceGroupVisible = isListField && (listSourceType === "automatic" || listSourceType === "field_list");
@@ -1297,6 +1336,13 @@
     if (listSourceTypeSelect) {
       listSourceTypeSelect.addEventListener("change", () => {
         refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    const listKeySelect = editor.querySelector("[data-additional-field-editor-list-key]");
+    if (listKeySelect) {
+      listKeySelect.addEventListener("change", () => {
         updateEditorVisibility_v3(root);
       });
     }

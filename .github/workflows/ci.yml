@@ -42,6 +42,7 @@ jobs:
             --ignore=tests/test_process_submenu_runtime_stage6_browser.py \
             --ignore=tests/test_configurable_items_pagination_scenarios_v1.py \
             --ignore=tests/test_process_editor_stay_after_save_cancel.py \
+            --ignore=tests/test_additional_field_process_list_selector_browser.py \
             --ignore=soma_cartao_ocr/test_core.py
   browser:
     # Testes Selenium (excluidos do job "test"): app real + Postgres vazio + Chrome headless.
@@ -101,7 +102,8 @@ jobs:
             tests/test_process_navigation_state_stage4_browser.py \
             tests/test_process_submenu_runtime_stage6_browser.py \
             tests/test_configurable_items_pagination_scenarios_v1.py \
-            tests/test_process_editor_stay_after_save_cancel.py
+            tests/test_process_editor_stay_after_save_cancel.py \
+            tests/test_additional_field_process_list_selector_browser.py
       - name: App log
         if: always()
         run: tail -n 200 uvicorn.log
