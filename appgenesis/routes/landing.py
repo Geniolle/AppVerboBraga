@@ -39,7 +39,7 @@ DEPARTAMENTOS = [
             {"titulo": "Aula - Somos Curados em Cristo", "texto": "Texto de exemplo para a notícia 3.", "url": "#", "imagem": "/static/img/noticias/aula-somos-curados-em-cristo.jpg"},
             {"titulo": "Aula - Fé para a Cura", "texto": "Texto de exemplo para a notícia 4.", "url": "#", "imagem": "/static/img/noticias/aula-fe-para-a-cura.jpg"},
             {"titulo": "Aula - Como Manter a sua Cura", "texto": "Texto de exemplo para a notícia 5.", "url": "#", "imagem": "/static/img/noticias/aula-como-manter-a-sua-cura.jpg"},
-            {"titulo": "Título da notícia 6", "texto": "Texto de exemplo para a notícia 6.", "url": "#", "imagem": "/static/img/centro-de-cura-logo.jpg"},
+            {"titulo": "Aula - A Unção da Cura", "texto": "Texto de exemplo para a notícia 6.", "url": "#", "imagem": "/static/img/noticias/aula-a-uncao-da-cura.jpg"},
         ],
     },
     {
