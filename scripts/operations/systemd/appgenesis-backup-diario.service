@@ -1,0 +1,9 @@
+[Unit]
+Description=AppGenesis - backup diario da BD de producao
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+ExecStart=/opt/appgenesis/app/scripts/operations/prod_daily_backup.sh
