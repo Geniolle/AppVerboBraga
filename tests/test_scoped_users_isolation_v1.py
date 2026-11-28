@@ -84,3 +84,38 @@ def test_system_admin_list_filters_types_in_sql():
     session, *_ = _seed()
     result = _resolve_scoped_users(session, {}, False, [], system_types={"legado", "owner"})
     assert _emails(result) == ["a.admin@t.test", "owner@t.test"]
+
+
+def _member_id(session, email):
+    return session.query(User).filter(User.login_email == email).one().member_id
+
+
+def test_owner_manages_system_admins_and_own_entity_but_not_legacy_users():
+    from appgenesis.repositories.user_repository import member_is_within_permissions
+
+    session, owner, a, b = _seed()
+    perms = {
+        "can_manage_tenant_structure": True,
+        "can_manage_all_entities": True,
+        "allowed_data_entity_ids": {owner.id},
+        "allowed_entity_ids": {owner.id, a.id, b.id},
+    }
+    assert member_is_within_permissions(session, _member_id(session, "owner@t.test"), perms)
+    assert member_is_within_permissions(
+        session, _member_id(session, "a.admin@t.test"), perms, system_admin_target=True
+    )
+    # Utilizador comum de entidade legado: dados operacionais fechados ao owner.
+    assert not member_is_within_permissions(session, _member_id(session, "a.user@t.test"), perms)
+
+
+def test_non_owner_manages_only_session_entity_members():
+    from appgenesis.repositories.user_repository import member_is_within_permissions
+
+    session, _, a, b = _seed()
+    perms = {"allowed_entity_ids": {a.id}}
+    assert member_is_within_permissions(session, _member_id(session, "a.user@t.test"), perms)
+    assert not member_is_within_permissions(session, _member_id(session, "b.user@t.test"), perms)
+    # system_admin_target nao alarga o escopo de quem nao e owner.
+    assert not member_is_within_permissions(
+        session, _member_id(session, "b.user@t.test"), perms, system_admin_target=True
+    )

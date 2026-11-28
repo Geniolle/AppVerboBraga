@@ -331,6 +331,8 @@ Cada etapa cabe num PR. Ordem obrigatória. Não avançar com teste vermelho, va
 
 ### Etapa 3 — Queries de `routes/users/*` para repositório
 
+- **Concluída em 2026-11-28.** 0 `session.execute/scalar/get`/`select(` em `routes/users`. Regra de segurança nova em `user_repository.member_is_within_permissions`: o owner gere administradores do sistema (`legado`/`owner`) de qualquer entidade e os membros das entidades onde tem dados; deixa de poder editar/apagar/reenviar convite a utilizadores comuns de entidades legado por POST direto.
+
 - Criar `appgenesis/repositories/user_repository.py` (já existe; expandir) e mover `select/update/delete` dos handlers de utilizadores.
 - Handlers chamam `use_cases/users/*`.
 - Critério: `grep -n "session.execute\|select(" appgenesis/routes/users` sem resultados de acesso direto; testes `test_create_user_use_case.py` e de utilizadores verdes.

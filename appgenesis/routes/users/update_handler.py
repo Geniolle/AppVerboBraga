@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import secrets
-from datetime import date, datetime, timezone
+from datetime import date
 from typing import Any
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
+from fastapi import Form, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -20,19 +18,15 @@ from appgenesis.services.user_member import member_status_for_user_account_statu
 from appgenesis.services.user_system import is_owner_system_v1, normalize_user_system_type_v1
 from appgenesis.models import (
     Entity,
-    Member,
     MemberEntity,
     MemberEntityStatus,
-    MemberStatus,
-    User,
     UserAccountStatus,
 )
+from appgenesis.repositories import user_repository as users_repo
 
 from appgenesis.routes.users.router import router
 from appgenesis.routes.users.helpers import (
     _ensure_not_last_active_admin_for_member,
-    _get_active_entity_ids_for_member,
-    _member_is_within_permissions,
     _resolve_entity_from_user_email,
 )
 from appgenesis.services.permissions import is_entity_within_permissions
@@ -62,12 +56,7 @@ def _resolve_explicit_user_entity_v1(
     if not is_entity_within_permissions(parsed_entity_id, permissions):
         return None, "Não tem permissão para associar utilizador a esta entidade."
 
-    entity = session.execute(
-        select(Entity).where(
-            Entity.id == parsed_entity_id,
-            Entity.is_active.is_(True),
-        )
-    ).scalar_one_or_none()
+    entity = users_repo.get_active_entity(session, parsed_entity_id)
     if entity is None:
         return None, "Entidade selecionada não existe ou está inativa."
     return entity, ""
@@ -136,7 +125,7 @@ def update_user(
             selected_entity_id,
         )
 
-        user = session.get(User, parsed_user_id)
+        user = users_repo.get_user_by_id(session, parsed_user_id)
         if user is None:
             return RedirectResponse(
                 url=build_return_url_v1(
@@ -156,10 +145,11 @@ def update_user(
             else normalize_user_system_type_v1(user.system_type)
         )
 
-        if not _member_is_within_permissions(
+        if not users_repo.member_is_within_permissions(
             session,
             int(user.member_id),
             entity_permissions,
+            system_admin_target=str(user.system_type or "") in users_repo.SYSTEM_ADMIN_TYPES,
         ):
             return RedirectResponse(
                 url=build_return_url_v1(
@@ -173,7 +163,7 @@ def update_user(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        member = session.get(Member, user.member_id)
+        member = user.member
         if member is None:
             return RedirectResponse(
                 url=build_return_url_v1(
@@ -202,7 +192,7 @@ def update_user(
             entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))
         )
         if not can_manage_tenant_structure and clean_entity_id.isdigit() and user.member_id:
-            current_entity_ids = _get_active_entity_ids_for_member(session, user.member_id)
+            current_entity_ids = users_repo.get_active_entity_ids_for_member(session, user.member_id)
             if int(clean_entity_id) not in current_entity_ids:
                 errors.append("Apenas o owner pode alterar a entidade do utilizador.")
         selected_entity = None
@@ -232,28 +222,13 @@ def update_user(
         # 3. A entidade atual pode estar inativa; ainda assim deve ser mantida para permitir
         #    alteração de estado do utilizador sem forçar nova resolução por domínio.
         if selected_entity is None and not clean_entity_id:
-            current_entity_stmt = (
-                select(Entity)
-                .join(MemberEntity, MemberEntity.entity_id == Entity.id)
-                .where(MemberEntity.member_id == member.id)
-                .order_by(MemberEntity.id.asc())
+            selected_entity = users_repo.get_first_linked_entity(
+                session,
+                member.id,
+                None
+                if entity_permissions.get("can_manage_all_entities")
+                else sorted(set(entity_permissions.get("allowed_entity_ids") or set())),
             )
-
-            if not entity_permissions.get("can_manage_all_entities"):
-                allowed_entity_ids = sorted(
-                    set(entity_permissions.get("allowed_entity_ids") or set())
-                )
-
-                if allowed_entity_ids:
-                    current_entity_stmt = current_entity_stmt.where(
-                        Entity.id.in_(allowed_entity_ids)
-                    )
-                else:
-                    current_entity_stmt = current_entity_stmt.where(Entity.id == -1)
-
-            selected_entity = session.execute(
-                current_entity_stmt.limit(1)
-            ).scalar_one_or_none()
 
             if selected_entity is not None:
                 entity_resolution_error = ""
@@ -263,22 +238,10 @@ def update_user(
         if selected_entity is None and entity_resolution_error:
             errors.append(entity_resolution_error)
 
-        duplicate_member_id = session.scalar(
-            select(Member.id).where(
-                func.lower(Member.email) == clean_email,
-                Member.id != member.id,
-            )
-        )
-        if duplicate_member_id is not None:
+        if users_repo.find_other_member_id_by_email(session, clean_email, member.id) is not None:
             errors.append("Já existe um membro com este email.")
 
-        duplicate_user_id = session.scalar(
-            select(User.id).where(
-                func.lower(User.login_email) == clean_email,
-                User.id != user.id,
-            )
-        )
-        if duplicate_user_id is not None:
+        if users_repo.find_other_user_id_by_email(session, clean_email, user.id) is not None:
             errors.append("Já existe um utilizador com este email de login.")
 
         if errors:
@@ -335,11 +298,7 @@ def update_user(
         member.member_status = member_status_for_user_account_status(clean_account_status)
 
         if selected_entity is not None:
-            member_links = session.execute(
-                select(MemberEntity)
-               .where(MemberEntity.member_id == member.id)
-                .order_by(MemberEntity.id.asc())
-            ).scalars().all()
+            member_links = users_repo.list_member_links(session, member.id)
             primary_link = member_links[0] if member_links else None
             if primary_link is None:
                 session.add(

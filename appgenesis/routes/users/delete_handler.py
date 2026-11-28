@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from fastapi import Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 
 from appgenesis.db.session import SessionLocal
@@ -10,18 +9,11 @@ from appgenesis.services.auth import is_admin_user
 from appgenesis.services.navigation_context import build_return_url_v1
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import get_current_user, get_session_entity_id
-from appgenesis.models import (
-    Member,
-    MemberEntity,
-    User,
-    UserAccountStatus,
-)
+from appgenesis.models import UserAccountStatus
+from appgenesis.repositories import user_repository as users_repo
 
 from appgenesis.routes.users.router import router
-from appgenesis.routes.users.helpers import (
-    _ensure_not_last_active_admin_for_member,
-    _member_is_within_permissions,
-)
+from appgenesis.routes.users.helpers import _ensure_not_last_active_admin_for_member
 
 
 @router.post("/users/delete", response_class=HTMLResponse)
@@ -88,7 +80,7 @@ def delete_user(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        user = session.get(User, parsed_user_id)
+        user = users_repo.get_user_by_id(session, parsed_user_id)
         if user is None:
             return RedirectResponse(
                 url=build_return_url_v1(
@@ -102,10 +94,11 @@ def delete_user(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        if not _member_is_within_permissions(
+        if not users_repo.member_is_within_permissions(
             session,
             int(user.member_id),
             entity_permissions,
+            system_admin_target=str(user.system_type or "") in users_repo.SYSTEM_ADMIN_TYPES,
         ):
             return RedirectResponse(
                 url=build_return_url_v1(
@@ -149,17 +142,9 @@ def delete_user(
         session.delete(user)
         session.flush()
 
-        # Verificar se o membro tem outros utilizadores
-        other_users_count = session.scalar(
-            select(func.count(User.id)).where(User.member_id == member_id)
-        ) or 0
-
-        if other_users_count == 0:
-            # Sem outros utilizadores: apagar ligações de entidade e o próprio membro
-            session.execute(delete(MemberEntity).where(MemberEntity.member_id == member_id))
-            member = session.get(Member, member_id)
-            if member is not None:
-                session.delete(member)
+        # Sem outros utilizadores: apagar ligações de entidade e o próprio membro
+        if users_repo.count_users_for_member(session, member_id) == 0:
+            users_repo.delete_member_with_links(session, member_id)
 
         try:
             session.commit()

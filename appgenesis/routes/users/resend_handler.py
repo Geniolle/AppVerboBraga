@@ -4,18 +4,10 @@ from typing import Any
 
 from fastapi import Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import select
 
 from appgenesis.db.session import SessionLocal
-from appgenesis.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    User,
-    UserAccountStatus,
-)
-from appgenesis.routes.users.helpers import _member_is_within_permissions
+from appgenesis.models import UserAccountStatus
+from appgenesis.repositories import user_repository as users_repo
 from appgenesis.routes.users.router import router
 from appgenesis.services.auth import (
     build_user_invite_link,
@@ -105,11 +97,7 @@ def _prepare_user_invite_payload(
             selected_entity_id,
         )
 
-        user_row = session.execute(
-            select(User.id, User.login_email, User.account_status, User.member_id).where(
-                User.id == parsed_user_id
-            )
-        ).one_or_none()
+        user_row = users_repo.get_user_by_id(session, parsed_user_id)
         if user_row is None:
             return None, _redirect_admin_users(
                 error="Utilizador não encontrado.",
@@ -126,10 +114,11 @@ def _prepare_user_invite_payload(
                 return_target=return_target,
             )
 
-        if not _member_is_within_permissions(
+        if not users_repo.member_is_within_permissions(
             session,
             int(user_row.member_id),
             entity_permissions,
+            system_admin_target=str(user_row.system_type or "") in users_repo.SYSTEM_ADMIN_TYPES,
         ):
             return None, _redirect_admin_users(
                 error="Sem permissão para gerar convite deste utilizador.",
@@ -138,7 +127,7 @@ def _prepare_user_invite_payload(
                 return_target=return_target,
             )
 
-        member = session.get(Member, int(user_row.member_id))
+        member = user_row.member
         if member is None:
             return None, _redirect_admin_users(
                 error="Membro associado ao utilizador não encontrado.",
@@ -148,29 +137,18 @@ def _prepare_user_invite_payload(
             )
 
         allowed_entity_ids = sorted(set(entity_permissions.get("allowed_entity_ids") or set()))
-        entity_links_stmt = (
-            select(MemberEntity.entity_id, Entity.name)
-            .join(Entity, Entity.id == MemberEntity.entity_id)
-            .where(
-                MemberEntity.member_id == int(user_row.member_id),
-                MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-                Entity.is_active.is_(True),
+        if not entity_permissions.get("can_manage_all_entities") and not allowed_entity_ids:
+            return None, _redirect_admin_users(
+                error="Sem permissão para gerar convite deste utilizador.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
             )
-            .order_by(MemberEntity.id.asc())
+        entity_link_rows = users_repo.list_active_entity_links(
+            session,
+            int(user_row.member_id),
+            None if entity_permissions.get("can_manage_all_entities") else allowed_entity_ids,
         )
-        if not entity_permissions.get("can_manage_all_entities"):
-            if not allowed_entity_ids:
-                return None, _redirect_admin_users(
-                    error="Sem permissão para gerar convite deste utilizador.",
-                    return_menu=return_menu,
-                    return_admin_tab=return_admin_tab,
-                    return_target=return_target,
-                )
-            entity_links_stmt = entity_links_stmt.where(
-                MemberEntity.entity_id.in_(allowed_entity_ids)
-            )
-
-        entity_link_rows = session.execute(entity_links_stmt).all()
         if not entity_link_rows:
             return None, _redirect_admin_users(
                 error="Utilizador sem entidade ativa para gerar convite.",
