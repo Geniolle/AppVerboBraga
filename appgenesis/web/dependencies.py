@@ -10,10 +10,11 @@ pulling in the `appgenesis.services` hub (`appgenesis.core` foi removido).
 
 from typing import Any
 
-from fastapi import Request
+from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from appgenesis.db.session import SessionLocal
+from appgenesis.domains.modules.permissions import require_module_access
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import (
     get_current_user,
@@ -66,7 +67,24 @@ def get_current_user_permissions(
     )
 
 
+def require_module(module_key: str):
+    """Dependency para rotas de modulo de negocio: 401 sem login, 403 sem o modulo ativo.
+
+    Uso: ``@router.get("/tesouraria", dependencies=[Depends(require_module("tesouraria"))])``.
+    A entidade vem da sessao revalidada por ``get_current_user`` (nunca do pedido).
+    """
+
+    def dependency(request: Request) -> None:
+        with SessionLocal() as session:
+            if get_current_user(request, session) is None:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão expirada.")
+            require_module_access(session, get_session_entity_id(request), module_key)
+
+    return dependency
+
+
 __all__ = [
+    "require_module",
     "get_db_session",
     "get_current_user_dict",
     "get_selected_entity_id",

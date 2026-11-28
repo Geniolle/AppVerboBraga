@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from appgenesis.domains.modules.repositories import (
@@ -51,3 +52,17 @@ def resolve_module_access(
         return ModuleAccessDenied(reason="Acesso ao módulo expirou.")
 
     return ModuleAccessGranted(module_key=module_key)
+
+
+def require_module_access(session: Session, entity_id: int | None, module_key: str) -> None:
+    """Recusa (403) quando a entidade nao tem o modulo ativo. Sem entidade: recusa (fail closed).
+
+    `entity_id` tem de ser a entidade da sessao ja validada (`get_current_user`), nunca um valor
+    vindo do formulario ou do URL.
+    """
+
+    if entity_id is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Sem entidade selecionada.")
+    result = resolve_module_access(session, int(entity_id), module_key)
+    if isinstance(result, ModuleAccessDenied):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=result.reason)

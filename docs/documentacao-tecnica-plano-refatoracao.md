@@ -387,6 +387,8 @@ Cada etapa cabe num PR. Ordem obrigatória. Não avançar com teste vermelho, va
 
 ### Etapa 6 — Módulos pagos (Fase 5 do roadmap)
 
+- **Concluída em 2026-11-28 (guard pronto; ainda sem rotas de módulo).** `domains/modules/permissions.require_module_access(session, entity_id, module_key)` devolve 403 quando o módulo não existe ou está inativo, quando a entidade não tem entitlement `active`, ou quando este ainda não começou ou já expirou; sem entidade também recusa (fail closed). Módulos `is_core` passam sempre. Nas rotas usa-se `web/dependencies.require_module("<module_key>")`: chama `get_current_user` (401 sem login), que revalida a entidade da sessão, e só depois verifica o módulo. Assim, um utilizador não usa o módulo de outra entidade forjando `entity_id`. Exemplo: `@router.get("/tesouraria", dependencies=[Depends(require_module("tesouraria"))])`. Testes: `tests/test_require_module_v1.py` (ativo, inativo, expirado, core, inexistente, sem login, entidade forjada) e `tests/test_module_access.py`. Regra para o primeiro módulo: toda a rota do módulo (GET e POST) leva a dependency; esconder o menu não chega.
+
 - Decidir a relação entre `entity_module_entitlements` e `admin_subprocesses/registry.py` (ambos resolvem "o que está ativo"). Decisão registrada: `registry.py` continua a controlar subprocessos administrativos; entitlements controlam módulos de negócio (tesouraria, eventos, …). Não duplicar regras.
 - Implementar `require_module_access(session, entity_id, module_key)` e chamá-lo nas rotas de módulo.
 - Critério: rota de módulo inativo devolve 403 pelo backend (§9 de `AGENTS.md`); teste por entidade ativa e inativa.
