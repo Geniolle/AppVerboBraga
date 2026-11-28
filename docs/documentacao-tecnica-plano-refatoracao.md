@@ -298,10 +298,19 @@ Estas decisões valem para o plano. Se o agente encontrar outro caminho melhor, 
 - Regra: antes de mudar `system_type` em produção, confirmar que a entidade tem uma função ativa para o perfil de destino (o filtro está ligado).
 - Reversão: remover a função `legado` em Funções administrativas da 1001, ou restaurar o backup.
 
+### 9.1d Membros revertidos para `default` (2026-11-28)
+
+- O owner confirmou que os 93 utilizadores movidos em §9.1 são **membros comuns**, não administradores. A mudança de §9.1 foi revertida: os ids que eram `default` no backup `appgenesis-prod-pre-move-legado-admins-20261127-150953.sql.gz` e estavam `legado` voltaram a `default` (93 linhas, transação com verificação). Backup antes: `appgenesis-prod-pre-revert-membros-default-20261128-083129.sql.gz`.
+- Estado: `default` 94, `legado` 1 (utilizador 4, IT VERBO BRAGA, administrador da 1001), `owner` 2 (1000).
+- Acesso verificado: 72 membros ativos `default` da 1001 e o utilizador 4 com `agenda`, `home`, `meu_perfil` (funções `user` e `legado`). Aba Administradores do sistema: owner 1000 + IT VERBO BRAGA 1001.
+- Pré-existente, não alterado: o utilizador id 3 (`default`, entidade 1000) não tem menus porque a 1000 não tem funções.
+- Regra: `legado` = administrador da entidade legado, não membro.
+
 ### 9.2 Interpretação do pedido "todos os admins na aba Administradores do sistema"
 
 - Admin = `system_type IN ('legado','owner')`. Motivo: `owner` aparece com o rótulo "Admin" na coluna PERFIL NO SISTEMA; `legado` é o perfil dos administradores de sistemas legados.
 - Utilizador local de entidade legada continua na lista da entidade (não é removido da aba Utilizador).
+- (2026-11-28) Membros de entidades legado são `default`; só administradores são `legado` (ver §9.1d).
 - Aba Administradores do sistema é owner-only e não aplica escopo de entidade da sessão (§5.5).
 
 ### 9.3 Admin legado e acesso ao menu
