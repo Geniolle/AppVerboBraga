@@ -76,10 +76,10 @@ def test_cancel_buttons_stay_in_editor_and_list_column_cancel_is_local() -> None
     # de saida resolvidas no template, nao mais o "settings-menu-edit-card" estatico.
     assert html_text.count(
         'data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"'
-    ) == 7
+    ) == 6  # 6 abas com formulario; "Geral" so lista os campos
     assert html_text.count(
         'data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"'
-    ) == 7
+    ) == 6  # 6 abas com formulario; "Geral" so lista os campos
     assert '"[data-process-list-column-editor-cancel]"' in controller_text
 
 
@@ -160,6 +160,7 @@ def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
         driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-items]").send_keys("A, B, C")
         submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
         submit.click()
+        wait.until(EC.staleness_of(submit))  # Guardar recarrega a pagina; ler a tabela so depois
         wait.until(
             lambda drv: "Lista teste stay"
             in drv.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]").text

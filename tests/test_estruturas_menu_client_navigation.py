@@ -400,6 +400,14 @@ def _open_process_editor_from_list_v1(
     wait.until(lambda drv: "settings_edit_key" in _current_href_v1(drv))
 
 
+def _activate_editor_tab_v1(driver: webdriver.Chrome, wait: WebDriverWait, tab: str) -> None:
+    driver.find_element(By.CSS_SELECTOR, f"[data-process-edit-tab='{tab}']").click()
+    wait.until(
+        lambda drv: tab
+        in (drv.find_element(By.CSS_SELECTOR, ".process-edit-pane.active").get_attribute("data-process-edit-pane"))
+    )
+
+
 def _editor_card_closed_v1(driver: webdriver.Chrome) -> bool:
     # O editor pode fechar de duas formas legitimas: escondido via JS (Cancelar, sem reload)
     # ou ausente do DOM porque o backend so renderiza a section quando settings_edit_data
@@ -430,8 +438,10 @@ def test_process_editor_cancel_returns_to_origin_list_on_multiple_tabs() -> None
         _login_admin_v1(driver, wait)
         _open_estruturas_menu_list_v1(driver, wait)
 
-        # (a) Cancelar na aba "Geral" (aba ativa por omissao).
+        # (a) Cancelar na aba "Sessao". A aba "Geral" (por omissao) so lista os campos e nao
+        # tem Guardar/Cancelar.
         _open_process_editor_from_list_v1(driver, wait)
+        _activate_editor_tab_v1(driver, wait, "sessao")
         driver.find_element(
             By.CSS_SELECTOR, ".process-edit-pane.active .action-btn-cancel"
         ).click()
@@ -471,8 +481,10 @@ def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> 
 
         _open_process_editor_from_list_v1(driver, wait)
 
-        # Guarda na aba "Geral" sem tocar em nenhum campo -- reenvia os mesmos valores ja
-        # carregados no formulario, cobrindo "Guardar" sem alterar dados criticos.
+        # Guarda na aba "Sessao" sem tocar em nenhum campo -- reenvia os mesmos valores ja
+        # carregados no formulario, cobrindo "Guardar" sem alterar dados criticos. ("Geral" so
+        # lista os campos e nao tem formulario.)
+        _activate_editor_tab_v1(driver, wait, "sessao")
         driver.find_element(
             By.CSS_SELECTOR, ".process-edit-pane.active .action-btn[type='submit']"
         ).click()

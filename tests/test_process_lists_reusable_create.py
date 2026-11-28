@@ -82,11 +82,8 @@ def test_process_lists_editor_uses_expected_computed_grid_by_viewport() -> None:
         stylesheet_urls = driver.execute_script(
             "return Array.from(document.styleSheets, (sheet) => sheet.href || '');"
         )
-        assert any(
-                "configurable_items_manager_v1.css"
-                "?v=20260713-shared-list-card-header-v1" in url
-            for url in stylesheet_urls
-        )
+        # O cache buster e o asset_version do arranque (nao um valor fixo).
+        assert any("/static/css/modules/configurable_items_manager_v1.css?v=" in url for url in stylesheet_urls)
     finally:
         driver.quit()
 
