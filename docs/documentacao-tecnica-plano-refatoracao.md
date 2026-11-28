@@ -306,6 +306,12 @@ Estas decisões valem para o plano. Se o agente encontrar outro caminho melhor, 
 - Pré-existente, não alterado: o utilizador id 3 (`default`, entidade 1000) não tem menus porque a 1000 não tem funções.
 - Regra: `legado` = administrador da entidade legado, não membro.
 
+### 9.1e Perfil "Administrativo" na 1001 (2026-11-28)
+
+- Depois do deploy da etapa 7 (#415): criado na 1001 o perfil de autorização "Administrativo" (key `administrativo`, menu `administrativo`, ações exibir/editar/criar/eliminar) e acrescentado à função `legado`. Mesmo formato dos registos existentes (texto JSON em `entity_menu_data`). Backup: `appgenesis-prod-pre-perfil-administrativo-1001-20261128-085621.sql.gz`.
+- Verificação em produção: utilizador 4 (IT VERBO BRAGA) é admin de entidade, com Administrativo + agenda/home/meu_perfil; 72 membros ativos com os mesmos 3 menus e sem admin; owner inalterado.
+- Reversão: remover `administrativo` da função `legado` (Funções administrativas da 1001, como owner) ou restaurar o backup.
+
 ### 9.2 Interpretação do pedido "todos os admins na aba Administradores do sistema"
 
 - Admin = `system_type IN ('legado','owner')`. Motivo: `owner` aparece com o rótulo "Admin" na coluna PERFIL NO SISTEMA; `legado` é o perfil dos administradores de sistemas legados.
