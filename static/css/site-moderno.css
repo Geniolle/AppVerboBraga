@@ -629,6 +629,10 @@ body {
   margin: 0 0 16px;
 }
 
+.vb-sec--escuro .vb-dupla p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
 /* Cultos */
 .vb-cultos {
   display: grid;
