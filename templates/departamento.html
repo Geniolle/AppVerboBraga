@@ -59,6 +59,20 @@
       </div>
       {% endif %}
 
+      {% if d.cards %}
+      <div class="vb-cards-animados">
+        {% for c in d.cards %}
+        <article class="vb-card-animado" style="--i: {{ loop.index0 }}">
+          <img src="{{ c.imagem }}" alt="" loading="lazy" width="600" height="450">
+          <div class="vb-card-animado__corpo">
+            <h3>{{ c.titulo }}</h3>
+            <p>{{ c.texto }}</p>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       {% if d.acoes and not d.hero %}
       <div class="vb-depto__acoes vb-depto-pagina__acoes">
         {% for acao in d.acoes %}
