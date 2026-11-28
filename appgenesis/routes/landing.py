@@ -34,7 +34,7 @@ DEPARTAMENTOS = [
         ],
         "fotos": [],
         "noticias": [
-            {"titulo": "A Primeira edição do centro de cura", "texto": "Texto de exemplo para a notícia 1.", "url": "#", "imagem": "/static/img/noticias/primeira-edicao-centro-de-cura.jpg"},
+            {"titulo": "Oração - Imposição de mãos", "texto": "Texto de exemplo para a notícia 1.", "url": "#", "imagem": "/static/img/noticias/oracao-imposicao-de-maos.jpg"},
             {"titulo": "Aula - Amor Curador de Deus", "texto": "Texto de exemplo para a notícia 2.", "url": "#", "imagem": "/static/img/noticias/aula-amor-curador-de-deus.jpg"},
             {"titulo": "Aula - Somos Curados em Cristo", "texto": "Texto de exemplo para a notícia 3.", "url": "#", "imagem": "/static/img/noticias/aula-somos-curados-em-cristo.jpg"},
             {"titulo": "Aula - Fé para a Cura", "texto": "Texto de exemplo para a notícia 4.", "url": "#", "imagem": "/static/img/noticias/aula-fe-para-a-cura.jpg"},
