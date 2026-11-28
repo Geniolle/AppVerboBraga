@@ -1,0 +1,683 @@
+/* new_user/11_process_lists_agenda.css: Processos de lista, edicao inline, agenda, ensaio e musicas. Carregar pela ordem numerada (cascata). */
+/* Dados institucionais: modo visualizacao por defeito; o lapis (profile-edit-toggle) abre o formulario. */
+#empresa-card:not(.editing) .profile-edit-form {
+  display: none !important;
+}
+#empresa-card.editing .profile-readonly {
+  display: none;
+}
+
+
+/* Processos de lista: linha clicavel abre a edicao do registo. */
+.dynamic-process-list-row-clickable-v1 {
+  cursor: pointer;
+}
+
+/* Processos de lista: o card generico "Criar/Editar" e o formulario ficam ocultos; o formulario abre inline na linha. */
+#dynamic-process-card[data-hidden-by-list-v1="1"] {
+  display: none !important;
+}
+
+/* Formulario de processo de lista aberto logo abaixo da linha clicada. */
+.dynamic-process-inline-editor-row .profile-edit-form {
+  display: block !important;
+}
+}
+
+/* "+" junto ao titulo do cartao de processo de lista. */
+.dynamic-process-list-title-group-v1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Lista de processo: "+" logo apos o titulo; o titulo nao cresce e a area de busca fica a direita. */
+.appgenesis-card-header-v1 > h2:has(+ .dynamic-process-list-create-btn-v1) {
+  flex: 0 0 auto;
+}
+.appgenesis-card-header-v1 > .dynamic-process-list-create-btn-v1 {
+  margin-right: auto !important;
+}
+
+/* Formulario de processo de lista (inline na linha): 3 campos por linha, como nos processos dinamicos. */
+.dynamic-process-inline-editor-row .profile-edit-form .personal-grid {
+  grid-template-columns: 160px 160px minmax(0, 1fr);
+}
+.dynamic-process-inline-editor-row .profile-edit-form .field.full {
+  grid-column: 1 / -1;
+}
+@media (max-width: 900px) {
+  .dynamic-process-inline-editor-row .profile-edit-form .personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .dynamic-process-inline-editor-row .profile-edit-form .personal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Agenda: grade de 12 colunas. Linha 1: Tipo | Organizador (max 160px) | Titulo (8). Linha 2: 4 campos iguais (3). Linha 3: Detalhes (12). Linha 4: Localizacao | Morada (6). Linha 5: Inserir | Atribuir | Precisa (4). */
+#dynamic-process-edit-form[data-menu-key="agenda"] .personal-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key] {
+  grid-column: span 3;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_tipo_de_agendamento"] {
+  grid-column: span 2;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_organizador"] {
+  grid-column: span 2;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_titulo_da_agenda"] {
+  grid-column: span 8;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_data_do_agendamento"] {
+  grid-column: span 3;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_hora_de_inicio"] {
+  grid-column: span 3;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_hora_de_fim"] {
+  grid-column: span 3;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_data_fim"] {
+  grid-column: span 3;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_localizacao"] {
+  grid-column: span 6;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_morada"] {
+  grid-column: span 6;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_detalhes_do_agendamento"] {
+  grid-column: span 12;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_inserir_data_na_escala"] {
+  grid-column: span 4;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_atribuir_aos_recados"] {
+  grid-column: span 4;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_precisa_de_apoio_dos_departamentos"] {
+  grid-column: span 4;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_tipo_de_agendamento"],
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_organizador"] {
+  max-width: 160px;
+}
+@media (max-width: 720px) {
+  #dynamic-process-edit-form[data-menu-key="agenda"] .personal-grid {
+    grid-template-columns: 1fr;
+  }
+  #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key] {
+    grid-column: auto;
+  }
+}
+
+/* Campos desativados por regra (editable_when) ficam cinzentos: aparecem fechados. */
+#dynamic-process-edit-form .field input:disabled,
+#dynamic-process-edit-form .field select:disabled,
+#dynamic-process-edit-form .field textarea:disabled {
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* Linha de edicao inline (todos os processos): fundo cinzento fixo, sem depender do hover. */
+.admin-subprocess-table-v1 tbody tr.dynamic-process-inline-editor-row,
+.admin-subprocess-table-v1 tbody tr.dynamic-process-inline-editor-row:hover {
+  background: #f8fafc;
+}
+
+/* Cartao de edicao inline (Administrativo > Utilizador): mesmo tom cinzento da linha de edicao. */
+.admin-subprocess-table-v1 tbody tr.admin-subprocess-inline-editor-row td > .card {
+  background: #f8fafc;
+}
+
+/* Utilizador: coluna EMAIL mais larga para o endereco caber inteiro (ativos e inativos alinhados). */
+#admin-users-table td[data-admin-column-key="email"],
+#admin-users-table th[data-admin-column-key="email"],
+#inactive-users-table td[data-admin-column-key="email"],
+#inactive-users-table th[data-admin-column-key="email"] {
+  min-width: 260px;
+  max-width: 260px;
+}
+
+/* Utilizador: coluna PERFIL NO SISTEMA ajustada ao conteudo (sobra largura para o Nome). */
+#admin-users-table td[data-admin-column-key="system_profile"],
+#admin-users-table th[data-admin-column-key="system_profile"],
+#inactive-users-table td[data-admin-column-key="system_profile"],
+#inactive-users-table th[data-admin-column-key="system_profile"] {
+  min-width: 0;
+  max-width: none;
+  width: 1%;
+}
+
+/* Ensaio: linha 1 com Data, Horario e Responsavel (3 colunas). Campo Musicas ocupa a linha inteira. */
+#dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#dynamic-process-edit-form[data-menu-key="ensaio"] .field[data-process-field-key="custom_responsavel"] {
+  grid-column: span 1;
+}
+@media (max-width: 900px) {
+  #dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  #dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Botao "+" para revelar o proximo par de campos (ex.: Musica/Tom no Ensaio). */
+#dynamic-process-edit-form .dynamic-process-add-pair-btn-v1 {
+  align-self: end;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px dashed #4f46e5;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #4f46e5;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Campo "rows" (ex.: Musica + Tom): cabecalho, linhas e botao "-" alinhados. */
+#dynamic-process-edit-form .dynamic-process-rows-container-v1 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#dynamic-process-edit-form .dynamic-process-row-head-v1 {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+#dynamic-process-edit-form .dynamic-process-rows-list-v1 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#dynamic-process-edit-form .dynamic-process-row-v1 {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+#dynamic-process-edit-form .dynamic-process-row-v1 input {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+}
+#dynamic-process-edit-form .dynamic-process-row-v1 input:disabled {
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+#dynamic-process-edit-form .dynamic-process-row-remove-v1 {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #b9cdf5;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #174ea6;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Botao "+" (icone) para adicionar linha em campos "rows". */
+#dynamic-process-edit-form .dynamic-process-row-add-v1 {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #b9cdf5;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #174ea6;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+/* Musicas: 4 campos por linha; Url ao lado da Versao e o campo mais largo. */
+#dynamic-process-edit-form[data-menu-key="musicas"] .personal-grid {
+  grid-template-columns: minmax(0, 1fr) 135px minmax(0, 1.4fr) minmax(0, 1.6fr);
+}
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key] {
+  grid-column: span 1;
+}
+@media (max-width: 900px) {
+  #dynamic-process-edit-form[data-menu-key="musicas"] .personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  #dynamic-process-edit-form[data-menu-key="musicas"] .personal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Musicas: o campo Letra ocupa a linha inteira (linha 2). */
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_letra"] {
+  grid-column: 1 / -1;
+}
+
+/* Musicas: linha 3 = Status Projecao | Obsoleta | Comentarios (ocupa o resto da linha). */
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_status"] {
+  order: 1;
+}
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_obsoleta"] {
+  order: 2;
+}
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_comentarios"] {
+  order: 3;
+  grid-column: span 2;
+}
+
+/* Musicas: campo Letra como area de texto de 8 linhas, linha inteira. */
+#dynamic-process-edit-form[data-menu-key="musicas"] textarea[name="process_field__custom_letra"] {
+  width: 100%;
+  height: 200px;
+  min-height: 200px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* Campo automatico de linha (ex.: Autor no Ensaio): fechado e cinzento. */
+#dynamic-process-edit-form .dynamic-process-row-v1 input.dynamic-process-row-readonly-v1 {
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Ensaio: coluna Musica com 250px. */
+#dynamic-process-edit-form[data-menu-key="ensaio"] .dynamic-process-row-head-v1,
+#dynamic-process-edit-form[data-menu-key="ensaio"] .dynamic-process-row-v1 {
+  grid-template-columns: 250px 250px 250px 36px !important;
+}
+
+/* Ensaio: campo Musicas ocupa a linha inteira (as colunas de Musica/Autor/Tom precisam da largura toda). */
+#dynamic-process-edit-form[data-menu-key="ensaio"] .field[data-process-field-key="custom_musicas"] {
+  grid-column: 1 / -1;
+}
+
+/* Campo rows: nome do sub-campo em cima do campo, alinhado a esquerda (Musica | Autor | Tom). */
+#dynamic-process-edit-form .dynamic-process-row-cell-v1 {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+}
+#dynamic-process-edit-form .dynamic-process-row-cell-label-v1 {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-align: left;
+}
+
+/* Ensaio: o nome "Musicas" acima do bloco fica oculto (cada sub-campo ja tem o seu nome). */
+#dynamic-process-edit-form[data-menu-key="ensaio"] .field[data-process-field-key="custom_musicas"] > label:first-child {
+  display: none;
+}
+
+/* Campo rows: controlo + icone de video lado a lado. */
+#dynamic-process-edit-form .dynamic-process-row-control-v1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+#dynamic-process-edit-form .dynamic-process-row-control-v1 > input,
+#dynamic-process-edit-form .dynamic-process-row-control-v1 > select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#dynamic-process-edit-form .dynamic-process-row-link-v1 {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #b9cdf5;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #174ea6;
+  cursor: pointer;
+}
+#dynamic-process-edit-form .dynamic-process-row-link-v1 svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  flex: 0 0 auto;
+}
+#dynamic-process-edit-form .dynamic-process-row-link-v1:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+#dynamic-process-edit-form .dynamic-process-row-note-v1 {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #b9cdf5;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #174ea6;
+  cursor: pointer;
+}
+#dynamic-process-edit-form .dynamic-process-row-note-v1 svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  flex: 0 0 auto;
+}
+#dynamic-process-edit-form .dynamic-process-row-note-v1:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+/* Painel da letra: linha inteira abaixo dos campos, so leitura e fechado. */
+#dynamic-process-edit-form .dynamic-process-row-v1 > .dynamic-process-row-lyrics-v1 {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#dynamic-process-edit-form .dynamic-process-row-v1 > .dynamic-process-row-lyrics-v1[hidden] {
+  display: none;
+}
+#dynamic-process-edit-form .dynamic-process-row-lyrics-text-v1 {
+  width: 100%;
+  box-sizing: border-box;
+  background: #e5e7eb;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  resize: vertical;
+  cursor: default;
+}
+
+/* Ausencias: Data inicio, Data fim, Nome do colaborador e Motivo numa unica linha (Motivo o maior). */
+#dynamic-process-edit-form[data-menu-key="ausencias"] .personal-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+#dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key="custom_data_inicio"],
+#dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key="custom_data_fim"] {
+  grid-column: span 2;
+}
+#dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key="custom_nome_colaborador"] {
+  grid-column: span 3;
+}
+#dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key="custom_motivo"] {
+  grid-column: span 5;
+}
+@media (max-width: 720px) {
+  #dynamic-process-edit-form[data-menu-key="ausencias"] .personal-grid {
+    grid-template-columns: 1fr;
+  }
+  #dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key] {
+    grid-column: auto;
+  }
+}
+
+/* Numero calculado a partir de uma data (ex.: Entradas): fechado e cinzento. */
+#dynamic-process-edit-form input.dynamic-process-auto-readonly-v1 {
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Entradas: 2 linhas de 4 campos iguais (Dia, Data, Tipo, Numero / Valor, Aux. 1, Aux. 2, Aux. substituto). */
+#dynamic-process-edit-form[data-menu-key="entradas"] .personal-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+#dynamic-process-edit-form[data-menu-key="entradas"] .field[data-process-field-key] {
+  grid-column: span 3;
+}
+@media (max-width: 720px) {
+  #dynamic-process-edit-form[data-menu-key="entradas"] .personal-grid {
+    grid-template-columns: 1fr;
+  }
+  #dynamic-process-edit-form[data-menu-key="entradas"] .field[data-process-field-key] {
+    grid-column: auto;
+  }
+}
+
+.cidade-combo-v1 {
+  position: relative;
+}
+
+.cidade-listbox-v1 {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid #d4ddeb;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.cidade-listbox-v1[hidden] {
+  display: none;
+}
+
+.cidade-listbox-v1 li {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #253046;
+}
+
+.cidade-listbox-v1 li:hover {
+  background: #eef2f7;
+}
+
+/* Perfil de autorizacao: colunas de origem com largura fixa para a coluna AÇÕES caber na tabela. */
+.admin-subprocess-table-v1 th[data-admin-column-key="session_origin"],
+.admin-subprocess-table-v1 td[data-admin-column-key="session_origin"],
+.admin-subprocess-table-v1 th[data-admin-column-key="menu_origin"],
+.admin-subprocess-table-v1 td[data-admin-column-key="menu_origin"],
+.admin-subprocess-table-v1 th[data-admin-column-key="tab_origin"],
+.admin-subprocess-table-v1 td[data-admin-column-key="tab_origin"],
+.admin-subprocess-table-v1 th[data-admin-column-key="authorization"],
+.admin-subprocess-table-v1 td[data-admin-column-key="authorization"] {
+  min-width: 140px;
+  max-width: 140px;
+  white-space: normal;
+}
+
+/* Acoes do perfil (marcadores do servidor): esconde o que o utilizador nao tem no menu. */
+body:has(.access-no-criar) [class*="inline-create-btn"],
+body:has(.access-no-criar) .admin-subprocess-create-collapse-v1,
+body:has(.access-no-criar) button.appgenesis-row-actions-item-v1[title^="Copiar"],
+body:has(.access-no-criar) .admin-subprocess-action-btn-v1[title^="Copiar"],
+body:has(.access-no-editar) .profile-edit-toggle,
+body:has(.access-no-editar) .profile-edit-icon-v1,
+body:has(.access-no-editar) button.appgenesis-row-actions-item-v1[title^="Editar"],
+body:has(.access-no-editar) .admin-subprocess-action-btn-v1[title^="Editar"],
+body:has(.access-no-editar) button.appgenesis-row-actions-item-v1[title^="Inativar"],
+body:has(.access-no-editar) button.appgenesis-row-actions-item-v1[title^="Ativar"],
+body:has(.access-no-eliminar) button.appgenesis-row-actions-item-v1[title^="Eliminar"],
+body:has(.access-no-eliminar) .admin-subprocess-action-btn-v1[title^="Eliminar"] {
+  display: none !important;
+}
+
+/* Campo de selecao multipla: caixa fechada como select; ao abrir mostra interruptores (toggle switch). */
+.admin-subprocess-multi-dropdown-v1 {
+  position: relative;
+  width: 100%;
+}
+.admin-subprocess-multi-trigger-v1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-subprocess-multi-summary-v1 {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.admin-subprocess-multi-chevron-v1 {
+  color: #64748b;
+  flex-shrink: 0;
+}
+.admin-subprocess-multi-panel-v1 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+.admin-subprocess-multi-panel-v1[hidden] {
+  display: none;
+}
+.admin-subprocess-toggle-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  align-self: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #0f172a;
+}
+.admin-subprocess-toggle-v1 input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.admin-subprocess-toggle-track-v1 {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+.admin-subprocess-toggle-thumb-v1 {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+.admin-subprocess-toggle-v1 input[type="checkbox"]:checked + .admin-subprocess-toggle-track-v1 {
+  background: #3f51b5;
+}
+.admin-subprocess-toggle-v1 input[type="checkbox"]:checked + .admin-subprocess-toggle-track-v1 .admin-subprocess-toggle-thumb-v1 {
+  transform: translateX(18px);
+}
+.admin-subprocess-toggle-v1 input[type="checkbox"]:focus-visible + .admin-subprocess-toggle-track-v1 {
+  outline: 2px solid #3f51b5;
+  outline-offset: 2px;
+}
+.admin-subprocess-toggle-v1 input[type="checkbox"]:disabled + .admin-subprocess-toggle-track-v1 {
+  opacity: 0.6;
+}
+
+/* O gatilho do campo lista mantem o fundo do select (a regra global button:hover pintava de azul). */
+.admin-subprocess-multi-trigger-v1,
+.admin-subprocess-multi-trigger-v1:hover,
+.admin-subprocess-multi-trigger-v1:focus,
+.admin-subprocess-multi-trigger-v1:active {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* Cursor de mao em todos os elementos com interacao de clique (padrao global). */
+button:not(:disabled),
+a[href],
+summary,
+select:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+.profile-photo-picker-v1,
+.entity-logo-menu-item:not(:disabled),
+.admin-subprocess-multi-trigger-v1,
+.admin-subprocess-toggle-v1,
+.table-icon-btn,
+.dynamic-process-list-row-clickable-v1,
+#recent-entities-table tbody tr,
+#auth-profile-active-table tbody tr,
+#menu-ativo-table tbody tr,
+#menu-inativo-table tbody tr {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled,
+.entity-logo-menu-item:disabled {
+  cursor: not-allowed;
+}
+
+/* Regra global: linhas de tabela abrem a edicao ao clique (cursor de mao). */
+table tbody tr {
+  cursor: pointer;
+}
+
+/* Guardar e Cancelar na mesma linha em qualquer largura (mobile incluido). */
+.form-action-row,
+.profile-edit-actions,
+.entity-form-actions {
+  flex-wrap: nowrap !important;
+}

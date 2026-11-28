@@ -1,0 +1,308 @@
+/* new_user/06_process_fields_entity_layout.css: Layout da configuracao de campos, abas de processo e entidade. Carregar pela ordem numerada (cascata). */
+/* APPGENESIS_PROCESS_FIELDS_CONFIG_LAYOUT_V1_START */
+
+/* ###################################################################################
+   ADMINISTRATIVO > MENU > CONFIGURAÇÃO DOS CAMPOS
+   Nome do campo e Cabeçalho do campo lado a lado
+   ################################################################################### */
+
+.process-fields-config-editor-v1,
+.process-fields-config-editor-grid-v1 {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* O bloco gerado pelo gestor JS deve ser sempre 2 colunas */
+.process-fields-picker-row-v4,
+.process-fields-config-editor-row-v5,
+.process-fields-config-editor-row-v4,
+.process-fields-config-editor-row-v3,
+.process-fields-config-editor-row-v2 {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 12px !important;
+  align-items: end !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  grid-column: 1 / -1 !important;
+}
+
+/* Cada coluna ocupa somente a sua metade */
+.process-fields-picker-row-v4 > *,
+.process-fields-config-editor-row-v5 > *,
+.process-fields-config-editor-row-v4 > *,
+.process-fields-config-editor-row-v3 > *,
+.process-fields-config-editor-row-v2 > * {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Coluna 1: Nome do campo */
+.process-fields-picker-row-v4 > .field,
+.process-fields-config-editor-row-v5 > .field,
+.process-fields-config-editor-row-v4 > .field,
+.process-fields-config-editor-row-v3 > .field,
+.process-fields-config-editor-row-v2 > .field {
+  grid-column: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin: 0 !important;
+}
+
+.process-fields-picker-row-v4 > .field.full,
+.process-fields-config-editor-row-v5 > .field.full,
+.process-fields-config-editor-row-v4 > .field.full,
+.process-fields-config-editor-row-v3 > .field.full,
+.process-fields-config-editor-row-v2 > .field.full {
+  grid-column: 1 / -1 !important;
+}
+
+/* Coluna 2: Cabeçalho do campo */
+.process-fields-picker-row-v4 > .process-field-header-picker-v4,
+.process-fields-config-editor-row-v5 > .process-field-header-picker-v4,
+.process-fields-config-editor-row-v5 > .process-fields-config-header-editor-v5,
+.process-fields-config-header-editor-v5,
+.process-fields-config-header-editor-v4,
+.process-fields-config-header-editor-v3,
+.process-fields-config-header-editor-v2,
+.process-field-header-picker-v6,
+.process-field-header-picker-v5,
+.process-field-header-picker-v4,
+.process-field-header-picker-v3,
+.process-field-header-picker-v2,
+.process-field-header-picker-v1 {
+  grid-column: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+/* Labels alinhadas */
+.process-fields-picker-row-v4 label,
+.process-fields-config-editor-row-v5 label,
+.process-fields-config-editor-row-v4 label,
+.process-fields-config-editor-row-v3 label,
+.process-fields-config-editor-row-v2 label,
+.process-fields-config-header-editor-v5 label,
+.process-fields-config-header-editor-v4 label,
+.process-fields-config-header-editor-v3 label,
+.process-fields-config-header-editor-v2 label {
+  min-height: 14px !important;
+  line-height: 14px !important;
+  margin: 0 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+/* Selects com a mesma altura e largura */
+.process-fields-picker-row-v4 select,
+.process-fields-config-editor-row-v5 select,
+.process-fields-config-editor-row-v4 select,
+.process-fields-config-editor-row-v3 select,
+.process-fields-config-editor-row-v2 select,
+.process-fields-config-header-editor-v5 select,
+.process-fields-config-header-editor-v4 select,
+.process-fields-config-header-editor-v3 select,
+.process-fields-config-header-editor-v2 select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  box-sizing: border-box !important;
+}
+
+/* Botões sempre abaixo das duas colunas */
+.process-fields-config-actions-v5,
+.process-fields-config-actions-v4,
+.process-fields-config-actions-v3,
+.process-fields-config-actions-v2,
+.process-fields-config-editor-v1 .form-action-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 12px !important;
+  grid-column: 1 / -1 !important;
+}
+
+/* Evita que qualquer regra global esconda os botões */
+.process-fields-config-actions-v5 button,
+.process-fields-config-actions-v4 button,
+.process-fields-config-actions-v3 button,
+.process-fields-config-actions-v2 button,
+.process-fields-config-editor-v1 [data-process-fields-config-submit],
+.process-fields-config-editor-v1 [data-process-fields-config-cancel] {
+  display: inline-flex !important;
+  visibility: visible !important;
+}
+
+/* Em ecrãs pequenos volta para uma coluna */
+@media (max-width: 900px) {
+  .process-fields-picker-row-v4,
+  .process-fields-config-editor-row-v5,
+  .process-fields-config-editor-row-v4,
+  .process-fields-config-editor-row-v3,
+  .process-fields-config-editor-row-v2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .process-fields-picker-row-v4 > .field,
+  .process-fields-config-editor-row-v5 > .field,
+  .process-fields-config-editor-row-v4 > .field,
+  .process-fields-config-editor-row-v3 > .field,
+  .process-fields-config-editor-row-v2 > .field,
+  .process-fields-picker-row-v4 > .process-field-header-picker-v4,
+  .process-fields-config-editor-row-v5 > .process-field-header-picker-v4,
+  .process-fields-config-editor-row-v5 > .process-fields-config-header-editor-v5,
+  .process-fields-config-header-editor-v5,
+  .process-fields-config-header-editor-v4,
+  .process-fields-config-header-editor-v3,
+  .process-fields-config-header-editor-v2 {
+    grid-column: 1 !important;
+  }
+}
+
+/* APPGENESIS_PROCESS_FIELDS_CONFIG_LAYOUT_V1_END */
+
+/* APPGENESIS: PROCESS TABS EQUAL WIDTH V1 */
+#menu-tabs-card #submenu-items.menu-tabs,
+.profile-process-tabs {
+  --appgenesis-process-tab-equal-width: auto;
+}
+
+#menu-tabs-card #submenu-items.menu-tabs {
+  align-items: stretch;
+}
+
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item,
+.profile-process-tabs .profile-process-tab-btn {
+  width: var(--appgenesis-process-tab-equal-width, auto);
+  min-width: var(--appgenesis-process-tab-equal-width, auto);
+  text-align: center;
+  justify-content: center;
+}
+
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.profile-process-tabs .profile-process-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* APPGENESIS_ENTITY_LAYOUT_4_FIELDS_V1_START */
+.entity-panel-card .entity-first-row,
+.entity-panel-card .entity-second-row,
+.entity-panel-card .entity-third-row,
+.entity-panel-card .entity-fourth-row,
+.entity-panel-card .entity-fifth-row,
+.entity-panel-card .entity-scope-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.entity-panel-card .entity-fifth-row-edit {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.entity-panel-card .entity-first-row .field,
+.entity-panel-card .entity-second-row .field,
+.entity-panel-card .entity-third-row .field,
+.entity-panel-card .entity-fourth-row .field,
+.entity-panel-card .entity-fifth-row .field {
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+}
+
+.entity-panel-card .entity-first-row input,
+.entity-panel-card .entity-first-row select,
+.entity-panel-card .entity-second-row input,
+.entity-panel-card .entity-second-row select,
+.entity-panel-card .entity-third-row input,
+.entity-panel-card .entity-third-row select,
+.entity-panel-card .entity-fourth-row input,
+.entity-panel-card .entity-fourth-row select,
+.entity-panel-card .entity-fifth-row input,
+.entity-panel-card .entity-fifth-row select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.entity-panel-card .entity-first-row label,
+.entity-panel-card .entity-second-row label,
+.entity-panel-card .entity-third-row label,
+.entity-panel-card .entity-fourth-row label,
+.entity-panel-card .entity-fifth-row label {
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.entity-panel-card .entity-fifth-row-logo {
+  grid-column: span 2;
+}
+
+.entity-panel-card .entity-edit-logo-row {
+  margin-bottom: 12px;
+}
+
+.entity-panel-card .entity-edit-current-logo {
+  max-width: 420px;
+}
+
+@media (max-width: 1500px) {
+  .entity-panel-card .entity-first-row,
+  .entity-panel-card .entity-second-row,
+  .entity-panel-card .entity-third-row,
+  .entity-panel-card .entity-fourth-row,
+  .entity-panel-card .entity-fifth-row,
+  .entity-panel-card .entity-scope-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entity-panel-card .entity-fifth-row-logo {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 780px) {
+  .entity-panel-card .entity-first-row,
+  .entity-panel-card .entity-second-row,
+  .entity-panel-card .entity-third-row,
+  .entity-panel-card .entity-fourth-row,
+  .entity-panel-card .entity-fifth-row,
+  .entity-panel-card .entity-scope-row {
+    grid-template-columns: 1fr;
+  }
+
+  .entity-panel-card .entity-fifth-row-logo {
+    grid-column: auto;
+  }
+}
+/* APPGENESIS_ENTITY_LAYOUT_4_FIELDS_V1_END */
+
+
+
+/* APPGENESIS_ADMIN_USERS_TABLE_FOOTER_LAYOUT_V10_START */
+#admin-users-created-card table,
+#inactive-users-card table {
+  margin-bottom: 0;
+}
+
+/* APPGENESIS_ADMIN_USERS_TABLE_FOOTER_LAYOUT_V10_END */
+

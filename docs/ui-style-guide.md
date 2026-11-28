@@ -6,7 +6,7 @@ Este guia define o padrao visual minimo para campos e botoes no AppGenesis.
 
 - Tokens globais: `static/css/ui-standards.css`
 - Implementacao por pagina:
-  - `static/css/new_user.css`
+  - `static/css/new_user/*.css` (antigo `new_user.css`, por componente; a ordem numerada é a cascata)
   - `static/css/login.css`
   - `static/css/user_invite_accept.css`
 
