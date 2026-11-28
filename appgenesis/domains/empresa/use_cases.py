@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import Request
 from sqlalchemy.orm import Session
 
-from appgenesis.core import BASE_DIR
+from appgenesis.config.settings import settings
 from appgenesis.domains.empresa.permissions import authorize_empresa_edit
 from appgenesis.domains.empresa.schemas import EmpresaProfileFormInput
 from appgenesis.models import Entity
@@ -106,11 +106,11 @@ def execute_update_empresa_profile(
     except Exception:
         session.rollback()
         if stored_logo_url.startswith("/static/entities/"):
-            (BASE_DIR / stored_logo_url.lstrip("/")).unlink(missing_ok=True)
+            (settings.BASE_DIR / stored_logo_url.lstrip("/")).unlink(missing_ok=True)
         return _empresa_error_redirect("Não foi possível guardar as alterações. Tente novamente.")
 
     if delete_old_logo_after_commit:
-        (BASE_DIR / delete_old_logo_after_commit.lstrip("/")).unlink(missing_ok=True)
+        (settings.BASE_DIR / delete_old_logo_after_commit.lstrip("/")).unlink(missing_ok=True)
 
     url = (
         build_users_new_url(menu="administrativo", admin_tab="dados_empresa", entity_success="Perfil da empresa atualizado com sucesso.")

@@ -9,15 +9,7 @@ from fastapi import UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from appgenesis.core import (
-    ALLOWED_ENTITY_LOGO_EXTENSIONS,
-    ALLOWED_ENTITY_PROFILE_SCOPE,
-    ENTITY_LOGOS_DIR,
-    ENTITY_PROFILE_SCOPE_LEGADO,
-    ENTITY_PROFILE_SCOPE_OWNER,
-    LOGO_CONTENT_TYPE_EXTENSION,
-    MAX_ENTITY_LOGO_SIZE_BYTES,
-)
+from appgenesis.config.settings import settings
 from appgenesis.models import Entity
 
 def save_entity_logo_upload(entity_logo_file: UploadFile | None) -> tuple[str, str]:
@@ -26,15 +18,15 @@ def save_entity_logo_upload(entity_logo_file: UploadFile | None) -> tuple[str, s
 
     content_type = (entity_logo_file.content_type or "").strip().lower()
     file_ext = Path(entity_logo_file.filename).suffix.lower()
-    if file_ext not in ALLOWED_ENTITY_LOGO_EXTENSIONS:
-        mapped_ext = LOGO_CONTENT_TYPE_EXTENSION.get(content_type, "")
+    if file_ext not in settings.ALLOWED_ENTITY_LOGO_EXTENSIONS:
+        mapped_ext = settings.LOGO_CONTENT_TYPE_EXTENSION.get(content_type, "")
         file_ext = mapped_ext
 
-    if file_ext not in ALLOWED_ENTITY_LOGO_EXTENSIONS:
+    if file_ext not in settings.ALLOWED_ENTITY_LOGO_EXTENSIONS:
         return "", "Formato de imagem inválido. Use PNG, JPG, WEBP, GIF ou SVG."
 
     stored_name = f"entity_logo_{secrets.token_hex(10)}{file_ext}"
-    destination = ENTITY_LOGOS_DIR / stored_name
+    destination = settings.ENTITY_LOGOS_DIR / stored_name
     total_size = 0
 
     try:
@@ -44,7 +36,7 @@ def save_entity_logo_upload(entity_logo_file: UploadFile | None) -> tuple[str, s
                 if not chunk:
                     break
                 total_size += len(chunk)
-                if total_size > MAX_ENTITY_LOGO_SIZE_BYTES:
+                if total_size > settings.MAX_ENTITY_LOGO_SIZE_BYTES:
                     file_handle.close()
                     destination.unlink(missing_ok=True)
                     return "", "Imagem demasiado grande. Limite maximo: 5MB."
@@ -99,10 +91,10 @@ def normalize_entity_text_v1(value: Any) -> str:
 
 def normalize_entity_profile_scope_v1(value: Any) -> tuple[str, bool]:
     clean_profile_scope = normalize_entity_text_v1(value).lower()
-    invalid_profile_scope = clean_profile_scope not in ALLOWED_ENTITY_PROFILE_SCOPE
+    invalid_profile_scope = clean_profile_scope not in settings.ALLOWED_ENTITY_PROFILE_SCOPE
 
     if invalid_profile_scope:
-        clean_profile_scope = ENTITY_PROFILE_SCOPE_LEGADO
+        clean_profile_scope = settings.ENTITY_PROFILE_SCOPE_LEGADO
 
     return clean_profile_scope, invalid_profile_scope
 
@@ -121,7 +113,7 @@ def clean_entity_form_data_v1(
     postal_code: Any = "",
     country: Any = "",
     phone: Any = "",
-    entity_profile_scope: Any = ENTITY_PROFILE_SCOPE_LEGADO,
+    entity_profile_scope: Any = settings.ENTITY_PROFILE_SCOPE_LEGADO,
     description: Any = None,
     created_at_text: str = "",
 ) -> tuple[dict[str, str], bool]:
@@ -175,7 +167,7 @@ def apply_entity_form_data_v1(
     if include_profile_scope:
         entity.profile_scope = normalize_entity_text_v1(
             form_data.get("profile_scope")
-        ) or ENTITY_PROFILE_SCOPE_LEGADO
+        ) or settings.ENTITY_PROFILE_SCOPE_LEGADO
 
     if include_description:
         entity.description = normalize_entity_text_v1(form_data.get("description")) or None
@@ -204,7 +196,7 @@ def get_existing_owner_entity_id_v1(
     *,
     ignore_entity_id: int | None = None,
 ) -> int | None:
-    stmt = select(Entity.id).where(Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER)
+    stmt = select(Entity.id).where(Entity.profile_scope == settings.ENTITY_PROFILE_SCOPE_OWNER)
 
     if ignore_entity_id is not None:
         stmt = stmt.where(Entity.id != int(ignore_entity_id))

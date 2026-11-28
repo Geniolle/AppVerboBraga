@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from appgenesis.core import ENTITY_PROFILE_SCOPE_OWNER
+from appgenesis.config.settings import settings
 from appgenesis.models import Entity, MemberEntity, MemberEntityStatus, User
 
 def owner_entity_exists(session: Session) -> bool:
@@ -16,7 +16,7 @@ def owner_entity_exists(session: Session) -> bool:
     owner_id = session.scalar(
         select(Entity.id)
        .where(
-            Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER,
+            Entity.profile_scope == settings.ENTITY_PROFILE_SCOPE_OWNER,
             Entity.is_active.is_(True),
         )
        .limit(1)
@@ -31,7 +31,7 @@ def user_has_owner_entity_membership(session: Session, user_id: int) -> bool:
        .where(
             User.id == user_id,
             MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-            Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER,
+            Entity.profile_scope == settings.ENTITY_PROFILE_SCOPE_OWNER,
             Entity.is_active.is_(True),
         )
        .limit(1)

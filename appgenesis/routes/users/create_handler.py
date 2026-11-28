@@ -6,7 +6,8 @@ import traceback
 from fastapi import Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from appgenesis.core import SessionLocal, templates
+from appgenesis.db.session import SessionLocal
+from appgenesis.web.templates import templates
 from appgenesis.routes.users.router import router
 from appgenesis.services.page import build_users_new_url
 from appgenesis.services.navigation_context import build_return_url_v1

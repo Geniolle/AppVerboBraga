@@ -12,7 +12,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.config.settings import settings as app_settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.menu_settings import get_sidebar_menu_settings
 
@@ -46,8 +46,8 @@ def _build_driver_v1():
 
 
 def _require_admin_credentials_v1() -> tuple[str, str]:
-    admin_email = str(ADMIN_LOGIN_EMAIL or "").strip()
-    admin_password = str(ADMIN_LOGIN_PASSWORD or "").strip()
+    admin_email = str(app_settings.ADMIN_LOGIN_EMAIL or "").strip()
+    admin_password = str(app_settings.ADMIN_LOGIN_PASSWORD or "").strip()
     if not admin_email or not admin_password:
         pytest.skip("ADMIN_LOGIN_EMAIL / ADMIN_LOGIN_PASSWORD não definidos.")
     return admin_email, admin_password

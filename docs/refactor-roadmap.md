@@ -519,4 +519,5 @@ Cada etapa segue a regra 17 do `AGENTS.md`. Estado registado aqui.
 | 5c | `new_user.css` (7.133 linhas) por componente, mantendo a ordem de cascata | - | - | - | pendente |
 | 6 | Testes excluídos do CI e pyflakes bloqueante | - | - | - | pendente |
 | 7 | Isolamento da lista de utilizadores por entidade da sessão; filtro no SQL; admins do sistema só para owner | #398 (deploy prd ok) | `test_scoped_users_isolation_v1.py` + CI (638 passed, 2 falhas pré-existentes) | dev: HTTP com login owner/legado, sem vazamento de emails; prd health 200, 0 membros com vínculo em 2 entidades | concluída |
-| 8 | Alinhar números dos documentos ao código (medição 2026-11-28) | (esta etapa) | n/a (docs) | revisão | concluída |
+| 8 | Alinhar números dos documentos ao código (medição 2026-11-28); modelo `EntityMenuData` (alembic check limpo) | #399 (deploy prd ok) | n/a (docs) | revisão | concluída |
+| 9 | Remover `appgenesis/core.py`: 53 importadores passam à origem (`db.session`, `web.templates`, `config.settings`, `authlib`) | (esta etapa) | CI (639 passed, 2 falhas pré-existentes); `app.routes` 13 = 13 | dev: login owner/legado, abas Administrativo com HTML de tamanho idêntico, sem traceback | concluída |

@@ -1,4 +1,4 @@
-﻿from appgenesis.core import SessionLocal
+﻿from appgenesis.db.session import SessionLocal
 from sqlalchemy import text
 import json
 

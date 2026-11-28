@@ -5,7 +5,7 @@ from __future__ import annotations
 These wrap the existing services (`appgenesis.services.session`,
 `appgenesis.services.permissions`) without changing their behavior. The goal
 is to give new code (use cases, domains/) a way to reach this data without
-pulling in the `appgenesis.core` / `appgenesis.services` wildcard hubs.
+pulling in the `appgenesis.services` hub (`appgenesis.core` foi removido).
 """
 
 from typing import Any

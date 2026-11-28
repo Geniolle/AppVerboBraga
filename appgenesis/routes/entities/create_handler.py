@@ -9,11 +9,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.core import (
-    BASE_DIR,
-    ENTITY_PROFILE_SCOPE_LEGADO,
-    ENTITY_PROFILE_SCOPE_OWNER,
-)
+from appgenesis.config.settings import settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.entities import (
@@ -63,7 +59,7 @@ def create_entity(
     postal_code: str = Form(...),
     country: str = Form(...),
     phone: str = Form(...),
-    entity_profile_scope: str = Form(ENTITY_PROFILE_SCOPE_LEGADO),
+    entity_profile_scope: str = Form(settings.ENTITY_PROFILE_SCOPE_LEGADO),
     entity_logo_file: UploadFile | None = File(default=None),
     description: str | None = Form(default=None),
     return_menu: str = Form(""),
@@ -202,7 +198,7 @@ def create_entity(
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
-        if clean_profile_scope == ENTITY_PROFILE_SCOPE_OWNER:
+        if clean_profile_scope == settings.ENTITY_PROFILE_SCOPE_OWNER:
             existing_owner_id = get_existing_owner_entity_id_v1(session)
             if existing_owner_id is not None:
                 context = {
@@ -276,7 +272,7 @@ def create_entity(
         except IntegrityError:
             session.rollback()
             if stored_logo_url.startswith("/static/entities/"):
-                local_logo_path = BASE_DIR / stored_logo_url.lstrip("/")
+                local_logo_path = settings.BASE_DIR / stored_logo_url.lstrip("/")
                 local_logo_path.unlink(missing_ok=True)
             context = {
                 "request": request,

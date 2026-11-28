@@ -10,7 +10,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.core import ADMIN_LOGIN_EMAIL, ALLOWED_ACCOUNT_STATUS
+from appgenesis.config.settings import settings
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.navigation_context import build_post_save_return_url_v1, build_return_url_v1
@@ -194,7 +194,7 @@ def update_user(
             errors.append("Telefone principal é obrigatório.")
         if not clean_email:
             errors.append("Email é obrigatório.")
-        if clean_account_status not in ALLOWED_ACCOUNT_STATUS:
+        if clean_account_status not in settings.ALLOWED_ACCOUNT_STATUS:
             errors.append("Estado de conta inválido.")
 
         # Entidade so pode ser alterada pelo owner; legado mantem a entidade atual.
@@ -300,7 +300,7 @@ def update_user(
             and is_admin_user(session, int(user.id), str(user.login_email or ""))
         )
         resulting_is_admin = (
-            (bool(ADMIN_LOGIN_EMAIL) and clean_email == ADMIN_LOGIN_EMAIL)
+            (bool(settings.ADMIN_LOGIN_EMAIL) and clean_email == settings.ADMIN_LOGIN_EMAIL)
             or is_owner_system_v1(clean_system_type)
         )
         resulting_is_active_admin = (

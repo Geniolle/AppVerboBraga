@@ -2,7 +2,7 @@ import json
 import re
 from pathlib import Path
 
-from appgenesis.core import templates
+from appgenesis.web.templates import templates
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = (ROOT / "templates/new_user.html").read_text(encoding="utf-8")

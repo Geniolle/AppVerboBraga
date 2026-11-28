@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import Request, status
 from fastapi.responses import RedirectResponse
 
-from appgenesis.core import OAuthError
+from authlib.integrations.starlette_client import OAuthError
 from appgenesis.db.session import SessionLocal
 from appgenesis.domains.auth.use_cases import (
     OAuthCallbackFailure,

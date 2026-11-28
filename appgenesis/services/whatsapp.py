@@ -6,21 +6,14 @@ from typing import Any
 
 import httpx
 
-from appgenesis.core import (
-    WHATSAPP_ACCESS_TOKEN,
-    WHATSAPP_GRAPH_API_VERSION,
-    WHATSAPP_PHONE_NUMBER_ID,
-    WHATSAPP_TEMPLATE_LANGUAGE,
-    WHATSAPP_TEMPLATE_NAME,
-    WHATSAPP_WEBHOOK_VERIFY_TOKEN,
-)
+from appgenesis.config.settings import settings
 
 def has_whatsapp_verification_config() -> bool:
     return bool(
-        WHATSAPP_ACCESS_TOKEN
-        and WHATSAPP_PHONE_NUMBER_ID
-        and WHATSAPP_TEMPLATE_NAME
-        and WHATSAPP_WEBHOOK_VERIFY_TOKEN
+        settings.WHATSAPP_ACCESS_TOKEN
+        and settings.WHATSAPP_PHONE_NUMBER_ID
+        and settings.WHATSAPP_TEMPLATE_NAME
+        and settings.WHATSAPP_WEBHOOK_VERIFY_TOKEN
     )
 
 def normalize_whatsapp_recipient(raw_phone: str) -> str:
@@ -74,11 +67,11 @@ def send_whatsapp_verification_template(recipient_phone: str) -> tuple[bool, str
         )
 
     url = (
-        f"https://graph.facebook.com/{WHATSAPP_GRAPH_API_VERSION}"
-        f"/{WHATSAPP_PHONE_NUMBER_ID}/messages"
+        f"https://graph.facebook.com/{settings.WHATSAPP_GRAPH_API_VERSION}"
+        f"/{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
     )
     headers = {
-        "Authorization": f"Bearer {WHATSAPP_ACCESS_TOKEN}",
+        "Authorization": f"Bearer {settings.WHATSAPP_ACCESS_TOKEN}",
         "Content-Type": "application/json",
     }
     payload = {
@@ -86,8 +79,8 @@ def send_whatsapp_verification_template(recipient_phone: str) -> tuple[bool, str
         "to": recipient_phone,
         "type": "template",
         "template": {
-            "name": WHATSAPP_TEMPLATE_NAME,
-            "language": {"code": WHATSAPP_TEMPLATE_LANGUAGE},
+            "name": settings.WHATSAPP_TEMPLATE_NAME,
+            "language": {"code": settings.WHATSAPP_TEMPLATE_LANGUAGE},
         },
     }
 

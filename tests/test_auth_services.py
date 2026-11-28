@@ -1,3 +1,4 @@
+from dataclasses import replace
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
@@ -86,8 +87,11 @@ def test_hash_password_and_verify() -> None:
 
 
 def test_verify_login_password_uses_env_password_for_admin_email(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "P@1internet")
+    monkeypatch.setattr(
+        auth_service,
+        "settings",
+        replace(auth_service.settings, ADMIN_LOGIN_EMAIL="admin@appgenesis.local", ADMIN_LOGIN_PASSWORD="P@1internet"),
+    )
 
     stored_hash = hash_password("OutraSenha123!")
 
@@ -104,8 +108,11 @@ def test_verify_login_password_uses_env_password_for_admin_email(monkeypatch) ->
 
 
 def test_verify_login_password_falls_back_to_hash_for_other_users(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "P@1internet")
+    monkeypatch.setattr(
+        auth_service,
+        "settings",
+        replace(auth_service.settings, ADMIN_LOGIN_EMAIL="admin@appgenesis.local", ADMIN_LOGIN_PASSWORD="P@1internet"),
+    )
 
     stored_hash = hash_password("SenhaUtilizador123!")
 
@@ -122,8 +129,11 @@ def test_verify_login_password_falls_back_to_hash_for_other_users(monkeypatch) -
 
 
 def test_verify_login_password_falls_back_to_hash_when_admin_env_password_is_empty(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "")
+    monkeypatch.setattr(
+        auth_service,
+        "settings",
+        replace(auth_service.settings, ADMIN_LOGIN_EMAIL="admin@appgenesis.local", ADMIN_LOGIN_PASSWORD=""),
+    )
 
     stored_hash = hash_password("SenhaBD123!")
 
