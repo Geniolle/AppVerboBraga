@@ -283,6 +283,13 @@ Estas decisões valem para o plano. Se o agente encontrar outro caminho melhor, 
 - Reversão, se necessária: restaurar o backup, ou `UPDATE users SET system_type='default' WHERE system_type='legado';` (isto também reverte legados criados depois da migração).
 - Estado após a mudança: `legado` 93 (72 ativos, 21 inativos); `default` 1 (1000); `owner` 3.
 
+### 9.1b Utilizador 4 passou a `legado` (2026-11-28)
+
+- Utilizador id 4 (`IT VERBO BRAGA`, entidade 1001) tinha `system_type='owner'` sem vínculo à 1000. Passou a `legado`, a pedido do owner. Transação com verificação de 1 linha. Backup: `appgenesis-prod-pre-user4-legado-20261128-074041.sql.gz`.
+- Estado após a mudança: `legado` 94, `owner` 2 (ambos na 1000), `default` 1.
+- Efeito: como `is_admin_user` só reconhece `owner`, esta conta deixa de entrar no menu Administrativo até haver função configurada (etapa 7).
+- Reversão: `UPDATE users SET system_type='owner' WHERE id=4;` ou restaurar o backup.
+
 ### 9.2 Interpretação do pedido "todos os admins na aba Administradores do sistema"
 
 - Admin = `system_type IN ('legado','owner')`. Motivo: `owner` aparece com o rótulo "Admin" na coluna PERFIL NO SISTEMA; `legado` é o perfil dos administradores de sistemas legados.
