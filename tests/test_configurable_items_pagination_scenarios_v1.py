@@ -25,7 +25,7 @@ from appgenesis.config.settings import settings
 TARGET_URL = (
     "http://127.0.0.1:8000/users/new?menu=sessoes&admin_tab=contas"
     "&settings_action=edit&target=settings-menu-edit-card"
-    "&settings_edit_key=perfil_de_autorizacao&settings_tab=lista"
+    "&settings_edit_key=calendario&settings_tab=lista"
     "#settings-menu-edit-card"
 )
 

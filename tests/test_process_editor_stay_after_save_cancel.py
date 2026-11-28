@@ -17,7 +17,7 @@ from appgenesis.routes.profile.process_settings.common import (
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EDITOR_RETURN_URL = (
     "/users/new?menu=sessoes&admin_tab=contas&settings_action=edit"
-    "&target=settings-menu-edit-card&settings_edit_key=perfil_de_autorizacao"
+    "&target=settings-menu-edit-card&settings_edit_key=calendario"
     "&settings_tab={settings_tab}#settings-menu-edit-card"
 )
 
@@ -42,7 +42,7 @@ def test_save_redirect_stays_in_current_process_editor_tab(settings_tab: str) ->
     result = _build_settings_editor_stay_redirect_url_v1(
         success_message="ok",
         redirect_menu="sessoes",
-        settings_edit_key="perfil_de_autorizacao",
+        settings_edit_key="calendario",
         settings_tab=settings_tab,
         return_url=EDITOR_RETURN_URL.format(settings_tab=settings_tab),
     )
@@ -54,7 +54,7 @@ def test_save_redirect_stays_in_current_process_editor_tab(settings_tab: str) ->
     assert params["menu"] == "sessoes"
     assert params["admin_tab"] == "contas"
     assert params["settings_action"] == "edit"
-    assert params["settings_edit_key"] == "perfil_de_autorizacao"
+    assert params["settings_edit_key"] == "calendario"
     assert params["settings_tab"] == settings_tab
     assert params["target"] == "settings-menu-edit-card"
     assert params["target"] != "menu-subprocess-card-active"
@@ -174,7 +174,7 @@ def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
         parsed = urlsplit(driver.current_url)
         params = dict(parse_qsl(parsed.query, keep_blank_values=True))
         assert parsed.fragment == "settings-menu-edit-card"
-        assert params["settings_edit_key"] == "perfil_de_autorizacao"
+        assert params["settings_edit_key"] == "calendario"
         assert params["settings_tab"] == "lista"
         assert params["target"] == "settings-menu-edit-card"
 
