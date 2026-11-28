@@ -9,6 +9,7 @@ from appgenesis.models.department import (
     Role,
 )
 from appgenesis.models.entity import Entity
+from appgenesis.models.entity_menu_data import EntityMenuData
 from appgenesis.models.enums import (
     DepartmentMembershipStatus,
     MemberEntityStatus,
@@ -37,6 +38,7 @@ __all__ = [
     "DepartmentMembershipRole",
     "Role",
     "Entity",
+    "EntityMenuData",
     "DepartmentMembershipStatus",
     "MemberEntityStatus",
     "MemberStatus",

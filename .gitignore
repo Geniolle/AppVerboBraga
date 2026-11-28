@@ -64,3 +64,7 @@ backups/
 *_output.txt
 diff_output.txt
 nginx/certs/
+
+# Artefactos locais
+appverbobraga.egg-info/
+graphify-out/
