@@ -7,7 +7,7 @@
 - **Chave SSH**: `Servidor/ssh-Genesys-chavekey-2026-11-12.key` (no repo local; nunca commitar nem copiar para fora do repo; a chave `Servidor/ssh-Genesys-key-2026-11-12.key` é a outra).
 - **Projeto no servidor**: `/opt/appgenesis/app` (git `origin/master` em `github.com/Geniolle/AppVerboBraga`).
 - **Compose**: `/opt/appgenesis/app/docker-compose.prod.yml` (serviços `web` = `appverbobraga-web-prod`, `db` = `appverbobraga-db-prod`, Postgres 16, BD `app_igreja`, utilizador `appgenesis`).
-- **Backups**: `~/backups/appgenesis-prod-pre-<commit>-<timestamp>.sql.gz` (criar antes de cada deploy).
+- **Backups**: `~/backups/appgenesis-prod-pre-<commit>-<timestamp>.sql.gz` (criar antes de cada deploy) e `~/backups/appgenesis-prod-diario-<timestamp>.sql.gz` (automático, ver abaixo).
 - **Docker** só com `sudo docker ...` (utilizador `ubuntu` não está no grupo docker).
 
 ### Comando SSH (a partir do PC; copiar a chave para pasta temporária com `chmod 600` se o Windows recusar permissões)
@@ -23,6 +23,22 @@ ssh -i <caminho-da-chave> -o BatchMode=yes ubuntu@141.147.76.187
 3. `sudo docker compose -f docker-compose.prod.yml build web && sudo docker compose -f docker-compose.prod.yml up -d web`
 4. Confirmar `healthy` e `GET /health` = 200.
 5. Estáticos: o volume `app_static_prod` (montado em `/app/static`) não é atualizado pelo deploy. Se o commit mudar `static/`, sincronizar com `docker cp` antes de testar.
+
+## Backup diário automático
+
+- Timer systemd `appgenesis-backup-diario.timer` corre todos os dias às 03:00 (Europe/Lisbon; o servidor está em UTC). `Persistent=true` corre o backup em falta se o servidor esteve desligado.
+- Executa `scripts/operations/prod_daily_backup.sh` como `ubuntu`: `pg_dump` completo de `app_igreja` via `docker exec`, `gzip -t`, rejeita ficheiros sem tabelas.
+- Retenção: mantém os 30 diários mais recentes (`appgenesis-prod-diario-*`). Os backups manuais `pre-*` nunca são apagados pelo script.
+- Unidades versionadas em `scripts/operations/systemd/`. Instalar ou atualizar:
+
+```bash
+sudo cp /opt/appgenesis/app/scripts/operations/systemd/appgenesis-backup-diario.* /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now appgenesis-backup-diario.timer
+```
+
+- Verificar: `systemctl list-timers appgenesis-backup-diario.timer` e `journalctl -u appgenesis-backup-diario.service -n 20`.
+- Correr já: `sudo systemctl start appgenesis-backup-diario.service`.
+- Restaurar (destrutivo): fazer antes um backup do estado atual, parar `web`, recriar `app_igreja` vazia e depois `zcat <ficheiro>.sql.gz | sudo docker exec -i appverbobraga-db-prod psql -U appgenesis -d app_igreja`. O dump é SQL simples, sem `DROP`, por isso não restaura por cima de uma BD com tabelas.
 
 ## Certificate Management
 
