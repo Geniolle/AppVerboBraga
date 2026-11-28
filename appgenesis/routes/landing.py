@@ -39,7 +39,7 @@ DEPARTAMENTOS = [
             {"titulo": "Aula - Fé para a Cura", "texto": "A fé alimenta-se, vence a passividade e recebe a cura antes dos sentimentos. Crer e confessar são essenciais.", "url": "#", "imagem": "/static/img/noticias/aula-fe-para-a-cura.jpg"},
             {"titulo": "Aula - Como Manter a sua Cura", "texto": "A cura recebida pela fé mantém-se pela fé: pela perseverança e por um reservatório espiritual cheio da Palavra de Deus.", "url": "#", "imagem": "/static/img/noticias/aula-como-manter-a-sua-cura.jpg"},
             {"titulo": "Aula - A Unção da Cura", "texto": "A Palavra de Deus é ungida para curar. A fé é o gatilho para o poder curador, e Deus traz cura, seja instantânea ou progressiva.", "url": "#", "imagem": "/static/img/noticias/aula-a-uncao-da-cura.jpg"},
-            {"titulo": "Oração - Imposição de mãos", "texto": "Texto de exemplo para a notícia 1.", "url": "#", "imagem": "/static/img/noticias/oracao-imposicao-de-maos.jpg"},
+            {"titulo": "Oração - Imposição de mãos", "texto": "A Palavra de Deus é ungida para curar. A fé é o gatilho para o poder curador, e Deus traz cura, seja instantânea ou progressiva.", "url": "#", "imagem": "/static/img/noticias/oracao-imposicao-de-maos.jpg"},
         ],
     },
     {
