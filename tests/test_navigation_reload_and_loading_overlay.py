@@ -56,7 +56,8 @@ def _login_admin_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
 ####################################################################################
 
 
-@pytest.mark.parametrize("data_menu", ["sessoes", "calendario", "perfil_de_autorizacao", "extrato"])
+# Menus que existem hoje (perfil_de_autorizacao e extrato deixaram de ser menus do sidebar).
+@pytest.mark.parametrize("data_menu", ["sessoes", "calendario", "empresa", "meu_perfil"])
 def test_reload_from_any_menu_normalizes_to_home(data_menu: str) -> None:
     driver = _build_driver_v1()
     wait = WebDriverWait(driver, 30)

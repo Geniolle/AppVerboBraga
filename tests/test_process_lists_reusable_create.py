@@ -16,7 +16,7 @@ from appgenesis.config.settings import settings
 TARGET_URL = (
     "http://127.0.0.1:8000/users/new?menu=sessoes&admin_tab=contas"
     "&settings_action=edit&target=settings-menu-edit-card"
-    "&settings_edit_key=perfil_de_autorizacao&settings_tab=lista"
+    "&settings_edit_key=calendario&settings_tab=lista"
     "#settings-menu-edit-card"
 )
 
@@ -82,11 +82,8 @@ def test_process_lists_editor_uses_expected_computed_grid_by_viewport() -> None:
         stylesheet_urls = driver.execute_script(
             "return Array.from(document.styleSheets, (sheet) => sheet.href || '');"
         )
-        assert any(
-                "configurable_items_manager_v1.css"
-                "?v=20260713-shared-list-card-header-v1" in url
-            for url in stylesheet_urls
-        )
+        # O cache buster e o asset_version do arranque (nao um valor fixo).
+        assert any("/static/css/modules/configurable_items_manager_v1.css?v=" in url for url in stylesheet_urls)
     finally:
         driver.quit()
 
@@ -285,8 +282,9 @@ def test_automatic_list_source_menu_real_flow() -> None:
         assert menu.is_displayed()
         assert driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-subprocess-wrapper]").is_displayed() is False
 
+        # Perfil de autorizacao e um subprocesso do menu Administrativo.
         driver.execute_script(
-            "arguments[0].value='perfil_de_autorizacao'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            "arguments[0].value='administrativo'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
             menu,
         )
         subprocess = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-subprocess]")
@@ -296,9 +294,9 @@ def test_automatic_list_source_menu_real_flow() -> None:
             for option in subprocess.find_elements(By.TAG_NAME, "option")
         ]
         assert subprocess_options[0] == ("", "Todos os subprocessos")
-        assert ("perfis", "Perfis") in subprocess_options
-        driver.execute_script("arguments[0].value='perfis'", subprocess)
-        assert subprocess.get_attribute("value") == "perfis"
+        assert ("perfil_de_autorizacao", "Perfil de autorização") in subprocess_options
+        driver.execute_script("arguments[0].value='perfil_de_autorizacao'", subprocess)
+        assert subprocess.get_attribute("value") == "perfil_de_autorizacao"
         driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-label]").send_keys(label)
         submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
         submit.click()
@@ -308,16 +306,16 @@ def test_automatic_list_source_menu_real_flow() -> None:
         assert "settings_tab=lista" in driver.current_url
         table_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
         assert label.lower() in table_body.text.lower()
+        assert "Administrativo" in table_body.text
         assert "Perfil de autorização" in table_body.text
-        assert "Perfis" in table_body.text
         row = next(row for row in table_body.find_elements(By.TAG_NAME, "tr") if label.lower() in row.text.lower())
         edit_button = row.find_element(By.CSS_SELECTOR, "[data-configurable-action='edit']")
         driver.execute_script("arguments[0].click()", edit_button)
         menu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-menu]")
         assert menu.is_displayed()
-        assert menu.get_attribute("value") == "perfil_de_autorizacao"
+        assert menu.get_attribute("value") == "administrativo"
         subprocess = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-subprocess]")
-        assert subprocess.get_attribute("value") == "perfis"
+        assert subprocess.get_attribute("value") == "perfil_de_autorizacao"
 
         field_type = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-field-type]")
         driver.execute_script(
