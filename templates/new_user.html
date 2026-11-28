@@ -2553,7 +2553,23 @@
   <script src="/static/js/modules/profile_phone_field_v1.js?v={{ asset_version }}"></script>
   <script src="/static/js/modules/cidade_por_pais_v1.js?v={{ asset_version }}"></script>
   <script src="/static/js/modules/codigo_postal_morada_v1.js?v={{ asset_version }}"></script>
-  <script src="/static/js/new_user.js?v={{ asset_version }}"></script>
+  {# new_user.js dividido por dominio (Etapa 5); a ordem conta: escopo global partilhado. #}
+  <script src="/static/js/new_user/01_state.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/02_menu_config.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/03_home_user_menu.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/04_dynamic_process_lists.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/05_dynamic_process_quantity.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/06_dynamic_process_card.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/07_navigation.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/08_meu_perfil.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/09_process_settings_builders.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/10_runtime_wiring.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/11_admin_users.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/12_boot.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/13_meu_perfil_runtime.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/14_post_save_return.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/15_meu_perfil_sections.js?v={{ asset_version }}"></script>
+  <script src="/static/js/new_user/16_ui_feedback.js?v={{ asset_version }}"></script>
   <script src="/static/js/modules/auth_profile_inline_editor_v1.js?v={{ asset_version }}"></script>
   <script src="/static/js/modules/admin_subprocess_inline_editor_v1.js?v={{ asset_version }}"></script>
   <script src="/static/js/modules/admin_profile_multi_select_v1.js?v={{ asset_version }}"></script>

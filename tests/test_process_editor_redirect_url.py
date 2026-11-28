@@ -6,6 +6,7 @@ from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _sanitize_users_new_settings_return_url_v1,
 )
+from new_user_js_source import read_new_user_js
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -130,7 +131,7 @@ def test_build_settings_redirect_url_uses_return_url_when_available() -> None:
 
 
 def test_post_save_context_does_not_reinject_dynamic_section_for_settings_editor() -> None:
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+    js_text = read_new_user_js()
     module_text = (
         PROJECT_ROOT / "static" / "js" / "modules" / "process_cards_visibility_v1.js"
     ).read_text(encoding="utf-8")
@@ -195,7 +196,7 @@ def test_appgenesis_cancel_controller_remains_the_single_cancel_entry_point() ->
     cancel_controller_text = (
         PROJECT_ROOT / "static" / "js" / "modules" / "appgenesis_cancel_controller_v1.js"
     ).read_text(encoding="utf-8")
-    new_user_js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+    new_user_js_text = read_new_user_js()
     return_after_save_text = (
         PROJECT_ROOT / "static" / "js" / "modules" / "return_after_save.js"
     ).read_text(encoding="utf-8")

@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from appgenesis.config.settings import settings
+from new_user_js_source import read_new_user_js
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -231,7 +232,7 @@ def test_reload_guard_normalizes_regardless_of_feedback_markers() -> None:
 
 
 def test_post_save_uses_authoritative_menu_and_config_return_url() -> None:
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+    js_text = read_new_user_js()
 
     assert "function resolveAuthoritativeActiveMenuKeyForPostSaveV1()" in js_text
     assert "function findConfigProvidedReturnUrlV1(form)" in js_text
