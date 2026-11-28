@@ -1332,3 +1332,16 @@ main#main {
   .vb-card-animado { animation: none; }
   .vb-card-animado img { transition: none; }
 }
+
+/* Secoes do Departamento Infantil com fotos pequenas entre os textos */
+.vb-secoes { margin: 32px 0; }
+.vb-secao { margin: 0 0 40px; }
+.vb-secao h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 12px; }
+.vb-secao p { font-size: 1.05rem; line-height: 1.7; color: #4a4843; margin: 0 0 12px; }
+.vb-secao__lista { padding-left: 20px; margin: 0 0 12px; color: #4a4843; line-height: 1.7; }
+.vb-secao__citacao { margin: 0 0 16px; padding: 16px 20px; border-left: 3px solid var(--vb-gold); background: #fff; border-radius: 12px; }
+.vb-secao__citacao p { margin: 0 0 6px; }
+.vb-secao__citacao cite { font-style: normal; font-weight: 700; font-size: 0.9rem; }
+.vb-secao__fotos { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.vb-secao__fotos img { width: calc(50% - 6px); max-width: 260px; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; box-shadow: var(--vb-shadow); }
+@media (max-width: 480px) { .vb-secao__fotos img { width: calc(50% - 6px); } }

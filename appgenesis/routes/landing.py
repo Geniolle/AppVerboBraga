@@ -55,19 +55,45 @@ DEPARTAMENTOS = [
         "slug": "departamento-infantil",
         "nome": "Departamento Infantil",
         "imagem": "/static/img/icon-criancas.png",
-        "resumo": "Um espaço de comunhão, crescimento e serviço para as crianças.",
-        "descricao": [
-            "No Departamento Infantil, as crianças são acolhidas em salas separadas por idades, com professores e monitores que acompanham cada turma.",
-            "Aprendemos com a Palavra de Deus, brincamos, criamos amizades e servimos uns aos outros.",
+        "resumo": "Conectar o coração das crianças ao coração de Deus.",
+        "descricao": [],
+        "secoes": [
+            {"titulo": "Ministério Infantil", "paragrafos": [
+                "O Ministério Infantil da Igreja Verbo da Vida existe para ensinar a Palavra de Deus às crianças, proporcionando um ambiente acolhedor, seguro e de crescimento espiritual.",
+                "Acreditamos que as crianças não são apenas a Igreja do futuro, mas também parte da Igreja de hoje.",
+            ], "fotos": [76]},
+            {"titulo": "A nossa missão", "paragrafos": [
+                "Conduzir as crianças a um relacionamento pessoal com Deus, ensinando os princípios da Sua Palavra e fortalecendo a sua identidade em Cristo.",
+            ], "fotos": [77, 78]},
+            {"titulo": "A nossa visão", "paragrafos": [
+                "Formar uma geração que conheça a Deus e o Seu amor, desenvolva um relacionamento com o Espírito Santo, viva a Palavra e seja capaz de impactar as nações.",
+            ], "fotos": [79, 80]},
+            {"titulo": "Os nossos valores", "lista": [
+                "Proteger — Preservar os princípios e valores cristãos.",
+                "Preparar — Fundamentar as crianças na Palavra de Deus.",
+                "Promover — Incentivar um relacionamento pessoal com Deus.",
+                "Perseverar — Investir no crescimento espiritual de cada criança.",
+                "Potencializar — Desenvolver os seus dons e talentos.",
+            ], "fotos": [81, 82]},
+            {"titulo": "Público-alvo", "paragrafos": [
+                "Recebemos crianças de 1 a 12 anos, com um ensino adaptado a cada faixa etária e etapa do seu desenvolvimento.",
+            ], "fotos": [83, 84]},
+            {"titulo": "As nossas atividades", "paragrafos": [
+                "Desenvolvemos momentos de louvor, adoração, oração, ensino bíblico, histórias, jogos e atividades criativas, tornando a aprendizagem da Palavra de Deus uma experiência significativa e participativa.",
+            ], "fotos": [85, 86]},
+            {"titulo": "Parceria com as famílias", "paragrafos": [
+                "Trabalhamos em parceria com as famílias, contribuindo para a formação espiritual das crianças e fortalecendo os valores cristãos no seu quotidiano.",
+            ], "fotos": [87, 88]},
+            {"titulo": "Os nossos espaços", "paragrafos": [
+                "Salas organizadas por idades, com professores e monitores que acompanham cada turma.",
+            ], "fotos": [89, 90, 91, 92, 93, 94]},
+            {"titulo": "A nossa fundamentação bíblica", "citacoes": [
+                ("«Ensina a criança no caminho em que deve andar, e, ainda quando for velho, não se desviará dele.»", "Provérbios 22:6"),
+                ("«Deixai vir a mim os pequeninos, não os embaraceis, porque dos tais é o Reino dos Céus.»", "Mateus 19:14"),
+            ], "fotos": []},
         ],
         "acoes": [],
         "fotos": [],
-        "cards": [
-            {"titulo": "Aprender", "texto": "Histórias e ensinamentos da Palavra de Deus, adaptados a cada idade.", "imagem": "/static/img/infantil/77.jpg"},
-            {"titulo": "Crescer", "texto": "Brincadeiras e atividades em grupo que ajudam a desenvolver a criança.", "imagem": "/static/img/infantil/83.jpg"},
-            {"titulo": "Servir", "texto": "Pequenos gestos de partilha e cooperação, aprendidos juntos.", "imagem": "/static/img/infantil/78.jpg"},
-            {"titulo": "Salas por idade", "texto": "Cada sala tem o seu espaço e a sua equipa de professores e monitores.", "imagem": "/static/img/infantil/85.jpg"},
-        ],
     },
     {
         "slug": "a-livraria",
