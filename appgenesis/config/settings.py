@@ -88,6 +88,7 @@ class Settings:
     WHATSAPP_TEMPLATE_NAME: str
     WHATSAPP_TEMPLATE_LANGUAGE: str
     WHATSAPP_WEBHOOK_VERIFY_TOKEN: str
+    WHATSAPP_APP_SECRET: str
 
     APP_PUBLIC_URL: str
     USER_INVITE_TTL_HOURS: int
@@ -159,6 +160,7 @@ def _build_settings() -> Settings:
         WHATSAPP_TEMPLATE_NAME=(os.getenv("WHATSAPP_TEMPLATE_NAME", "") or "").strip(),
         WHATSAPP_TEMPLATE_LANGUAGE=(os.getenv("WHATSAPP_TEMPLATE_LANGUAGE", "pt_PT") or "pt_PT").strip(),
         WHATSAPP_WEBHOOK_VERIFY_TOKEN=(os.getenv("WHATSAPP_WEBHOOK_VERIFY_TOKEN", "") or "").strip(),
+        WHATSAPP_APP_SECRET=(os.getenv("WHATSAPP_APP_SECRET", "") or "").strip(),
         APP_PUBLIC_URL=(os.getenv("APP_PUBLIC_URL", "") or "").strip().rstrip("/"),
         USER_INVITE_TTL_HOURS=_env_int("USER_INVITE_TTL_HOURS", 72),
         SMTP_HOST=(os.getenv("SMTP_HOST", "") or "").strip(),
