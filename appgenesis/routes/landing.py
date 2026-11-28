@@ -34,12 +34,12 @@ DEPARTAMENTOS = [
         ],
         "fotos": [],
         "noticias": [
-            {"titulo": "A Primeira edição do centro de cura", "texto": "Texto de exemplo para a notícia 1.", "url": "#", "imagem": "/static/img/noticias/primeira-edicao-centro-de-cura.jpg"},
-            {"titulo": "Título da notícia 2", "texto": "Texto de exemplo para a notícia 2.", "url": "#", "imagem": "/static/img/hero-concerto-desfocado.jpg"},
-            {"titulo": "Título da notícia 3", "texto": "Texto de exemplo para a notícia 3.", "url": "#", "imagem": "/static/img/centro-de-cura-logo.jpg"},
-            {"titulo": "Título da notícia 4", "texto": "Texto de exemplo para a notícia 4.", "url": "#", "imagem": "/static/img/hero-braga.jpg"},
-            {"titulo": "Título da notícia 5", "texto": "Texto de exemplo para a notícia 5.", "url": "#", "imagem": "/static/img/hero-concerto-desfocado.jpg"},
-            {"titulo": "Título da notícia 6", "texto": "Texto de exemplo para a notícia 6.", "url": "#", "imagem": "/static/img/centro-de-cura-logo.jpg"},
+            {"titulo": "Aula - Amor Curador de Deus", "texto": "Deus é bom e deseja curar-te. A Palavra de Deus é um remédio infalível, e Jesus, o restaurador, torna a cura nossa.", "url": "#", "imagem": "/static/img/noticias/aula-amor-curador-de-deus.jpg"},
+            {"titulo": "Aula - Somos Curados em Cristo", "texto": "Cristo levou sobre si a maldição da Lei, que inclui doenças. A cura é um facto já estabelecido na cruz, não só uma promessa.", "url": "#", "imagem": "/static/img/noticias/aula-somos-curados-em-cristo.jpg"},
+            {"titulo": "Aula - Fé para a Cura", "texto": "A fé alimenta-se, vence a passividade e recebe a cura antes dos sentimentos. Crer e confessar são essenciais.", "url": "#", "imagem": "/static/img/noticias/aula-fe-para-a-cura.jpg"},
+            {"titulo": "Aula - Como Manter a sua Cura", "texto": "A cura recebida pela fé mantém-se pela fé: pela perseverança e por um reservatório espiritual cheio da Palavra de Deus.", "url": "#", "imagem": "/static/img/noticias/aula-como-manter-a-sua-cura.jpg"},
+            {"titulo": "Aula - A Unção da Cura", "texto": "A Palavra de Deus é ungida para curar. A fé é o gatilho para o poder curador, e Deus traz cura, seja instantânea ou progressiva.", "url": "#", "imagem": "/static/img/noticias/aula-a-uncao-da-cura.jpg"},
+            {"titulo": "Oração - Imposição de mãos", "texto": "A Palavra de Deus é ungida para curar. A fé é o gatilho para o poder curador, e Deus traz cura, seja instantânea ou progressiva.", "url": "#", "imagem": "/static/img/noticias/oracao-imposicao-de-maos.jpg"},
         ],
     },
     {

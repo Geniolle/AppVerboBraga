@@ -617,7 +617,7 @@ body {
 
 .vb-dupla__imagem {
   border-radius: 28px;
-  background: var(--vb-night) url("/static/img/quem-somos-colagem.webp") center / cover no-repeat;
+  background: var(--vb-night) url("/static/img/quem-somos-colagem-v3.webp") center / cover no-repeat;
   aspect-ratio: 4 / 5;
   box-shadow: var(--vb-shadow);
 }
