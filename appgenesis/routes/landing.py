@@ -38,7 +38,7 @@ DEPARTAMENTOS = [
             {"titulo": "Aula - Amor Curador de Deus", "texto": "Texto de exemplo para a notícia 2.", "url": "#", "imagem": "/static/img/noticias/aula-amor-curador-de-deus.jpg"},
             {"titulo": "Aula - Somos Curados em Cristo", "texto": "Texto de exemplo para a notícia 3.", "url": "#", "imagem": "/static/img/noticias/aula-somos-curados-em-cristo.jpg"},
             {"titulo": "Aula - Fé para a Cura", "texto": "Texto de exemplo para a notícia 4.", "url": "#", "imagem": "/static/img/noticias/aula-fe-para-a-cura.jpg"},
-            {"titulo": "Título da notícia 5", "texto": "Texto de exemplo para a notícia 5.", "url": "#", "imagem": "/static/img/hero-concerto-desfocado.jpg"},
+            {"titulo": "Aula - Como Manter a sua Cura", "texto": "Texto de exemplo para a notícia 5.", "url": "#", "imagem": "/static/img/noticias/aula-como-manter-a-sua-cura.jpg"},
             {"titulo": "Título da notícia 6", "texto": "Texto de exemplo para a notícia 6.", "url": "#", "imagem": "/static/img/centro-de-cura-logo.jpg"},
         ],
     },
