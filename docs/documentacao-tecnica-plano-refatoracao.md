@@ -378,6 +378,7 @@ Cada etapa cabe num PR. Ordem obrigatória. Não avançar com teste vermelho, va
 ### Etapa 5 — Frontend por domínio (roadmap 5b, 5c)
 
 - `static/js/new_user.js` em módulos por feature (uma fatia por PR, com `node --check` e teste).
+- **5c concluída em 2026-11-28.** `static/css/new_user.css` passou a `static/css/new_user/01_base_layout.css` … `11_process_lists_agenda.css`, no mesmo ponto do template e pela mesma ordem (cascata igual). Regra nova vai para o ficheiro do componente; nunca reordenar os `<link>`. Atenção: `11_process_lists_agenda.css` mantém uma `}` a mais (pré-existente) que anula a regra seguinte `.dynamic-process-list-title-group-v1`.
 - `static/css/new_user.css` por componente, preservando a ordem de cascata (regra §"Regra que venceu a cascata" em `AGENT_HANDOFF.md`).
 - Validar desktop e mobile em cada fatia. Não repetir Selenium quando o código funcional não mudou.
 - Critério: página igual antes/depois nas abas Administrativo, Sessões, Meu Perfil, Entidade.

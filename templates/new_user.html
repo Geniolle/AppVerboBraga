@@ -9,7 +9,18 @@
 {% block head_extra %}
 <script src="/static/js/modules/navigation_reload_guard_v1.js?v={{ asset_version }}"></script>
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v={{ asset_version }}">
-  <link rel="stylesheet" href="/static/css/new_user.css?v={{ asset_version }}">
+  {# new_user.css dividido por componente (Etapa 5c); a ordem e a cascata original. #}
+  <link rel="stylesheet" href="/static/css/new_user/01_base_layout.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/02_meus_dados_controls.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/03_forms_tables.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/04_process_settings.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/05_responsive.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/06_process_fields_entity_layout.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/07_table_pagination.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/08_admin_forms_buttons.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/09_meu_perfil_extras.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/10_empresa_entity_layout.css?v={{ asset_version }}">
+  <link rel="stylesheet" href="/static/css/new_user/11_process_lists_agenda.css?v={{ asset_version }}">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v={{ asset_version }}">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v={{ asset_version }}">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v={{ asset_version }}">

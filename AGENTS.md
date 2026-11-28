@@ -1258,7 +1258,7 @@ mecanismo genérico — sem duplicar endpoint/regra de negócio da ação movida
    (`static/css/modules/app_shell/admin_subprocess_inline_create_v1.css`)
    é genérica/reutilizável (forma pill, hover, `focus-visible`) e se soma —
    não substitui — à classe já existente `.entity-create-link-shortcut`
-   (`static/css/new_user.css`, dona de altura/padding/borda). A classe
+   (`static/css/new_user/01_base_layout.css`, dona de altura/padding/borda). A classe
    `.action-btn-secondary` (preenchimento cinza sólido) foi removida deste
    botão especificamente para obter o visual "outline" pedido; o botão
    "Copiar" dentro do slot mantém `.action-btn-secondary` normalmente.
@@ -1521,7 +1521,7 @@ Decisão do projeto (validada pelo utilizador):
 2. Os cabeçalhos configurados chegam ao front-end como `profilePersonalSections` (já existe). A lista de abas e os blocos devem sair daí.
 3. Não acrescentar abas hardcoded em `process_menu_config_builder_v1.js` (ex.: `Dados de morada`, `Dados de Treinamento`). Remover as que existirem quando a configuração estiver completa.
 4. Antes de remover uma aba fixa, garantir que os seus campos existem como campos configuráveis do processo `meu_perfil` (`MENU_MEU_PERFIL_FIELD_OPTIONS` em `appgenesis/services/process_settings/normalizers.py`). Hoje morada (morada, cidade, freguesia, código postal) e treinamento NÃO são campos configuráveis; enquanto não forem, a remoção quebra o acesso a esses dados.
-5. Campos de Dados pessoais devem respeitar a ordem da configuração. Estado atual: Nome, Telefone, Email, Data de nascimento, Género (ver `static/css/new_user.css`, regra `.personal-grid > .field` com `order`).
+5. Campos de Dados pessoais devem respeitar a ordem da configuração. Estado atual: Nome, Telefone, Email, Data de nascimento, Género (ver `static/css/new_user/08_admin_forms_buttons.css`, regra `.personal-grid > .field` com `order`).
 
 ### Fases (ordem obrigatória)
 - Fase 1 (concluída): tornar morada e treinamento campos configuráveis do processo `meu_perfil` (backend `profile_handlers.py` + `services/profile.py` + opções em `normalizers.py`).
