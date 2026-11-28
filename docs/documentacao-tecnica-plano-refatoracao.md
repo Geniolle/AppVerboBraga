@@ -339,6 +339,8 @@ Cada etapa cabe num PR. Ordem obrigatória. Não avançar com teste vermelho, va
 
 ### Etapa 4 — Partir `profile_handlers.py` e `settings_handlers.py`
 
+- **Concluída em 2026-11-28.** Novos módulos em `appgenesis/routes/profile/handlers/`: `auth_profile.py`, `personal.py` (inclui WhatsApp), `process_data.py`, `admin_lists.py` (funções e departamentos), `profile_common.py` (helpers partilhados), `sidebar_sections.py`, `menu_subprocess.py`. Mortas removidas: `_sanitize_sidebar_section_return_url_v17`, `_is_history_process`, `_is_authorization_profile_process`, `_build_users_new_url_with_return_context_v4`, `_sanitize_users_new_return_url_post_save_v4`, `_append_after_save_marker_to_users_new_url_v4`.
+
 - Dividir por área (pessoal, morada, formação, WhatsApp, processos dinâmicos) em `routes/profile/handlers/*.py`, mantendo as assinaturas das rotas.
 - Critério: mesmo número de rotas registadas (comparar `app.routes` antes e depois); testes de perfil verdes.
 
