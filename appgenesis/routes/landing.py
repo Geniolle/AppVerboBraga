@@ -56,9 +56,18 @@ DEPARTAMENTOS = [
         "nome": "Departamento Infantil",
         "imagem": "/static/img/icon-criancas.png",
         "resumo": "Um espaço de comunhão, crescimento e serviço para as crianças.",
-        "descricao": ["Em breve, mais informações sobre este departamento."],
+        "descricao": [
+            "No Departamento Infantil, as crianças são acolhidas em salas separadas por idades, com professores e monitores que acompanham cada turma.",
+            "Aprendemos com a Palavra de Deus, brincamos, criamos amizades e servimos uns aos outros.",
+        ],
         "acoes": [],
         "fotos": [],
+        "cards": [
+            {"titulo": "Aprender", "texto": "Histórias e ensinamentos da Palavra de Deus, adaptados a cada idade.", "imagem": "/static/img/infantil/77.jpg"},
+            {"titulo": "Crescer", "texto": "Brincadeiras e atividades em grupo que ajudam a desenvolver a criança.", "imagem": "/static/img/infantil/83.jpg"},
+            {"titulo": "Servir", "texto": "Pequenos gestos de partilha e cooperação, aprendidos juntos.", "imagem": "/static/img/infantil/78.jpg"},
+            {"titulo": "Salas por idade", "texto": "Cada sala tem o seu espaço e a sua equipa de professores e monitores.", "imagem": "/static/img/infantil/85.jpg"},
+        ],
     },
     {
         "slug": "a-livraria",
